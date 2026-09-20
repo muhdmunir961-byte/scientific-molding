@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev -p 5555",
     "build": "next build",
-    "start": "next start -p 5555",
+    "start": "next start",
     "typecheck": "tsc --noEmit",
     "check:entrance": "node scripts/check-entrance.mjs",
     "check:timeline": "node scripts/check-timeline.mjs",
