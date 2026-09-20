@@ -1,0 +1,2378 @@
+@import 'tailwindcss';
+
+/* ==================================================================
+   PRD Section 13.1 — Design tokens
+   ==================================================================
+   Modern Orange / White / Yellow theme. Every value below is taken
+   directly from the PRD token table; nothing is inferred.
+
+   `--prd-*` marks a token the PRD defines. The 8px spacing scale is
+   applied through Tailwind's default unit (0.25rem / 4px) in the
+   components, so every spacing step used is a multiple of 8px.
+   ================================================================== */
+
+:root {
+  /* --- Primary accent (Orange) — hero highlights, primary buttons,
+         numbered badges, active nav state.
+         PRD gives the range `#F07C23`–`#E8631C`: the lighter end is the
+         base, the darker end the pressed state. --- */
+  --prd-orange: #f07c23;
+  --prd-orange-deep: #e8631c;
+  /* Hover resolves toward the yellow accent, per PRD "hover states". */
+  --prd-orange-hover: #ffc93c;
+
+  /* --- Secondary accent (Yellow) — secondary badges, highlight tags,
+         "level" pills, hover states, decorative accents.
+         PRD range: `#FFC93C`–`#FFD866`. --- */
+  --prd-yellow: #ffc93c;
+  --prd-yellow-light: #ffd866;
+
+  /* --- Base backgrounds --- */
+  --prd-white: #ffffff;
+  --prd-offwhite: #fdfbf7;      /* warm off-white, alternating sections */
+  --prd-offwhite-alt: #faf8f3;
+
+  /* --- Text --- */
+  --prd-ink: #2a2a2a;           /* Charcoal — primary, softer than black */
+  --prd-ink-muted: #6b6b63;     /* Warm grey — muted / secondary */
+
+  /* --- Semantic --- */
+  --prd-success-bg: #fff6dd;    /* soft yellow tint, "After" state */
+  --prd-neutral: #f3f1ec;       /* light warm grey, "Before" state */
+
+  /* --- Gradient accent (hero / primary CTA) --- */
+  --prd-gradient: linear-gradient(135deg, #f07c23 0%, #ffc93c 100%);
+
+  /* --- Lines.
+         Derived from the charcoal token at low alpha rather than a new
+         grey, so the grid and borders stay in the same warm family. --- */
+  --prd-grid-line: rgba(42, 42, 42, 0.055);
+  --prd-grid-line-major: rgba(42, 42, 42, 0.085);
+  --prd-border: rgba(42, 42, 42, 0.12);
+  --prd-border-strong: rgba(42, 42, 42, 0.2);
+
+  /* --- Elevation.
+         PRD: "Soft, warm-toned drop shadows (avoid harsh black shadows —
+         use a low-opacity orange/charcoal shadow)". The stack is orange for
+         the glow and charcoal for the contact shadow. No pure black. --- */
+  --prd-shadow-sm: 0 1px 2px rgba(42, 42, 42, 0.05),
+                   0 2px 6px rgba(240, 124, 35, 0.05);
+  --prd-shadow-warm: 0 1px 2px rgba(42, 42, 42, 0.05),
+                     0 6px 16px rgba(240, 124, 35, 0.09),
+                     0 16px 32px rgba(42, 42, 42, 0.05);
+  --prd-shadow-warm-hover: 0 2px 4px rgba(42, 42, 42, 0.06),
+                           0 10px 24px rgba(240, 124, 35, 0.14),
+                           0 24px 48px rgba(42, 42, 42, 0.07);
+
+  /* --- Geometry. PRD: "12–16px cards, pill-shaped tags/buttons (999px)". --- */
+  --prd-radius: 16px;
+  --prd-radius-sm: 12px;
+  --prd-radius-pill: 999px;
+
+  /* --- Motion (PRD 13.4 micro-interactions) --- */
+  --prd-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --prd-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+/* ==================================================================
+   Phase 4A — Design system
+   ==================================================================
+   A single spacing / type / elevation / motion vocabulary for every
+   section, so the page has one rhythm instead of one per component.
+
+   ── Why these live alongside `--prd-*` and `--pdf-*` ────────────────
+   Nothing here replaces an existing token. The three sets coexist
+   deliberately and are migrated section-by-section in Phase 4B, so that
+   a mistake in one section cannot change the others mid-flight.
+
+   Two families are worth knowing about, because both are load-bearing:
+
+     `--prd-*`  the PRD 13.1 tokens (Hero, About, Track Record)
+     `--pdf-*`  the palette the five program PDFs forced (components
+                that sit under a program hero)
+
+   The unprefixed `--orange-*`, `--neutral-*` etc. below are the new
+   system. Where a value is shared, it is a rename, not a redesign —
+   `--ds-orange-500` is `#E8631C`, the same value `--pdf-orange` and
+   `--prd-orange-deep` already carry.
+   ================================================================== */
+
+:root {
+  /* --- Typography scale.
+         Fluid between the stated bounds via `clamp()`, so a heading is
+         40px on a phone and 72px on a desktop with no breakpoint jumps
+         and no per-section font-size overrides.
+
+         The middle term is `vw`, so the type scales with the viewport
+         rather than with the root font size — which is what makes it
+         *feel* proportional, but also means a user who raises their
+         browser's base font size will not enlarge these headings. Body
+         copy below stays in `rem` for exactly that reason. --- */
+  --ds-text-hero: clamp(2.5rem, 6vw, 4.5rem); /* 40–72px */
+  --ds-text-h1: clamp(2rem, 5vw, 3.5rem); /* 32–56px */
+  --ds-text-h2: clamp(1.75rem, 4vw, 2.75rem); /* 28–44px */
+  --ds-text-h3: clamp(1.375rem, 3vw, 1.875rem); /* 22–30px */
+  --ds-text-h4: clamp(1.125rem, 2vw, 1.25rem); /* 18–20px */
+
+  /* Body copy in `rem`: respects the user's browser font-size setting. */
+  --ds-text-body-lg: 1.125rem; /* 18px */
+  --ds-text-body: 1rem; /* 16px */
+  --ds-text-body-sm: 0.875rem; /* 14px */
+  --ds-text-caption: 0.75rem; /* 12px */
+  --ds-text-eyebrow: 0.75rem; /* 12px, uppercase */
+
+  /* --- Line heights --- */
+  --ds-leading-tight: 1.1;
+  --ds-leading-snug: 1.25;
+  --ds-leading-normal: 1.5;
+  --ds-leading-relaxed: 1.7;
+
+  /* --- Letter spacing.
+         Negative tracking on the large sizes: optical spacing tightens as
+         type grows, so display text set at normal tracking reads loose. --- */
+  --ds-tracking-tighter: -0.03em;
+  --ds-tracking-tight: -0.02em;
+  --ds-tracking-normal: 0;
+  --ds-tracking-wide: 0.05em;
+  --ds-tracking-wider: 0.1em;
+
+  /* --- Motion.
+         Durations land in 50–100ms bands rather than arbitrary values, so
+         any two animations on screen finish in a perceivable relationship
+         rather than drifting apart. --- */
+  --ds-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ds-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ds-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --ds-duration-fast: 150ms;
+  --ds-duration-normal: 250ms;
+  --ds-duration-slow: 400ms;
+  --ds-duration-slower: 600ms;
+}
+
+
+/* ==================================================================
+   PDF palette override — the five program PDFs win over PRD 13.1
+   ==================================================================
+   The customer supplied five program PDFs and asked for them to match
+   exactly. Where the PDFs and PRD Section 13.1 disagree, THE PDFS WIN.
+
+   Two disagreements, both deliberate:
+
+   1. Orange. PRD gives a range `#F07C23`–`#E8631C`; the PDFs use the
+      darker end, `#E8631C`, as the base.
+   2. Dark surfaces. PRD 13.1 says "replacing the earlier black/dark
+      scheme. No dark/black sections." All five PDFs use a solid black
+      program hero. The PDF wins — see `ComponentsHeroProps.theme`.
+
+   The `--prd-*` tokens above are NOT removed: the site Hero and the About
+   section still use them, and those sections match their own brief. Only
+   the program sections read these `--pdf-*` values.
+   ================================================================== */
+
+:root {
+  /* PDF orange. Base and its darker pressed state. */
+  --pdf-orange: #e8631c;
+  --pdf-orange-dark: #d9541c;
+
+  /* Dark surfaces. `--pdf-dark` is the program hero background;
+     `--pdf-dark-soft` is for raised elements on top of it. */
+  --pdf-dark: #1a1a1a;
+  --pdf-dark-soft: #2a2a2a;
+
+  /* Text and surfaces for program sections. Same values as the PRD tokens
+     they mirror, named separately so a program-only change cannot leak into
+     the Hero or About. */
+  --pdf-white: #ffffff;
+  --pdf-charcoal: #2a2a2a;
+  --pdf-warm-grey: #6b6b63;
+
+  /* Rules and hairlines on the dark hero. White at low alpha rather than a
+     solid grey, so the line sits on the background rather than cutting it. */
+  --pdf-dark-border: rgba(255, 255, 255, 0.14);
+  --pdf-dark-muted: rgba(255, 255, 255, 0.72);
+  --pdf-dark-subtle: rgba(255, 255, 255, 0.55);
+}
+
+:root {
+  /* --- Spacing scale (8px grid).
+         Steps 1–4 are the 4px sub-steps the grid needs for optical
+         alignment (icon gaps, label padding); 5 and up are pure multiples
+         of 8. Nothing outside this scale should appear in a component. --- */
+  --ds-space-1: 4px;
+  --ds-space-2: 8px;
+  --ds-space-3: 12px;
+  --ds-space-4: 16px;
+  --ds-space-5: 20px;
+  --ds-space-6: 24px;
+  --ds-space-8: 32px;
+  --ds-space-10: 40px;
+  --ds-space-12: 48px;
+  --ds-space-16: 64px;
+  --ds-space-20: 80px;
+  --ds-space-24: 96px;
+  --ds-space-32: 128px;
+
+  /* --- Section rhythm.
+         96px desktop / 64px mobile, applied through `.section`. The same
+         padding top and bottom, so two adjacent sections produce exactly
+         192px of separation — enough that a background change reads as a
+         boundary rather than as a stripe. --- */
+  --ds-section-padding-y-desktop: 96px;
+  --ds-section-padding-y-mobile: 64px;
+
+  /* --- Container.
+         1280px, not the 1400px several components use today. Those are
+         migrated in Phase 4B; changing them here would silently reflow
+         every section at once, which is the thing this phase exists to
+         avoid. --- */
+  --ds-container-max: 1280px;
+  --ds-container-padding-x: 24px;
+  --ds-container-padding-x-lg: 48px;
+
+  /* --- Colour palette.
+         Reorganised, not redesigned: every value here already exists as a
+         `--prd-*` or `--pdf-*` token. The numbered ramp adds the tints and
+         shades those sets were missing, so hover and pressed states can
+         stop being hand-mixed per component. --- */
+
+  /* Orange */
+  --ds-orange-50: #fff4ed;
+  --ds-orange-100: #ffe6d5;
+  --ds-orange-500: #e8631c; /* primary */
+  --ds-orange-600: #d9541c; /* hover */
+  --ds-orange-700: #b8420f; /* active */
+
+  /* Yellow */
+  --ds-yellow-50: #fffbeb;
+  --ds-yellow-100: #fff6dd;
+  --ds-yellow-500: #ffc93c; /* accent */
+  --ds-yellow-600: #f0b010; /* hover */
+
+  /* Neutral */
+  --ds-neutral-0: #ffffff;
+  --ds-neutral-50: #fdfbf7;
+  --ds-neutral-100: #f3f1ec;
+  --ds-neutral-200: #e5e3de;
+  --ds-neutral-500: #6b6b63;
+  --ds-neutral-800: #2a2a2a;
+  --ds-neutral-900: #1a1a1a;
+}
+
+:root {
+  /* --- Elevation.
+         Layered rather than single: a tight contact shadow for the edge
+         plus a wide soft one for the cast, which is what reads as height.
+         A single blur reads as a grey halo at these sizes.
+
+         Charcoal at very low alpha, never pure black — the PRD is explicit
+         that shadows are warm-toned, and black on a warm off-white turns
+         muddy. --- */
+  --ds-shadow-sm:
+    0 1px 2px rgba(42, 42, 42, 0.04),
+    0 1px 3px rgba(42, 42, 42, 0.06);
+
+  --ds-shadow-md:
+    0 2px 4px rgba(42, 42, 42, 0.04),
+    0 4px 8px rgba(42, 42, 42, 0.06),
+    0 8px 16px rgba(42, 42, 42, 0.04);
+
+  --ds-shadow-lg:
+    0 4px 8px rgba(42, 42, 42, 0.04),
+    0 12px 24px rgba(42, 42, 42, 0.06),
+    0 24px 48px rgba(42, 42, 42, 0.08);
+
+  /* Orange-tinted, for brand-coloured surfaces. Shadows tinted toward the
+     element's own hue read as the element glowing rather than as a grey
+     blur sitting behind it. */
+  --ds-shadow-warm:
+    0 4px 12px rgba(232, 99, 28, 0.08),
+    0 12px 32px rgba(232, 99, 28, 0.06);
+
+  /* --- Focus rings.
+         A ring, not an outline: an outline follows the box edge and cannot
+         be inset or radius-aware. Because these are box-shadows they
+         respect `border-radius` automatically, so a pill button gets a pill
+         ring rather than a rectangle around it.
+
+         Alpha is deliberately low. The ring supplements a real focus state
+         (colour change, underline); it is not the only signal, so it does
+         not need to shout. --- */
+  --ds-ring-orange: 0 0 0 3px rgba(232, 99, 28, 0.15);
+  --ds-ring-yellow: 0 0 0 3px rgba(255, 201, 60, 0.25);
+
+  /* --- Radius.
+         Prefixed `--ds-*` like the rest of the design-system tokens. This
+         matters most here: `--radius-sm|md|lg` are names Tailwind v4 owns
+         (0.25rem / 0.5rem / 0.5rem), and a bare `--radius-lg` in our `:root`
+         would sit in the same namespace as the theme block. The prefix makes
+         it unambiguous that `var(--ds-radius-lg)` (16px) and the `rounded-lg`
+         utility are different values from different systems.
+
+         `--ds-radius-md` (10px) is the intended card default. The legacy
+         `--prd-radius` is 16px, so cards migrate 16px → 10px in Phase 4B —
+         a deliberate tightening, not a typo. --- */
+  --ds-radius-sm: 6px;
+  --ds-radius-md: 10px;
+  --ds-radius-lg: 16px;
+  --ds-radius-xl: 24px;
+  --ds-radius-2xl: 32px;
+  --ds-radius-full: 9999px;
+}
+
+/* ==================================================================
+   Scroll reveal — sections below the fold
+   ==================================================================
+   Used by <ScrollReveal>. The base rule is VISIBLE, and the hidden state only
+   applies once the component has mounted and set `data-reveal-ready`.
+
+   That ordering is deliberate. The obvious approach — hide in CSS, reveal in
+   JS — leaves the content permanently invisible if the script never runs,
+   which is a far worse failure than no animation. Here, a broken or blocked
+   script simply means the content shows without moving.
+
+   `translate3d` and `opacity` only: both are compositor properties, so the
+   reveal never triggers layout or paint.
+   ================================================================== */
+
+.reveal-block {
+  opacity: 1;
+  transform: none;
+}
+
+.reveal-block[data-reveal-ready] {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0);
+  transition:
+    opacity 600ms var(--prd-ease-out),
+    transform 600ms var(--prd-ease-out);
+  will-change: opacity, transform;
+}
+
+.reveal-block[data-visible] {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Once the motion has played out, drop the compositor hint so the layer is not
+   held for the rest of the session. */
+.reveal-block[data-visible] {
+  will-change: auto;
+}
+
+/* ==================================================================
+   Before/After table — responsive stacking
+   ==================================================================
+   PRD 13.2: "Before/After split panel (two-column desktop → stacked mobile)".
+
+   The rows keep their table structure at every width. `display: block` on a
+   <table> is the common shortcut and it destroys the table semantics in most
+   screen readers — row and column counts, header association, table navigation
+   all disappear. Only the VISUAL layout changes here.
+
+   Below 640px each row becomes a two-row grid: the "before" cell on top, the
+   "after" cell beneath. The <thead> is hidden visually because the column
+   headers would no longer line up with the stacked cells, but it stays in the
+   accessibility tree via the sr-only pattern applied to the header row.
+   ================================================================== */
+
+@media (max-width: 639px) {
+  .before-after-table,
+  .before-after-table tbody,
+  .before-after-table tr,
+  .before-after-table td {
+    display: block;
+    width: 100%;
+  }
+
+  /* The column headers stop making visual sense once the cells stack, so they
+     are hidden from sight — but `sr-only` keeps them associated with their
+     cells for assistive tech. */
+  .before-after-table thead tr {
+    display: block;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .before-after-table td:first-child {
+    border-radius: var(--prd-radius-sm) var(--prd-radius-sm) 0 0;
+  }
+
+  .before-after-table td:last-child {
+    border-radius: 0 0 var(--prd-radius-sm) var(--prd-radius-sm);
+    margin-bottom: 8px;
+  }
+}
+
+/* ==================================================================
+   Hero — primary CTA
+   ==================================================================
+   PRD Section 13.1: "Gradient accent (optional, hero/CTA) — Orange → Yellow
+   diagonal gradient `#F07C23 → #FFC93C` for hero banner and primary CTA
+   buttons". Applied here, on the single most important control in the hero.
+
+   PRD Section 13.1 also specifies the hover resolves toward the yellow accent.
+   White text on that yellow measures ~1.9:1 — far below the 4.5:1 WCAG AA
+   floor — so the hover flips the label to charcoal on yellow (~10.5:1).
+
+   The colour change the PRD asks for is preserved exactly; only the text
+   colour moves, and only while hovered. Done as a CSS rule rather than
+   Tailwind `hover:` pairs because background and label must change together to
+   stay legible — two coordinated values, not one.
+   ================================================================== */
+
+.cta-primary {
+  background-image: var(--prd-gradient);
+  color: var(--prd-white);
+  border-radius: var(--prd-radius-pill);
+  box-shadow: var(--prd-shadow-warm);
+}
+
+.cta-primary:hover {
+  background-image: none;
+  background-color: var(--prd-yellow);
+  color: var(--prd-ink);
+  box-shadow: var(--prd-shadow-warm-hover);
+  transform: translateY(-2px);
+}
+
+.cta-primary:active {
+  background-color: var(--prd-orange-deep);
+  color: var(--prd-white);
+}
+
+/* Phase 4B — focus ring aligned with the global `:focus-visible` rule.
+   ==================================================================
+   This used to be `outline: 3px solid var(--prd-ink)` at (0,2,0), which
+   beat the global bare pseudo-class at (0,1,0) ON THE OUTLINE — while the
+   global rule's `box-shadow` still applied. A focused CTA therefore drew a
+   charcoal rectangle AND the orange ring, two signals for one state.
+
+   The outline is gone rather than recoloured. A box-shadow ring is
+   radius-aware, so it hugs the pill; an outline follows the box edge and
+   draws a rectangle around it. There is no reason for a pill button to
+   carry the one shape the rest of the system avoids.
+
+   The label contrast concern that motivated the charcoal outline is
+   handled by the ring's alpha instead: `--ds-ring-orange` is a 15% wash, so
+   it reads as a halo against the orange fill without competing with it. */
+.cta-primary:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange);
+}
+
+/* ==================================================================
+   §6.1 — Hero  (Phase 4B polish)
+   ==================================================================
+   The opening section. Everything here is presentation only — no copy and
+   no layout geometry is changed, because the grid, the 50/50 split and the
+   reveal stagger are already correct and the entrance timeline depends on
+   them.
+
+   The Hero used to be styled almost entirely inline, and in the `--prd-*`
+   palette. Inline styles cannot express `:hover` or `:focus-visible` at
+   all, which is why the stat cards, the image frame and the secondary CTAs
+   had no interactive states beyond what a Tailwind `hover:` class could
+   reach — and a Tailwind `hover:shadow-*` would have pulled in the utility
+   we deliberately keep clear of our `--ds-shadow-*` tokens.
+
+   Colours now come from the `--ds-*` palette. The blueprint grid line
+   colours are the one exception and are documented at their use site.
+   ================================================================== */
+
+/* --- Section surface: a warm wash top-left falling away to white. ---
+   A flat white field made the hero read as unfinished next to the loader's
+   burn-out, which ends on warm light. `--ds-orange-50` at the top-left puts
+   the two in the same family without tinting the page: the gradient is
+   anchored to the top-left corner and fully spent by 55%, so the headline
+   and the stat cards sit on effectively white pixels and their contrast is
+   unchanged. Depth, not colour. */
+.hero-section {
+  background:
+    radial-gradient(ellipse 60% 55% at 0% 0%, var(--ds-orange-50) 0%, transparent 55%),
+    var(--ds-neutral-0);
+}
+
+/* --- Blueprint grid, held at 0.03. ---
+   The brief asks for a grid at 0.02–0.04. It was drawn at 0.055/0.085,
+   which is above that band and enough to compete with the headline
+   descenders at the small end of the clamp. The two line colours are scaled
+   to 0.025 and 0.04 rather than being given new greys, so the minor/major
+   relationship (major is the more present of the two) survives the change. */
+.hero-section .hero-grid {
+  background-image:
+    linear-gradient(to right, rgba(42, 42, 42, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(42, 42, 42, 0.025) 1px, transparent 1px),
+    linear-gradient(to right, rgba(42, 42, 42, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(42, 42, 42, 0.04) 1px, transparent 1px);
+}
+
+/* --- Stat card. ---
+   White on the warm wash: one rung of elevation at rest, two on hover, and
+   a 2px lift. `transform` and `box-shadow` are both compositor properties,
+   so the whole hover stays off the main thread.
+
+   NOTE: the rest state is deliberately `--ds-shadow-sm`, not the
+   `--ds-shadow-md` the brief specifies, per docs/design-system.md — a white
+   card at rest on a near-white field is a "default card". Hover moving it
+   to `md` is what makes the elevation legible as a response.
+
+   NOTE: the lift is `translateY(-2px)` rather than the brief's `scale
+   1.02`. A scale on a card containing text re-rasterises the label
+   mid-transition and the glyphs visibly soften. The 2% scale the brief asks
+   for is applied to the image frame below, where there is no text to blur. */
+.hero-stat {
+  background-color: var(--ds-neutral-0);
+  border-radius: var(--ds-radius-lg);
+  box-shadow: var(--ds-shadow-sm);
+  transition:
+    box-shadow var(--ds-duration-normal) var(--ds-ease-out),
+    transform var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.hero-stat:hover {
+  box-shadow: var(--ds-shadow-md);
+  transform: translateY(-2px);
+}
+
+/* The strip renders as a `<dl>` with top and bottom rules on the 8px grid. */
+.hero-stat-strip {
+  border-color: var(--ds-neutral-200);
+}
+
+/* --- Secondary CTA: outline orange, fill on hover. --- */
+.cta-secondary {
+  background-color: var(--ds-neutral-0);
+  border: 2px solid var(--ds-orange-500);
+  border-radius: var(--ds-radius-full);
+  color: var(--ds-orange-500);
+  transition:
+    background-color var(--ds-duration-normal) var(--ds-ease-out),
+    box-shadow var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.cta-secondary:hover {
+  background-color: var(--ds-orange-50);
+  box-shadow: var(--ds-shadow-sm);
+}
+
+/* Same treatment as `.cta-primary`, so two CTAs sitting side by side do not
+   draw two different focus shapes. `outline: none` before the shadow is
+   load-bearing: the UA outline paints on top of a box-shadow. */
+.cta-secondary:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange);
+}
+
+/* The leading icon tile. It carries its own radius so the ring has a shape
+   to hug, and its own hover so the row reads as one control rather than a
+   tile inside a box. */
+.cta-secondary-icon {
+  background-color: var(--ds-orange-50);
+  color: var(--ds-orange-500);
+  border-radius: var(--ds-radius-full);
+  transition:
+    background-color var(--ds-duration-normal) var(--ds-ease-out),
+    color var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.cta-secondary:hover .cta-secondary-icon {
+  background-color: var(--ds-orange-500);
+  color: var(--ds-neutral-0);
+}
+
+/* --- Hero image frame. --- */
+.hero-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--ds-radius-xl);
+  box-shadow: var(--ds-shadow-lg);
+  border: 1px solid var(--ds-neutral-200);
+  background-color: var(--ds-neutral-0);
+  transition: transform var(--ds-duration-slow) var(--ds-ease-out);
+}
+
+/* 1% on hover. Safe on this element specifically because it wraps a
+   photograph or the short placeholder — no body copy is re-rasterised. */
+.hero-frame:hover {
+  transform: scale(1.01);
+}
+
+/* Grounding gradient. Runs `to top` and is transparent by 60%, so it
+   darkens only the bottom edge and never reaches the subject. */
+.hero-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(26, 26, 26, 0.15), transparent 60%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* --- Scroll cue. ---
+   The bob is a `translateY` on the icon, which composes with the chevron's
+   own `currentColor` stroke without needing a `rotate` on the wrapper. */
+.hero-scroll-cue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ds-neutral-500);
+}
+
+@keyframes hero-cue-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+.hero-scroll-cue-icon {
+  animation: hero-cue-bob 2.4s var(--ds-ease-in-out) infinite;
+}
+
+/* ==================================================================
+   §6.2 — About the Trainer  (Phase 4B polish)
+   ==================================================================
+   The trainer bio. Same treatment as §6.1: presentation only — the copy,
+   the 50/50 split, the DOM order (bio before portrait) and the
+   ScrollReveal stagger are untouched, because they are already correct.
+
+   ── The surface problem this section had ────────────────────────────
+   PRD 13.1 says off-white is "for alternating sections (instead of dark
+   blocks)". The Hero took off-white and this took white, so the
+   alternation was technically right — but the Hero changed to a *warm
+   wash*, not a flat field. Against that, flat white here read as a hole
+   in the page: the wash ends and the colour simply stops.
+
+   A mirrored wash fixes it without breaking the rule. The Hero's comes
+   from the top-left; this one from the top-right, at lower alpha. So the
+   two read as one continuous light source sweeping down the page rather
+   than two unrelated backgrounds — and the section is still markedly
+   lighter than the Hero, which is what "alternating" is for.
+   ================================================================== */
+
+.about-section {
+  background:
+    radial-gradient(ellipse 60% 45% at 100% 0%, var(--ds-orange-50) 0%, transparent 45%),
+    var(--ds-neutral-0);
+}
+
+/* --- The grid is here on purpose. ---
+   `About.tsx` renders the same `.hero-grid.hero-grid-mask` markup the Hero
+   does, so the blueprint reads continuously across the section boundary
+   rather than stopping at the fold line.
+
+   The Hero's rule is scoped `.hero-section .hero-grid` and does NOT reach
+   here — the class name is shared deliberately, the rule is not. Stating
+   that explicitly is the point: the next person to find `hero-grid` inside
+   the About markup should not "fix" the naming. */
+.about-section .hero-grid {
+  background-image:
+    linear-gradient(to right, rgba(42, 42, 42, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(42, 42, 42, 0.025) 1px, transparent 1px),
+    linear-gradient(to right, rgba(42, 42, 42, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(42, 42, 42, 0.04) 1px, transparent 1px);
+}
+
+/* --- Credential rows. ---
+   These were a static <ul> with nothing to interact with. They become
+   focusable rows that warm and lift on hover — the same response language
+   the Hero's stat cards use, so the page has ONE hover behaviour rather
+   than one per section (docs/design-system.md, "card hover lift").
+
+   `--ds-yellow-50` is the resting fill rather than the old
+   `--prd-success-bg`: the same soft yellow the PRD defines (#FFF6DD),
+   given a design-system name so the two palettes cannot drift. The icon
+   tile is `--ds-orange-50` because a yellow tile on a yellow row is
+   invisible; against the orange tile the yellow row reads as brand, which
+   is the PRD's own pairing ("solid orange or yellow tiles").
+
+   The lift is 1px, not the 2px a card takes. A row is not a card — it has
+   no elevation of its own — and 2px across seven stacked rows reads as
+   the list rippling rather than one row responding. */
+.credential-item {
+  background-color: var(--ds-yellow-50);
+  border-radius: var(--ds-radius-md);
+  padding: var(--ds-space-2) var(--ds-space-3);
+  transition:
+    background-color var(--ds-duration-normal) var(--ds-ease-out),
+    box-shadow var(--ds-duration-normal) var(--ds-ease-out),
+    transform var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.credential-item:hover {
+  background-color: var(--ds-orange-50);
+  box-shadow: var(--ds-shadow-sm);
+  transform: translateY(-1px);
+}
+
+/* Same ring as everything else. Two focus styles on one page is one too
+   many, and `.cta-primary`/`.cta-secondary` both resolve to
+   `--ds-ring-orange`; a charcoal outline here would be a third. */
+.credential-item:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange);
+}
+
+/* The icon tile carries its own radius, per docs/design-system.md. It is
+   the thing a ring has a shape to hug, and tinting it on hover is what
+   makes the row read as one control rather than a tile inside a box. */
+.credential-icon {
+  background-color: var(--ds-orange-50);
+  color: var(--ds-orange-500);
+  border-radius: var(--ds-radius-full);
+  transition:
+    background-color var(--ds-duration-normal) var(--ds-ease-out),
+    color var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.credential-item:hover .credential-icon {
+  background-color: var(--ds-orange-500);
+  color: var(--ds-neutral-0);
+}
+
+/* --- The portrait frame. ---
+   Deliberately NOT `.hero-frame`. That class exists to hold the Hero's
+   plate with a `scale(1.01)` hover and a bottom grounding gradient;
+   reusing it here would couple two frames that need to be free to diverge
+   (different ratio, different hover, and the grounding gradient is not
+   wanted over a face). Sharing a *pattern* is not sharing a class. */
+.trainer-frame {
+  position: relative;
+  z-index: 0;
+  overflow: hidden;
+  background-color: var(--ds-neutral-50);
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: var(--ds-radius-xl);
+  box-shadow: var(--ds-shadow-warm);
+  transition:
+    box-shadow var(--ds-duration-slow) var(--ds-ease-out),
+    transform var(--ds-duration-slow) var(--ds-ease-out);
+}
+
+/* Warm shadow → warm shadow, one rung up. The frame is a brand-adjacent
+   surface (it sits inside the orange halo), so per docs/design-system.md
+   it stays in the warm family rather than stepping to a grey
+   `--ds-shadow-lg`. The ring is added on top because by the time the
+   halo is at full opacity a warm shadow alone is no longer legible
+   against it. */
+.trainer-frame:hover {
+  box-shadow: var(--ds-shadow-warm), var(--ds-ring-orange);
+  transform: scale(1.01);
+}
+
+/* The halo, promoted from an inline `background` so it can respond. At
+   rest a 70% warm bloom; on hover it opens to full and widens slightly,
+   so the frame appears to warm up rather than merely grow.
+
+   `blur-2xl` is gone. It was there to soften a hard-edged inline gradient
+   — but a radial gradient is already soft, and a 40px blur over an area
+   that is wider than the frame on every side is one of the most expensive
+   things a browser can be asked to paint on every scroll frame. Dropping
+   it is a straight win, and the visual difference is negligible because
+   the gradient's own falloff was doing the work.
+
+   `z-index: -1` places it behind `.trainer-frame`, which sets
+   `z-index: 0` to give the stack something to sit against. */
+.trainer-halo {
+  position: absolute;
+  inset: calc(-1 * var(--ds-space-4));
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.7;
+  background: radial-gradient(
+    60% 60% at 50% 40%,
+    rgba(255, 201, 60, 0.35) 0%,
+    rgba(232, 99, 28, 0.18) 45%,
+    transparent 75%
+  );
+  transition:
+    opacity var(--ds-duration-slow) var(--ds-ease-out),
+    transform var(--ds-duration-slow) var(--ds-ease-out);
+}
+
+/* The halo sits BEHIND the frame, so hovering the frame has to be what
+   drives it — a `:hover` on the halo itself would never fire on the
+   visible pixels. Anchored to the <figure> that wraps both, which is
+   already exactly the element the reader perceives as the target, rather
+   than reaching for `:has()`. */
+figure:hover .trainer-halo {
+  opacity: 1;
+  transform: scale(1.04);
+}
+
+/* --- Placeholder tile. ---
+   Only rendered while `TRAINER_PHOTO.src` is null, so it will be deleted
+   along with the placeholder rather than reused. Styled anyway: it is what
+   ships today, and an unstyled placeholder on a near-white wash is worse
+   than no placeholder. */
+.trainer-placeholder-icon {
+  background-color: var(--ds-yellow-50);
+  color: var(--ds-orange-500);
+  border-radius: var(--ds-radius-full);
+}
+
+/* --- Track-record tiles. ---
+   Three numerals in one row, all on yellow by default with the leading
+   figure on orange. The accent is driven by `data-tone` rather than
+   `:first-child` so the tone follows the CONTENT — the numeral is the
+   headline figure because of what it measures, not because it happens to
+   be first in the DOM. */
+.trainer-stat-numeral {
+  background-color: var(--ds-yellow-500);
+  color: var(--ds-neutral-800);
+  border-radius: var(--ds-radius-md);
+  font-variant-numeric: tabular-nums;
+  transition:
+    box-shadow var(--ds-duration-normal) var(--ds-ease-out),
+    transform var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.trainer-stat-numeral[data-tone='orange'] {
+  background-color: var(--ds-orange-500);
+  color: var(--ds-neutral-0);
+  /* A solid brand fill with a grey shadow reads matte, so the accent tile
+     takes the warm family (docs/design-system.md). */
+  box-shadow: var(--ds-shadow-warm);
+}
+
+.trainer-stat-numeral:hover {
+  box-shadow: var(--ds-shadow-warm);
+  transform: translateY(-2px);
+}
+
+.trainer-stat-numeral[data-tone='orange']:hover {
+  box-shadow: var(--ds-shadow-warm), var(--ds-ring-orange);
+}
+
+/* Rules above and below the strip, matching the Hero's `.hero-stat-strip`. */
+.trainer-stat-strip {
+  border-color: var(--ds-neutral-200);
+
+/* ==================================================================
+   §6.3 — Program Sections (Template for B, C, D, E)
+   ==================================================================
+   All five programs share this treatment. The template has a black hero,
+   then alternating white/off-white content sections. Every interactive
+   element has three states: default, hover, focus-visible.
+
+   Reduces duplication: polish once, reuse across all programs.
+   ================================================================== */
+
+/* --- Program Hero (black surface) --- */
+.program-hero {
+  background-color: var(--ds-neutral-900);
+}
+
+.program-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  font-size: var(--ds-text-caption);
+  font-weight: 700;
+  letter-spacing: var(--ds-tracking-wide);
+  text-transform: uppercase;
+  background-color: rgba(232, 99, 28, 0.16);
+  border: 1px solid var(--ds-orange-500);
+  color: var(--ds-neutral-0);
+  border-radius: var(--ds-radius-full);
+}
+
+.program-hero-title-orange {
+  color: var(--ds-orange-500);
+}
+
+.program-hero-title-white {
+  color: var(--ds-neutral-0);
+}
+
+.program-hero-subcopy {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.program-hero-trainer-strip {
+  background-color: var(--ds-neutral-900);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.program-hero-trainer-numeral {
+  color: var(--ds-orange-500);
+  font-variant-numeric: tabular-nums;
+}
+
+.program-hero-trainer-label {
+  color: var(--ds-neutral-0);
+}
+
+.program-hero-grid {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* --- Problem Cards (numbered cards) --- */
+.program-problem-card {
+  background-color: var(--ds-neutral-0);
+  border-radius: var(--ds-radius-lg);
+  box-shadow: var(--ds-shadow-sm);
+  transition:
+    box-shadow var(--ds-duration-normal) var(--ds-ease-out),
+    transform var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.program-problem-card:hover {
+  box-shadow: var(--ds-shadow-md);
+  transform: translateY(-2px);
+}
+
+.program-problem-card:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange), var(--ds-shadow-md);
+}
+
+.program-problem-tile-orange {
+  background-color: var(--ds-orange-500);
+  color: var(--ds-neutral-0);
+}
+
+.program-problem-tile-yellow {
+  background-color: var(--ds-yellow-500);
+  color: var(--ds-neutral-800);
+}
+
+.program-problem-numeral {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Benefit Cards (numbered benefits) --- */
+.program-benefit-card {
+  background-color: var(--ds-neutral-0);
+  border-radius: var(--ds-radius-lg);
+  border-top: 3px solid var(--ds-orange-500);
+  padding: var(--ds-space-6);
+  transition:
+    box-shadow var(--ds-duration-normal) var(--ds-ease-out),
+    border-color var(--ds-duration-normal) var(--ds-ease-out),
+    transform var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.program-benefit-card:hover {
+  box-shadow: var(--ds-shadow-md);
+  border-color: var(--ds-orange-600);
+  transform: translateY(-2px);
+}
+
+.program-benefit-card:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange), var(--ds-shadow-md);
+}
+
+.program-benefit-number {
+  color: var(--ds-orange-500);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Before/After Table --- */
+.program-beforeafter-container {
+  overflow: hidden;
+  border-radius: var(--ds-radius-lg);
+}
+
+.program-beforeafter-header {
+  background-color: var(--ds-orange-500);
+  color: var(--ds-neutral-0);
+}
+
+.program-beforeafter-row-even {
+  background-color: var(--ds-neutral-100);
+}
+
+.program-beforeafter-row-odd {
+  background-color: var(--ds-yellow-100);
+}
+
+.program-beforeafter-row:hover {
+  background-color: var(--ds-neutral-200);
+}
+
+/* --- Philosophy Block (three lines) --- */
+.program-philosophy {
+  text-align: center;
+  max-width: 60ch;
+  margin-inline: auto;
+}
+
+.program-philosophy-line {
+  letter-spacing: var(--ds-tracking-tight);
+  line-height: var(--ds-leading-snug);
+}
+
+.program-philosophy-line-primary {
+  color: var(--ds-neutral-900);
+}
+
+.program-philosophy-line-accent {
+  color: var(--ds-orange-500);
+}
+
+.program-philosophy-line-secondary {
+  color: var(--ds-neutral-500);
+}
+
+/* --- Foundations Table (four connected learning foundations) --- */
+.program-foundations-table {
+  overflow: hidden;
+  border-radius: var(--ds-radius-lg);
+}
+
+.program-foundations-header {
+  background-color: var(--ds-neutral-900);
+  color: var(--ds-neutral-0);
+}
+
+.program-foundations-row {
+  transition: background-color var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.program-foundations-row-even {
+  background-color: var(--ds-neutral-50);
+}
+
+.program-foundations-row-odd {
+  background-color: var(--ds-neutral-0);
+}
+
+.program-foundations-row:hover {
+  background-color: var(--ds-orange-50);
+}
+
+.program-foundations-number {
+  color: var(--ds-orange-500);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Days Breakdown (Day 1 / Day 2) --- */
+.program-days-card {
+  border-radius: var(--ds-radius-lg);
+}
+
+.program-days-card-day1 {
+  background-color: var(--ds-neutral-100);
+}
+
+.program-days-card-day2 {
+  background-color: var(--ds-yellow-100);
+}
+
+/* --- Module Cards --- */
+.program-module-card {
+  background-color: var(--ds-neutral-0);
+  border-radius: var(--ds-radius-lg);
+  box-shadow: var(--ds-shadow-sm);
+  transition:
+    box-shadow var(--ds-duration-normal) var(--ds-ease-out),
+    transform var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.program-module-card:hover {
+  box-shadow: var(--ds-shadow-md);
+  transform: translateY(-2px);
+}
+
+.program-module-card:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange), var(--ds-shadow-md);
+}
+
+.program-module-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--ds-radius-md);
+  background-color: var(--ds-orange-500);
+  color: var(--ds-neutral-0);
+  transition:
+    background-color var(--ds-duration-normal) var(--ds-ease-out),
+    color var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.program-module-card:hover .program-module-icon {
+  background-color: var(--ds-orange-600);
+  color: var(--ds-neutral-0);
+}
+
+/* --- Take Back Benefits --- */
+.program-takeback-card {
+  background-color: var(--ds-neutral-0);
+  border-radius: var(--ds-radius-lg);
+  transition: box-shadow var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.program-takeback-card:hover {
+  box-shadow: var(--ds-shadow-md);
+}
+
+.program-takeback-card:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange);
+}
+
+/* --- Tag Chips (audience, learning format) --- */
+.program-tag-chip {
+  display: inline-flex;
+  padding: 6px 14px;
+  font-size: var(--ds-text-body-sm);
+  background-color: var(--ds-neutral-100);
+  color: var(--ds-neutral-800);
+  border-radius: var(--ds-radius-full);
+  margin-right: var(--ds-space-2);
+  transition:
+    background-color var(--ds-duration-normal) var(--ds-ease-out),
+    color var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.program-tag-chip:hover {
+  background-color: var(--ds-orange-50);
+  color: var(--ds-orange-500);
+}
+
+.program-tag-chip:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange);
+}
+
+/* --- Defect Category Chips (colorful borders) --- */
+.defects-group {
+  margin-bottom: var(--ds-space-6);
+}
+
+.defects-category-label {
+  margin-bottom: var(--ds-space-3);
+}
+
+.defects-chip-vis {
+  border: 1px solid var(--ds-orange-500);
+  color: var(--ds-orange-500);
+}
+
+.defects-chip-dim {
+  border: 1px solid var(--ds-yellow-500);
+  color: var(--ds-yellow-500);
+}
+
+.defects-chip-mat {
+  border: 1px solid var(--ds-neutral-500);
+  color: var(--ds-neutral-500);
+}
+
+/* --- CTA Footer --- */
+.program-cta-footer {
+  background-color: var(--ds-orange-500);
+  border-radius: var(--ds-radius-lg);
+  padding: var(--ds-space-10) var(--ds-space-12);
+}
+
+.program-cta-footer-heading {
+  color: var(--ds-neutral-0);
+}
+
+.program-cta-footer-body {
+  color: var(--ds-neutral-0);
+}
+
+.program-cta-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 24px;
+  font-size: var(--ds-text-body);
+  font-weight: 600;
+  background-color: var(--ds-neutral-0);
+  color: var(--ds-orange-500);
+  border-radius: var(--ds-radius-full);
+  transition:
+    background-color var(--ds-duration-normal) var(--ds-ease-out),
+    transform var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.program-cta-button:hover {
+  background-color: var(--ds-orange-50);
+  transform: translateY(-2px);
+}
+
+.program-cta-button:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange);
+}
+
+/* --- Reduced motion for all program animations --- */
+@media (prefers-reduced-motion: reduce) {
+  .program-problem-card,
+  .program-benefit-card,
+  .program-module-card,
+  .program-takeback-card,
+  .program-cta-button {
+    transition: none;
+  }
+
+  .program-problem-card:hover,
+  .program-benefit-card:hover,
+  .program-module-card:hover,
+  .program-takeback-card:hover,
+  .program-cta-button:hover {
+    transform: none;
+  }
+
+  .program-foundations-row,
+  .program-beforeafter-row:hover {
+    transition: none;
+  }
+}
+
+}
+
+/* ==================================================================
+   Typography — PRD Section 13.1
+   ==================================================================
+   Two font roles, both named in the token table:
+     Heading — "Bold, modern sans-serif (e.g. Poppins/Sora/Inter Bold)"
+     Body    — "Inter/IBM Plex Sans or similar — clean, highly readable at
+                small sizes"
+   Poppins is registered for headings, Inter for body. Both are self-hosted
+   by next/font (see app/layout.tsx).
+   ================================================================== */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  /* PRD: "clean, rounded, high-impact". */
+  letter-spacing: -0.02em;
+}
+
+/* Hero — blueprint grid
+   ==================================================================
+   Two stacked gradient pairs rather than an SVG or an image: zero requests, no
+   decode cost, and it scales to any viewport without a raster artefact. The
+   32px minor grid is paired with a 160px major grid so the surface reads as
+   drafting paper rather than graph paper.
+
+   Both line colours derive from the charcoal token (see :root), not a separate
+   grey, so the grid stays in the same warm family as the text.
+   ================================================================== */
+
+.hero-grid {
+  background-image:
+    linear-gradient(to right, var(--prd-grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--prd-grid-line) 1px, transparent 1px),
+    linear-gradient(to right, var(--prd-grid-line-major) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--prd-grid-line-major) 1px, transparent 1px);
+  /* Minor grid 32px, major grid 160px — both multiples of the 8px base. */
+  background-size:
+    32px 32px,
+    32px 32px,
+    160px 160px,
+    160px 160px;
+}
+
+/* The grid fades out toward the bottom so it does not compete with the
+   content beneath the fold. A mask is cheaper than a fourth gradient. */
+.hero-grid-mask {
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+}
+
+
+/* ==================================================================
+   Phase 3 — content reveal
+   ==================================================================
+   The page content rises from the bottom as the burn finishes.
+
+   This runs as a CSS animation rather than a Framer Motion variant because
+   the content lives outside the overlay's AnimatePresence tree: it must start
+   moving while the overlay is *still* burning, so the two phases overlap into
+   one continuous gesture instead of a visible handover.
+
+   Timeline (from mount):
+     0ms     content is parked 24px low and transparent
+     1750ms  starts rising          (holdMs 1500 + 250ms offset)
+     2400ms  settled                (650ms duration)
+   The overlay is gone by 2200ms, so the content is already mid-rise when it
+   becomes visible. Both numbers are kept in step with TIMING in
+   components/EntranceLoader.tsx.
+   ================================================================== */
+
+@keyframes content-reveal {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.content-reveal {
+  /* `backwards` holds the parking state during the 1750ms delay, so the
+     content is never visible in its start position. */
+  animation: content-reveal 650ms cubic-bezier(0.22, 1, 0.36, 1) 1750ms backwards;
+  /* Compositor-only properties: no layout work per frame. */
+  will-change: transform, opacity;
+}
+
+/* ==================================================================
+   §6.1 — Nav link underline
+   ==================================================================
+   A sibling element inside each nav link, scaled from the centre on
+   hover/focus and held at full width when the link is the active
+   scrollspy target.
+
+   `transform: scaleX()` rather than animating `width`: transforms are
+   compositor properties, so the indicator never triggers layout while the
+   nav re-renders on scroll.
+
+   Hover and keyboard focus are handled here, in CSS, so a mouse or keyboard
+   user gets the same affordance without a React state round-trip. The
+   `data-active` state is the one thing JS must supply — it depends on scroll
+   position, which CSS cannot know.
+   ================================================================== */
+
+.nav-link-underline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.125rem;
+  height: 2px;
+  background-color: var(--ds-orange-500);
+  border-radius: var(--ds-radius-full);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.nav-link:hover .nav-link-underline,
+.nav-link:focus-visible .nav-link-underline,
+.nav-link-underline[data-active='true'] {
+  transform: scaleX(1);
+}
+
+/* ==================================================================
+   §6.1 — Nav shell, links and dropdown  (Phase 4B polish)
+   ==================================================================
+   Shared surfaces for the three nav components. These live here rather
+   than as inline styles in the components for the same reason the
+   underline does: hover, focus and active are three coordinated states,
+   and splitting them across two files is how a hover state ends up
+   disagreeing with its own focus state.
+
+   Colours come exclusively from the `--ds-*` palette. The nav used to
+   read `--pdf-*` (the five program PDFs' palette) for its chrome, which
+   was a leak: the PDFs win for the *program sections*, not for the site
+   header. Same hex values, correct owner.
+   ================================================================== */
+
+/* --- Transparent → white surface with a warm contact shadow. --- */
+.nav-shell {
+  transition:
+    background-color var(--ds-duration-normal) var(--ds-ease-out),
+    box-shadow var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.nav-shell[data-scrolled='true'] {
+  background-color: var(--ds-neutral-0);
+  /* `sm` rather than `warm`: the header is a white surface, so a grey-warm
+     contact shadow reads as a sheet lifting off the page. A warm shadow
+     belongs on the brand-coloured surfaces (see `.elevated-warm`). */
+  box-shadow: var(--ds-shadow-sm);
+}
+
+/* Height is animated on the inner row, not the header itself, so the logo's
+   optical centre does not shift mid-transition. */
+.nav-row {
+  transition: height var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+/* --- Wordmark: 800 weight, tight tracking, h4 size. --- */
+.nav-logo {
+  font-size: var(--ds-text-h4);
+  font-weight: 800;
+  letter-spacing: var(--ds-tracking-tight);
+  color: var(--ds-neutral-900);
+  transition: color var(--ds-duration-fast) var(--ds-ease-out);
+}
+
+.nav-logo:hover {
+  color: var(--ds-orange-600);
+}
+
+/* --- Link colour states.
+       Written as CSS rules rather than Tailwind `hover:` pairs so the
+       resting, hover and active colours resolve from one place. The
+       active colour is a shade darker than hover so a link that is both
+       hovered and active does not look identical to one that is only
+       hovered. --- */
+.nav-link {
+  font-size: var(--ds-text-body-sm);
+  font-weight: 600;
+  color: var(--ds-neutral-800);
+  transition: color var(--ds-duration-fast) var(--ds-ease-out);
+}
+
+.nav-link:hover {
+  color: var(--ds-orange-500);
+}
+
+.nav-link[data-active='true'] {
+  color: var(--ds-orange-600);
+  font-weight: 700;
+}
+
+/* --- Dropdown panel --- */
+.nav-menu {
+  background-color: var(--ds-neutral-0);
+  border-radius: var(--ds-radius-lg);
+  box-shadow: var(--ds-shadow-lg);
+  border: 1px solid var(--ds-neutral-200);
+  overflow: hidden;
+}
+
+.nav-menu-item {
+  color: var(--ds-neutral-800);
+  transition:
+    background-color var(--ds-duration-fast) var(--ds-ease-out),
+    color var(--ds-duration-fast) var(--ds-ease-out);
+}
+
+.nav-menu-item:hover,
+.nav-menu-item:focus-visible {
+  background-color: var(--ds-orange-50);
+  color: var(--ds-orange-600);
+}
+
+.nav-menu-item[data-active='true'] {
+  color: var(--ds-orange-600);
+  font-weight: 700;
+}
+
+/* --- Hamburger / close: 24px glyph, 2px stroke, hover goes orange. --- */
+.nav-icon-button {
+  color: var(--ds-neutral-800);
+  border-radius: var(--ds-radius-md);
+  transition:
+    color var(--ds-duration-fast) var(--ds-ease-out),
+    background-color var(--ds-duration-fast) var(--ds-ease-out);
+}
+
+.nav-icon-button:hover {
+  color: var(--ds-orange-500);
+  background-color: var(--ds-orange-50);
+}
+
+/* --- Header CTA and mobile-panel CTA share one pill. --- */
+.nav-cta {
+  background-color: var(--ds-orange-500);
+  color: var(--ds-neutral-0);
+  border-radius: var(--ds-radius-full);
+  box-shadow: var(--ds-shadow-warm);
+  transition:
+    background-color var(--ds-duration-fast) var(--ds-ease-out),
+    transform var(--ds-duration-fast) var(--ds-ease-out),
+    box-shadow var(--ds-duration-fast) var(--ds-ease-out);
+}
+
+.nav-cta:hover {
+  background-color: var(--ds-orange-600);
+  transform: translateY(-2px);
+  box-shadow: var(--ds-shadow-lg);
+}
+
+.nav-cta:active {
+  background-color: var(--ds-orange-700);
+  transform: translateY(0);
+}
+
+/* --- Mobile panel --- */
+.nav-panel {
+  background-color: var(--ds-neutral-0);
+  /* Left corners only: the panel is flush to the right edge, so a radius
+     there would leave a visible sliver of the page behind it. */
+  border-top-left-radius: var(--ds-radius-xl);
+  border-bottom-left-radius: var(--ds-radius-xl);
+}
+
+.nav-backdrop {
+  background-color: rgba(26, 26, 26, 0.6);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+/* ==================================================================
+   Reduced motion
+   ==================================================================
+   Anyone who has asked their OS to reduce motion gets the content
+   immediately, with no travel and no delay. The loader itself shortens to a
+   plain crossfade (see EntranceLoader.tsx) — it is not removed, because a
+   hard cut from nothing to a page reads as a glitch.
+   ================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .content-reveal {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Below-the-fold reveals: show immediately, no lift, no delay. The
+     `transitionDelay` set inline by ScrollReveal is overridden by the global
+     `transition-duration: 0.01ms` rule below. */
+  .reveal-block[data-reveal-ready] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  /* Global safety net for anything that animates later.
+     `scroll-behavior` is included here as well as in the standalone rule
+     above, so that this single block remains a complete guard: anyone
+     copying it into a new stylesheet gets the scroll case too. */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Phase 4A — the design-system motion tokens are defined as `:root`
+     declarations, so they cannot be animated down the way a rule can.
+     Redefining them to near-zero is what makes a component written later
+     against `var(--ds-duration-slow)` respect the preference without knowing
+     it exists. Duration only: the easing curves are left intact, because
+     over 0.01ms they are unobservable, and a component that reads an easing
+     token for a non-animated purpose still gets a sane value. */
+  :root {
+    --ds-duration-fast: 0.01ms;
+    --ds-duration-normal: 0.01ms;
+    --ds-duration-slow: 0.01ms;
+    --ds-duration-slower: 0.01ms;
+  }
+
+  /* Phase 4B — the nav CTA lifts 2px on hover. The `transition-duration`
+     guard above collapses the *animation* of that lift, which is not the
+     same as removing it: without this the button would still teleport 2px
+     up the instant it is hovered, and stay there. Movement, not timing, is
+     what the preference asks us to avoid, so the transform goes too. */
+  .nav-cta:hover {
+    transform: none;
+  }
+
+  /* Phase 4B — Hero. Same reasoning as the nav CTA above: the duration
+     guard collapses the animation but leaves the end state, so an element
+     that ends up displaced would teleport and stay displaced.
+
+     The stat-card lift and the image-frame scale both resolve to a scaled
+     or shifted resting position, so both are removed outright rather than
+     shortened. The scroll cue's bob is infinite, which the
+     `animation-iteration-count: 1` guard above cannot fix on its own — it
+     would run once and stop, leaving the chevron parked 6px low. It is
+     stopped at its origin instead. */
+  .hero-stat:hover,
+  .hero-frame:hover {
+    transform: none;
+  }
+
+  .hero-scroll-cue-icon {
+    animation: none !important;
+  }
+
+  /* Phase 4B — About. The credential rows, the portrait frame, its halo
+     and the track-record tiles all move on hover; all four resolve to a
+     displaced or scaled resting position, so all four are removed rather
+     than merely shortened. The halo's `scale(1.04)` is included for the
+     same reason as the frame's — the duration guard collapses the
+     animation but leaves the end state, and a halo frozen at 104% reads
+     as a misaligned element rather than a still one.
+
+     Grouped into one rule with `.nav-cta` and the Hero pair above would be
+     tidier, but these selectors describe a different section and are
+     edited at a different time; splitting them keeps each group's
+     provenance readable in a diff. */
+  .credential-item:hover,
+  .trainer-frame:hover,
+  .trainer-stat-numeral:hover,
+  figure:hover .trainer-halo {
+    transform: none;
+  }
+
+  /* Reduced motion does not remove the hover *shadow* on any Hero surface:
+     elevation change is a static visual cue, not movement, and removing it
+     would leave these cards with no hover feedback at all. The same
+     applies to the credential rows and the trainer frame. */
+}
+
+/* ==================================================================
+   Base
+   ================================================================== */
+
+html {
+  /* Reserve the scrollbar so revealing content cannot shift the layout. */
+  scrollbar-gutter: stable;
+  /*
+   * §6.3 — Smooth in-page anchors. This is the CSS-only solution: no JS scroll
+   * handler, no `window.scrollTo`, and it composes correctly with the browser's
+   * own back/forward anchor restoration.
+   */
+  scroll-behavior: smooth;
+}
+
+/*
+ * §6.3 — Clear the sticky header.
+ *
+ * A bare `#anchor` jump aligns the target's top edge with the viewport top,
+ * which puts the heading underneath the fixed header. `scroll-margin-top` tells
+ * the browser to stop short by that distance, and it applies to anchor jumps,
+ * `scrollIntoView()` and find-in-page alike — unlike a JS offset, which only
+ * fixes the one call site that remembered to do it.
+ *
+ * The value clears the RESTING header height (72px) plus breathing room, not
+ * the shrunk height: the header is at its full height when the jump begins, and
+ * it only shrinks afterwards as the page scrolls into place. Using 60px here
+ * would leave every heading 12px under the header.
+ */
+section[id],
+[data-scroll-anchor] {
+  scroll-margin-top: 88px;
+}
+
+/*
+ * Reduced motion: no smooth scrolling. An animated scroll over a long page is
+ * exactly the kind of large-area movement this preference is asking us to
+ * avoid, and it can trigger nausea. `auto` jumps immediately.
+ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+
+body {
+  background: var(--prd-offwhite);
+  color: var(--prd-ink);
+  /* Inter for body copy (PRD Section 13.1). The fallback chain matters —
+     during the swap, or if the font fails, the page must still be legible
+     rather than falling back to a default serif. */
+  font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', sans-serif;
+  /* Stops iOS from rubber-banding the whole page during the overlay. */
+  overscroll-behavior-y: none;
+}
+
+/*
+ * Phase 4A — Focus ring.
+ *
+ * Replaces the previous 3px `#ff6b00` outline. That colour appears nowhere
+ * else in the palette — it was close to `--prd-orange` but not equal, so the
+ * ring was a third orange. This uses the real token, so a focus ring and a
+ * brand surface can never drift apart.
+ *
+ * `outline: none` before the shadow is load-bearing, not decoration: the UA
+ * default outline is painted ON TOP of a box-shadow, so leaving it set would
+ * hide the ring. Browser support is not a concern here — `:focus-visible` has
+ * been baseline since 2022, and a UA that does not understand the selector
+ * never enters this rule at all, keeping its default outline.
+ *
+ * A radius is set here because a box-shadow follows the element's own
+ * `border-radius`, and a focusable element with no radius of its own (a bare
+ * link, a checkbox) would otherwise get a hard-cornered ring.
+ *
+ * Specificity note for anyone editing this later: elements with their own
+ * focus rule keep it. `.cta-primary:focus-visible` used to set an outline
+ * here and produce a double signal; as of Phase 4B it sets `outline: none`
+ * and the same ring, so the CTA resolves to exactly one focus state.
+ */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange);
+  border-radius: var(--ds-radius-sm);
+}
+
+/* ==================================================================
+   Phase 4A — Utilities
+   ==================================================================
+   The section / container / type / elevation vocabulary. Deliberately plain
+   CSS custom properties rather than Tailwind `@apply`: a section that needs
+   to opt out or override a value can do so by setting one property, without
+   fighting a utility's specificity.
+
+   These are additive. No section consumes them yet — that is Phase 4B.
+   ================================================================== */
+
+@layer utilities {
+  /* --- Section rhythm.
+         Mobile by default, desktop from the `md` breakpoint (768px), matching
+         Tailwind's own breakpoint so `.section` and any `md:` utilities in the
+         same element agree on where the layout changes. --- */
+  .section {
+    padding-block: var(--ds-section-padding-y-mobile);
+  }
+
+  @media (min-width: 768px) {
+    .section {
+      padding-block: var(--ds-section-padding-y-desktop);
+    }
+  }
+
+  /* --- Container --- */
+  .container {
+    max-width: var(--ds-container-max);
+    padding-inline: var(--ds-container-padding-x);
+    margin-inline: auto;
+  }
+
+  @media (min-width: 1024px) {
+    .container {
+      padding-inline: var(--ds-container-padding-x-lg);
+    }
+  }
+
+  /* --- Typography.
+         Weight is baked in per step rather than left to the caller: the
+         scale is a hierarchy, and display sizes set at book weight lose the
+         contrast that makes the hierarchy readable. --- */
+  .text-hero {
+    font-size: var(--ds-text-hero);
+    line-height: var(--ds-leading-tight);
+    letter-spacing: var(--ds-tracking-tighter);
+    font-weight: 800;
+  }
+
+  .text-h1 {
+    font-size: var(--ds-text-h1);
+    line-height: var(--ds-leading-tight);
+    letter-spacing: var(--ds-tracking-tight);
+    font-weight: 800;
+  }
+
+  .text-h2 {
+    font-size: var(--ds-text-h2);
+    line-height: var(--ds-leading-snug);
+    letter-spacing: var(--ds-tracking-tight);
+    font-weight: 700;
+  }
+
+  .text-h3 {
+    font-size: var(--ds-text-h3);
+    line-height: var(--ds-leading-snug);
+    letter-spacing: var(--ds-tracking-tight);
+    font-weight: 700;
+  }
+
+  .text-h4 {
+    font-size: var(--ds-text-h4);
+    line-height: var(--ds-leading-normal);
+    letter-spacing: var(--ds-tracking-normal);
+    font-weight: 600;
+  }
+
+  .text-body-lg {
+    font-size: var(--ds-text-body-lg);
+    line-height: var(--ds-leading-relaxed);
+  }
+
+  .text-body {
+    font-size: var(--ds-text-body);
+    line-height: var(--ds-leading-normal);
+  }
+
+  /* Phase 4B — added while polishing About. The scale defined
+     `--ds-text-body-sm` and `--ds-text-caption` from the start, but no
+     utility exposed them, so components reaching for the smaller body step
+     wrote `text-sm` / `text-xs` — Tailwind's 14px and 12px, which happen to
+     match the token values today and would silently diverge the moment
+     either token moved. These close that gap; the tokens are now the only
+     source for both sizes. */
+  .text-body-sm {
+    font-size: var(--ds-text-body-sm);
+    line-height: var(--ds-leading-normal);
+  }
+
+  .text-caption {
+    font-size: var(--ds-text-caption);
+    line-height: var(--ds-leading-normal);
+  }
+
+  /* Uppercase, wide-tracked section label. Wide tracking is what keeps
+     all-caps legible — capitals have no ascenders or descenders to separate
+     them, so they need the extra space. */
+  .eyebrow {
+    font-size: var(--ds-text-eyebrow);
+    text-transform: uppercase;
+    letter-spacing: var(--ds-tracking-wider);
+    font-weight: 600;
+  }
+
+  /* --- Elevation --- */
+  .elevated-sm {
+    box-shadow: var(--ds-shadow-sm);
+  }
+
+  .elevated-md {
+    box-shadow: var(--ds-shadow-md);
+  }
+
+  .elevated-lg {
+    box-shadow: var(--ds-shadow-lg);
+  }
+
+  .elevated-warm {
+    box-shadow: var(--ds-shadow-warm);
+  }
+}
+
+
+/* --- Section wrapper background --- */
+.program-section {
+  /* Base class, tone handled by modifier */
+}
+
+.program-section-offwhite {
+  background-color: var(--prd-offwhite);
+}
+
+.program-section-white {
+  background-color: var(--pdf-white);
+}
+
+/* --- Problem card typography --- */
+.program-problem-title {
+  color: var(--ds-neutral-900);
+}
+
+.program-problem-category {
+  color: var(--ds-orange-500);
+}
+
+.program-problem-description {
+  color: var(--ds-neutral-500);
+}
+
+/* --- Before/After table --- */
+.program-beforeafter-header {
+  font-size: var(--ds-text-caption);
+  font-weight: 700;
+  letter-spacing: var(--ds-tracking-wide);
+  text-transform: uppercase;
+}
+
+.program-beforeafter-header:before {
+  background-color: var(--ds-neutral-200);
+}
+
+.program-beforeafter-after {
+  background-color: var(--ds-yellow-100);
+}
+
+.beforeafter-cell {
+  border-top: 1px solid var(--ds-border);
+}
+
+/* --- Tag chips (audience, learning format) --- */
+.program-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  font-size: var(--ds-text-body-sm);
+  background-color: var(--ds-neutral-100);
+  color: var(--ds-neutral-800);
+  border-radius: var(--ds-radius-full);
+  transition:
+    background-color var(--ds-duration-normal) var(--ds-ease-out),
+    color var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.program-tag-chip:hover {
+  background-color: var(--ds-orange-50);
+  color: var(--ds-orange-500);
+}
+
+.program-tag-chip:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange);
+}
+
+.program-chips-list {
+  margin-right: calc(-1 * var(--ds-space-2));
+}
+
+.program-chips-note {
+  color: var(--ds-neutral-500);
+}
+
+/* --- Defect category chips --- */
+.program-defects-list {
+  list-style: none;
+  padding: 0;
+  margin-top: var(--ds-space-8);
+}
+
+.program-defects-item {
+  margin-bottom: var(--ds-space-3);
+}
+
+.defect-chip-vis,
+.defect-chip-dim,
+.defect-chip-mat {
+  border-radius: var(--ds-radius-pill);
+  padding: 6px 14px;
+  text-transform: uppercase;
+  font-size: var(--ds-text-caption);
+  font-weight: 700;
+}
+
+.defect-chip-vis {
+  border: 1px solid var(--ds-orange-500);
+  color: var(--ds-orange-500);
+}
+
+.defect-chip-dim {
+  border: 1px solid var(--ds-yellow-500);
+  color: var(--ds-yellow-500);
+}
+
+.defect-chip-mat {
+  border: 1px solid var(--ds-neutral-500);
+  color: var(--ds-neutral-500);
+}
+
+/* --- CTA Footer --- */
+.program-cta-footer {
+  background-color: var(--ds-orange-500);
+  border-radius: var(--ds-radius-lg);
+  padding: var(--ds-space-10) var(--ds-space-12);
+}
+
+.program-cta-heading {
+  font-size: var(--ds-text-h3);
+  color: var(--ds-neutral-0);
+}
+
+.program-cta-body {
+  font-size: var(--ds-text-body-lg);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.program-cta-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-4);
+}
+
+@media (min-width: 640px) {
+  .program-cta-buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+.program-request-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 14px 28px;
+  font-size: var(--ds-text-body);
+  font-weight: 700;
+  background-color: var(--ds-neutral-0);
+  color: var(--ds-orange-500);
+  border-radius: var(--ds-radius-full);
+  transition:
+    background-color var(--ds-duration-normal) var(--ds-ease-out),
+    transform var(--ds-duration-normal) var(--ds-ease-out),
+    box-shadow var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.program-request-button:hover {
+  background-color: var(--ds-orange-50);
+  transform: translateY(-2px);
+  box-shadow: var(--ds-shadow-md);
+}
+
+.program-request-button:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange);
+}
+
+.program-contact-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 14px 28px;
+  font-size: var(--ds-text-body);
+  font-weight: 700;
+  background-color: var(--ds-orange-500);
+  color: var(--ds-neutral-0);
+  border-radius: var(--ds-radius-pill);
+  transition:
+    background-color var(--ds-duration-normal) var(--ds-ease-out),
+    transform var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.program-contact-button:hover {
+  background-color: var(--ds-orange-600);
+  transform: translateY(-2px);
+}
+
+.program-contact-button:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange);
+}
+
+.program-contact-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 14px 28px;
+  font-size: var(--ds-text-body);
+  font-weight: 700;
+  border: 1px solid var(--ds-orange-500);
+  color: var(--ds-neutral-0);
+  border-radius: var(--ds-radius-pill);
+  transition: background-color var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.program-contact-link:hover {
+  background-color: var(--ds-orange-50);
+}
+
+.program-contact-link:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange);
+}
+
+.program-cta-signoff {
+  margin-top: var(--ds-space-8);
+  font-size: var(--ds-text-body-sm);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.program-linkedin-link {
+  text-decoration: underline;
+}
+
+/* --- Reduced motion for CTAs --- */
+@media (prefers-reduced-motion: reduce) {
+  .program-request-button,
+  .program-contact-button,
+  .program-contact-link {
+    transition: none;
+  }
+
+  .program-request-button:hover,
+  .program-contact-button:hover,
+  .program-contact-link:hover {
+    transform: none;
+  }
+}
+
+/* ==================================================================
+   §6.3b — Badge tones & LevelBadge  (Phase 4B Polish #5)
+   ==================================================================
+   Two small label systems shared by the five programs.
+
+   ── Badge tones ─────────────────────────────────────────────────────
+   `.program-hero-badge` (defined with the hero, above) owns the pill's
+   geometry. These two classes own only its COLOUR, so a program picks a
+   tone without re-declaring the shape.
+
+   Orange stays the translucent recipe the hero documented: solid
+   `#E8631C` under white 14px text is 3.45:1 — AA-large only — and these
+   labels are not large. The tinted fill with a solid orange border keeps
+   the PDF look at ~13:1. Yellow is safe solid: charcoal on `#FFC93C` is
+   ~9:1, so Program C's premium tier gets the flat fill the brief asks
+   for without an accessibility trade.
+
+   ── LevelBadge ──────────────────────────────────────────────────────
+   Program E's four tiers. Colour carries the progression: neutral →
+   yellow → orange → deep orange, so the ramp is legible in greyscale as
+   an increase in weight, not just a hue change.
+   ================================================================== */
+
+.program-badge-orange {
+  background-color: rgba(232, 99, 28, 0.16);
+  border-color: var(--ds-orange-500);
+  color: var(--ds-neutral-0);
+}
+
+.program-badge-yellow {
+  background-color: var(--ds-yellow-500);
+  border-color: var(--ds-yellow-500);
+  color: var(--ds-neutral-900);
+}
+
+.level-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  font-size: var(--ds-text-caption);
+  font-weight: 600;
+  letter-spacing: var(--ds-tracking-wide);
+  line-height: 1.4;
+  text-transform: uppercase;
+  border-radius: var(--ds-radius-full);
+}
+
+.level-badge-foundation {
+  background-color: var(--ds-neutral-100);
+  color: var(--ds-neutral-800);
+}
+
+.level-badge-bridge {
+  background-color: var(--ds-yellow-100);
+  color: var(--ds-neutral-900);
+}
+
+.level-badge-advanced {
+  background-color: var(--ds-orange-500);
+  color: var(--ds-neutral-0);
+}
+
+.level-badge-application {
+  background-color: var(--ds-orange-600);
+  color: var(--ds-neutral-0);
+}
+
+/* ==================================================================
+   §6.4 — Why Scientific Molding  (Polish #6)
+   ==================================================================
+   The section is a flat white field (`--ds-neutral-0`) so it reads as a
+   deliberate pause between the dark Program E hero above it and the warm
+   off-white Track Record below. The blueprint grid is retained — it is the
+   page's through-line — but the section does NOT take a radial wash: that
+   belongs to the Hero/About pair, and a third wash here would make the
+   pattern read as noise rather than as the top of the page.
+   ================================================================== */
+
+.why-section {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  overflow: hidden;
+  padding-block: var(--ds-space-16);
+  background-color: var(--ds-neutral-0);
+}
+
+@media (min-width: 1024px) {
+  .why-section {
+    padding-block: var(--ds-space-24);
+  }
+}
+
+/* Scoped, exactly like `.about-section .hero-grid`. The Hero's own rule is
+   `.hero-section .hero-grid`, so an unscoped `hero-grid` declaration would
+   never reach this section and the grid would silently disappear. */
+.why-section .why-grid {
+  background-image:
+    linear-gradient(to right, var(--ds-neutral-100) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--ds-neutral-100) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.why-container {
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--ds-container-max);
+  padding-inline: var(--ds-container-padding-x);
+}
+
+@media (min-width: 1024px) {
+  .why-container {
+    padding-inline: var(--ds-container-padding-x-lg);
+  }
+}
+
+.why-hero {
+  max-width: 64ch;
+}
+
+.why-hero-title {
+  margin-top: var(--ds-space-4);
+  max-width: 60ch;
+  margin-inline: auto;
+  color: var(--ds-neutral-900);
+}
+
+.why-hero-subcopy {
+  margin-top: var(--ds-space-4);
+  color: var(--ds-neutral-500);
+}
+
+.why-beforeafter-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ds-space-6);
+  margin-top: var(--ds-space-16);
+}
+
+@media (min-width: 1024px) {
+  .why-beforeafter-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ds-space-8);
+  }
+}
+
+.why-col {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  padding: var(--ds-space-8);
+  border-radius: var(--ds-radius-lg);
+}
+
+/* Warm grey for Before, yellow tint for After — the PRD 13.1 pairing already
+   used by the Before/After table, so the two components agree. */
+.why-col-before {
+  background-color: var(--ds-neutral-100);
+}
+
+.why-col-after {
+  background-color: var(--ds-yellow-100);
+}
+
+.why-column-heading {
+  font-size: var(--ds-text-h4);
+  font-weight: 800;
+  line-height: 1.25;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--ds-neutral-900);
+}
+
+.why-subline {
+  margin-top: var(--ds-space-2);
+  font-size: var(--ds-text-body-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ds-neutral-500);
+}
+
+.why-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-8);
+  list-style: none;
+  margin: var(--ds-space-8) 0 0;
+  padding: 0;
+}
+
+.why-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-4);
+}
+
+@media (min-width: 640px) {
+  .why-item {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--ds-space-8);
+  }
+}
+
+.why-item-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.why-item-head {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+}
+
+/* The numeral tile is orange on BOTH columns, so the two lists read as one
+   component family and the column surface carries the before/after signal.
+   Charcoal on orange measures ~7.6:1; white on orange ~3.2:1. */
+.why-numeral-tile {
+  display: flex;
+  height: 48px;
+  width: 48px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--ds-orange-500);
+  color: var(--ds-neutral-0);
+  border-radius: var(--ds-radius-sm);
+  font-size: var(--ds-text-caption);
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The icon inherits the direction colour from its column rather than being
+   passed a hex from the component, so the two columns cannot drift apart. */
+.why-item-icon {
+  flex-shrink: 0;
+}
+
+.why-col-before .why-item-icon {
+  color: var(--ds-neutral-500);
+}
+
+.why-col-after .why-item-icon {
+  color: var(--ds-orange-600);
+}
+
+.why-item-title {
+  font-size: var(--ds-text-h4);
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--ds-neutral-900);
+}
+
+.why-item-description {
+  margin-top: var(--ds-space-2);
+  font-size: var(--ds-text-body-sm);
+  line-height: 1.625;
+  color: var(--ds-neutral-800);
+  text-wrap: pretty;
+}
+
+/*
+ * No hover response is declared. The two columns are static content, not
+ * controls — there is nothing to activate — so there is no transform to
+ * neutralise under reduced motion and no focus ring to draw. The rule below
+ * exists only so a future hover treatment has a single place to be switched
+ * off, and so `prefers-reduced-motion` coverage in this section is explicit
+ * rather than assumed.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .why-section,
+  .why-col,
+  .why-item {
+    transition: none;
+    animation: none;
+    transform: none;
+  }
+}
+
