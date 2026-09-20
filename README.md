@@ -476,12 +476,16 @@ licensed/owned photography, do not reuse third-party stock without rights."*
 
 ## ⚠️ PRD status
 
-The PRD **is** present: `Scientific-Molding-Landing-page-PRD.md` (367 lines) in
-this directory. It was read before the refactor, and both sections this build
-depends on were applied directly:
+The PRD is an **internal document and is not part of this repository.** It was
+read before the refactor, and both sections this build depends on were applied
+directly:
 
 - **Section 5.1** — Hero copy, stat strip, CTA labels and the `#contact` scroll target
 - **Section 13.1** — the design token table
+
+It is kept locally under `.private/` and excluded via `.gitignore`, so the
+section numbers cited throughout this README and in the component comments
+refer to a document a public reader will not have.
 
 Earlier revisions of this code carried `ASSUMPTION` and `PRD-TODO` markers
 because the PRD had not been supplied. **All of them are now resolved and

@@ -37,3 +37,6 @@ next-env.d.ts
 
 # Logs
 *.log
+
+# Private docs (PRD, internal notes)
+.private/
