@@ -3516,9 +3516,9 @@ report(
  * edit can restyle it freely as long as it stays legible.
  */
 report(
-  contrast(CONTRAST_TOKENS.n800, TOKENS.y100, 1) >= 4.5,
+  contrast(CONTRAST_TOKENS.n800, CONTRAST_TOKENS.y100, 1) >= 4.5,
   'the success card text is legible on its own tint',
-  `served ratio: ${contrast(CONTRAST_TOKENS.n800, TOKENS.y100, 1).toFixed(2)}`,
+  `served ratio: ${contrast(CONTRAST_TOKENS.n800, CONTRAST_TOKENS.y100, 1).toFixed(2)}`,
 );
 
 /*
