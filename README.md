@@ -1,3 +1,20 @@
+cd /config/workspace/entrance-anim
+
+# 1. Check status — tengok apa berubah
+git status
+
+# 2. Stage semua
+git add .
+
+# 3. Verify takde node_modules / .next masuk
+git status --short | grep -E 'node_modules|\.next' | wc -l
+# expect: 0 — kalau bukan 0, STOP, bagi tau aku
+
+# 4. Commit
+git commit -m "Polish #7 Session 1+2: compact, premium refine, contact/footer/mobile, Resend"
+
+# 5. Push
+git push origin main
 # Scientific Molding Training Landing Page
 
 Production landing page for the Scientific Molding Training Series — 7 in-house
