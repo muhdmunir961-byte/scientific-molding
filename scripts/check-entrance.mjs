@@ -75,19 +75,56 @@ const STRUCTURE = [
   ['status role', 'role="status"'],
   ['hero section', 'id="hero"'],
   ['headline id', 'id="hero-headline"'],
+  /* Polish #7 — the headline is two-tone: "Scientific Molding" in orange and
+     "Training Series" in charcoal, inside ONE <h1>. The split is derived from
+     the single PRD string in `hero-content.ts`, so this asserts the two colour
+     runs are both present rather than asserting two copy strings that could
+     drift from the headline. */
+  ['headline keyword run', 'hero-headline-keyword'],
+  ['headline remainder run', 'hero-headline-rest'],
   ['blueprint grid', 'hero-grid'],
-  ['media placeholder', 'Image placeholder'],
+  /* Polish #7 — the hero visual is now `<ImageSlot>`, so the marker the
+     placeholder used to carry ("Image placeholder") is gone. The frame is still
+     asserted by class below; the asset path is asserted separately. */
+  ['hero image asset path', '/images/hero-training.jpg'],
+  ['hero image slot frame', 'image-slot'],
   // Section 5.2
   ['about section', 'id="about"'],
   ['about heading id', 'id="about-heading"'],
   ['credential list is a <ul>', 'list-none'],
-  ['trainer photo frame', 'Photo placeholder'],
+  /* Polish #7 — the labelled placeholder frame became an `<ImageSlot>` driven by
+     `TRAINER_PHOTO.src`. */
+  ['trainer photo asset path', '/images/trainer-portrait.jpg'],
+  ['trainer session gallery', 'session-grid'],
+  ['session 1 asset path', '/images/session-1.jpg'],
+  ['session 4 asset path', '/images/session-4.jpg'],
   // Section 5.3 Program A
   ['program A section', 'id="fundamentals"'],
   ['program A heading id', 'id="fundamentals-heading"'],
-  ['program A hero is dark', 'var(--pdf-dark)'],
-  ['program hero height', 'min-height:70vh'],
-  ['before/after table', 'before-after-table'],
+  /*
+   * The dark program hero. The needle moved from `var(--pdf-dark)` to
+   * `var(--ds-neutral-900)` in Polish #7 Session 2 — same colour, correct owner.
+   * The `--pdf-*` set belongs to the five program sections because their source
+   * PDFs specified it; `--pdf-dark` was the one value in that set that no PDF
+   * actually specified, so the hero now reads the design-system token.
+   *
+   * The assertion is on the VALUE being present, and `.program-hero` is asserted
+   * by declaration further down, so a hero that stopped being dark fails there
+   * even if this substring test were satisfied some other way.
+   */
+  ['program A hero is dark', 'var(--ds-neutral-900)'],
+  /*
+   * Was `min-height:70vh`. Reduced to 50vh in Polish #7: five consecutive
+   * near-full-viewport heroes pushed the first content block below the fold on
+   * every program. Asserted at the new value rather than dropped, so an edit
+   * that lets the hero grow back is still caught.
+   */
+  ['program hero height', 'min-height:50vh'],
+  /*
+   * The one-line trainer credit each program hero now carries in place of the
+   * full `TrainerCredibility` strip it used to repeat five times.
+   */
+  ['program hero trainer credit', 'program-hero-credibility'],
   // Section 5.3 Programs B–E anchors
   ['program B anchor', 'id="materials"'],
   ['program C anchor', 'id="process-development"'],
@@ -301,10 +338,17 @@ const PROGRAM_A_COPY = [
   'Five Measurable Benefits',
   'Faster technical onboarding',
   'Sustainable engineering capability',
-  // PDF-TYPO: "Memories" preserved
-  'Memories machine settings',
-  'BEFORE',
-  'AFTER',
+  /*
+   * `Memories machine settings`, `BEFORE` and `AFTER` were asserted here until
+   * Polish #7. All three were cells in Program A's own Before/After table, which
+   * is no longer rendered: the table existed in all five programs and again in
+   * §5.4, so the same comparison appeared six times. The canonical one is in the
+   * Why section, whose copy is asserted by `WHY_COPY`.
+   *
+   * The PDF-TYPO note for "Memories machine settings" still stands in
+   * `program-a-content.ts` — the string is preserved there, it is just no longer
+   * rendered per program. If the table is ever restored, so must these.
+   */
   'Why Foundation Matters',
   'A DEFECT IS A SYMPTOM — NOT AUTOMATIC PROOF OF ITS ROOT CAUSE.',
   'Five Outcomes for New Engineers',
@@ -314,7 +358,16 @@ const PROGRAM_A_COPY = [
   // PDF-TYPO: "behavior" (US) against "behaviour" (UK) elsewhere, preserved
   'Material behavior, the four plastic conditions and machine-function awareness.',
   'Two-Day Journey',
-  'Learning Format',
+  /*
+   * "Learning Format" was the heading of Program A's tag-chip grid. In Polish
+   * #7 that grid — and its heading — collapsed into the combined one-line
+   * "For: … · Format: …" statement, so the words "Learning Format" no longer
+   * appear. The ITEMS are still asserted directly below and still render, which
+   * is what actually proves the content survived: a heading is chrome, the five
+   * format items are the copy.
+   */
+  'For:',
+  'Format:',
   'Guided discussions',
   'BUILD A STRONGER ENGINEERING FOUNDATION',
   'Ts. Mohd Hafiedzzul Bin Malek Riduan',
@@ -666,6 +719,16 @@ const FORBIDDEN = [
 let failures = 0;
 
 /**
+ * The label of the most recent failing check.
+ *
+ * Kept so the summary can NAME the expected failure rather than emitting a
+ * generic hint that sends the reader after a stale build. Only the last one is
+ * tracked: the summary's special case is for a run with exactly one failure, and
+ * a list would be dead weight for that.
+ */
+let lastFailureLabel = '';
+
+/**
  * @param {boolean} ok
  * @param {string} label
  * @param {string} [detail] Why the check matters, or what went wrong. Shown only
@@ -674,7 +737,10 @@ let failures = 0;
 function report(ok, label, detail) {
   const mark = ok ? '\u001b[32m✓\u001b[0m' : '\u001b[31m✗\u001b[0m';
   console.log(`  ${mark} ${label}${!ok && detail ? ` — ${detail}` : ''}`);
-  if (!ok) failures += 1;
+  if (!ok) {
+    failures += 1;
+    lastFailureLabel = label;
+  }
 }
 
 /**
@@ -956,9 +1022,15 @@ report(
  * Matching the whole group rather than just `.nav-cta:hover` is deliberate:
  * splitting the group back up would be a legitimate refactor, but silently
  * dropping a selector from it would not, and this catches that.
+ *
+ * Polish #7 EXTENDED the group: the primary CTA's hover lift, its active state
+ * and its arrow slide all resolve to displaced positions, so they were added to
+ * the same rule. The pattern below tolerates the extra selectors rather than
+ * pinning an exact list, so a future addition to the group does not fail here —
+ * the *presence* of the three originals is what it protects.
  */
 report(
-  /prefers-reduced-motion:reduce\)\{[^@]*?\.nav-cta:hover,\.hero-stat:hover,\.hero-frame:hover\{transform:none\}/.test(
+  /prefers-reduced-motion:reduce\)\{[^@]*?\.nav-cta:hover[\s\S]*?\.hero-stat:hover,\s*\.hero-frame:hover[^{]*\{transform:none\}/.test(
     squash(cssText),
   ),
   'reduced motion neutralises the nav CTA lift',
@@ -1215,9 +1287,28 @@ console.log('\n\u001b[1mEmail delivery\u001b[0m');
 console.log('\n\u001b[1mContent completeness\u001b[0m');
 report(
   !htmlText.includes('CONTENT REQUIRED'),
-  'no "CONTENT REQUIRED" placeholder remains',
-  'PDF copy supplied; marker must be gone',
+  'no "CONTENT REQUIRED" placeholder remains in the rendered copy',
+  'PDF copy supplied; the marker must be gone from the page itself',
 );
+
+/*
+ * ⚠️ EXCEPTION — the testimonials section is EXPECTED to fail here until real
+ * quotes are supplied.
+ *
+ * The earlier `CONTENT REQUIRED` check reads the rendered HTML, and the source
+ * module deliberately does NOT put that marker into the page: the testimonial
+ * placeholders are bracketed ("[Name]", "[Testimonial text — 2-3 sentences]"),
+ * which a visitor would read as a broken layout, not as a warning. So the
+ * rendered page is clean and the gate has to live here instead.
+ *
+ * This is reported as a FAILURE on purpose. The brief requires the section to
+ * ship with a visible flag; a warning that still exits 0 is a warning that gets
+ * ignored, and this is the one item on the page that must not reach production
+ * unreplaced. It is also the reason `npm run verify` reports a non-zero exit
+ * right now, which is the correct state of the project.
+ *
+ * See `components/testimonials/testimonials-content.ts` for what to supply.
+ */
 
 console.log('\n\u001b[1mFont\u001b[0m');
 report(/\/_next\/static\/media\/[^"]+\.woff2/.test(html), 'fonts self-hosted');
@@ -1237,8 +1328,9 @@ report(cssText.includes('--font-inter'), 'Inter variable registered (body)');
 
 /** The declarations the Hero polish is responsible for. */
 const HERO_CSS = [
-  // Section surface: warm wash top-left over a white base.
-  '.hero-section{background:radial-gradient(',
+  // Section surface: a flat white base, with the wash as its own layer.
+  '.hero-section{background-color:var(--ds-neutral-0)',
+  '.hero-wash{opacity:.5',
   'var(--ds-orange-50)',
   // Blueprint grid at the brief's 0.03, up from 0.055.
   '.hero-section .hero-grid{background-image:',
@@ -1250,7 +1342,8 @@ const HERO_CSS = [
   '.cta-secondary{background-color:var(--ds-neutral-0)',
   '.cta-secondary:hover{background-color:var(--ds-orange-50)',
   '.cta-secondary:hover .cta-secondary-icon{background-color:var(--ds-orange-500)',
-  // Image frame: radius-xl, shadow-lg, 1% hover, grounding gradient.
+  /* Image frame: the radius and elevation moved to `<ImageSlot>` in Polish #7,
+     so `.hero-frame` now carries only the hover scale. */
   '.hero-frame:hover{transform:scale(1.01)',
 ];
 
@@ -1313,12 +1406,26 @@ report(
 
 const heroFrameDecls = declarationsOf('.hero-frame');
 
+/*
+ * Polish #7 — this used to assert `border-radius` + `box-shadow` on
+ * `.hero-frame`, because the frame owned its own geometry. It does not any more:
+ * the radius and the elevation are `<ImageSlot>` props (`radius="xl"`,
+ * `elevation="lg"`), so the assertions moved to the class map in the component.
+ *
+ * Asserting the OLD rule here would fail on the correct build, which is worse
+ * than a missing check — the usual response to a red check is to "fix" working
+ * code. So this reads what the frame still owns: the compositor-only hover
+ * scale, and nothing that touches layout.
+ */
 report(
-  heroFrameDecls.get('border-radius') === 'var(--ds-radius-xl)' &&
-    heroFrameDecls.get('box-shadow') === 'var(--ds-shadow-lg)',
-  'the hero frame floats at radius-xl with shadow-lg',
-  `expected radius-xl + shadow-lg — served: ${JSON.stringify(Object.fromEntries(heroFrameDecls))}`,
+  heroFrameDecls.get('transition') ===
+    'transform var(--ds-duration-slow) var(--ds-ease-out)',
+  'the hero frame transitions only its transform',
+  `the frame should declare exactly one transition (transform) so the hover stays off the main thread — served: ${JSON.stringify(Object.fromEntries(heroFrameDecls))}`,
 );
+
+/* The radius and elevation are asserted at the CALL SITE, in the served HTML —
+   see the `heroRegion` block below, which owns that scope. */
 
 const secondaryDecls = declarationsOf('.cta-secondary');
 
@@ -1363,10 +1470,53 @@ report(
   `the most present grid line is at ${gridTopAlpha ?? '(unreadable)'}, above 0.04 it competes with the headline — served: ${gridDecls.get('background-image') ?? '(absent)'}`,
 );
 
+/*
+ * Polish #7 — the frame's `::after` grounding gradient is GONE.
+ *
+ * It existed to seat the frame on the page by darkening its bottom edge. With
+ * `<ImageSlot>` the tint moved to the TOP-left highlight instead
+ * (`135deg, rgba(232,99,28,0.08), transparent`), which is the brand colour
+ * rather than a neutral charcoal wash, and which does not darken the subject.
+ *
+ * So the assertion is inverted: the grounding gradient must be ABSENT and the
+ * orange tint must be present. A leftover `::after` would double-tint the frame.
+ */
 report(
-  squash(cssText).includes('.hero-frame:after{content:""'),
-  'the hero frame carries its grounding gradient',
-  'the ::after overlay is missing, so the frame has no bottom-edge grounding',
+  !squash(cssText).includes('.hero-frame:after{content:""'),
+  'the hero frame no longer carries a grounding gradient',
+  'the ::after overlay is superseded by the ImageSlot orange tint — leaving both double-tints the frame',
+);
+
+/*
+ * Polish #7 — the image slot's 8% orange tint.
+ *
+ * Asserted by DECLARATION, not by literal. The minifier rewrites
+ * `rgba(232, 99, 28, 0.08)` to `#e8631c14` and `transparent` to `#0000`, so a
+ * literal needle for the source spelling fails on a correct build — the same
+ * trap the hero grid and the badge tones documented.
+ *
+ * So this reads the served rule and decodes whichever form the minifier chose:
+ * the alpha must be 0.08, the hue must be the brand orange, and the gradient
+ * must run at 135°.
+ */
+const tintBody = declarationsOf('.image-slot-tint').get('background') ?? '';
+const tintAlphaMatch = tintBody.match(/#e8631c([0-9a-f]{2})/);
+const tintAlpha = tintAlphaMatch
+  ? parseInt(tintAlphaMatch[1], 16) / 255
+  : Number(tintBody.match(/rgba\(232,\s*99,\s*28,\s*([\d.]+)\)/)?.[1] ?? NaN);
+
+report(
+  tintBody.includes('linear-gradient(135deg') &&
+    Number.isFinite(tintAlpha) &&
+    Math.abs(tintAlpha - 0.08) < 0.005,
+  'the image slot carries its 8% orange tint',
+  `expected a 135° brand-tinted overlay at alpha 0.08 — served: ${tintBody || '(absent)'}`,
+);
+
+report(
+  declarationsOf('.image-slot-tint').get('pointer-events') === 'none',
+  'the image tint cannot intercept a click',
+  'the tint layer covers the whole frame, so without pointer-events:none anything over the image is unreachable',
 );
 
 /*
@@ -1389,30 +1539,60 @@ report(
 );
 
 /*
- * The scroll cue. It is a NEW animation introduced by this polish, so it must
- * be stopped under reduced motion — and stopped at its origin, not merely
- * shortened, or the chevron parks 6px low.
+ * Polish #7 — the scroll cue's infinite bob is GONE.
+ *
+ * It was a 2.4s `translateY` loop that never stopped: the one animation on the
+ * page that ran continuously, and exactly the decorative motion the brief rules
+ * out (Task 9, "REMOVE: rotating/pulsing shapes … continuous bg animation").
+ * A chevron pointing down at the fold already says "there is more below".
+ *
+ * So the assertion is INVERTED rather than deleted. Deleting it would let the
+ * bob come back silently, which is the regression this check exists to catch.
  */
-report(
-  /@keyframes hero-cue-bob/.test(squash(cssText)),
-  'the scroll cue animation is declared',
-  'the bob keyframes are missing, so the cue would sit still under every preference',
+/*
+ * Polish #7 — the scroll cue's infinite bob is GONE.
+ *
+ * It was a 2.4s `translateY` loop that never stopped: the one animation on the
+ * page that ran continuously, and exactly the decorative motion the brief rules
+ * out (Task 9, "REMOVE: rotating/pulsing shapes … continuous bg animation").
+ * A chevron pointing down at the fold already says "there is more below".
+ *
+ * The check reads EVERY `.hero-scroll-cue*` rule in the served stylesheet and
+ * fails if any of them declares an `animation` — including one inside a
+ * reduced-motion block, where an `animation: none` would look like a guard
+ * rather than the leftover it is. That is the shape the removal actually took:
+ * the default rule lost its animation but a stale `animation: none !important`
+ * survived in the media query, and a naive "no keyframes" check passed straight
+ * over it.
+ */
+const cueRules = [...squash(cssText).matchAll(/\.hero-scroll-cue[^{]*\{([^}]*)\}/g)].map(
+  ([, body]) => body,
 );
 
 report(
-  /prefers-reduced-motion:reduce\)\{[^@]*?\.hero-scroll-cue-icon\{animation:none/.test(
-    squash(cssText),
-  ),
-  'reduced motion stops the scroll cue outright',
-  'the cue still animates with reduced motion on — the duration guard alone leaves it parked mid-bob',
+  cueRules.length > 0 && cueRules.every((body) => !body.includes('animation')),
+  'no scroll-cue rule declares an animation',
+  `the cue is static by design — served cue rules: ${JSON.stringify(cueRules)}`,
 );
 
 report(
-  /prefers-reduced-motion:reduce\)\{[^@]*?\.hero-stat:hover,\.hero-frame:hover\{transform:none\}/.test(
+  /prefers-reduced-motion:reduce\)\{[^@]*?\.hero-stat:hover,\.hero-frame:hover[^{]*\{transform:none\}/.test(
     squash(cssText),
   ),
   'reduced motion removes the hero hover movement',
   'the stat card or image frame still jumps on hover with reduced motion on',
+);
+
+/* Polish #7 — the primary CTA's lift, its active state and its arrow slide all
+   resolve to a displaced resting position, so all three are removed outright
+   rather than merely shortened. Same reasoning as the stat card above: the
+   duration guard collapses the animation but leaves the end state. */
+report(
+  /prefers-reduced-motion:reduce\)\{[^@]*?\.cta-primary:hover,\.cta-primary:active,\.cta-primary:hover \.cta-primary-arrow\{transform:none\}/.test(
+    squash(cssText),
+  ),
+  'reduced motion removes the primary CTA lift and arrow slide',
+  'the primary CTA still jumps or slides its arrow with reduced motion on — the duration guard alone does not remove the movement',
 );
 
 /*
@@ -1470,6 +1650,24 @@ report(
   heroRegion.length > 3000,
   'the hero region of the served HTML is locatable',
   `could not bracket the hero markup (span was ${heroRegion.length} chars), so the inline-style check below is vacuous`,
+);
+
+/*
+ * Polish #7 — the frame's geometry is asserted HERE, at the call site, because
+ * `<ImageSlot>` owns it now rather than `.hero-frame`.
+ *
+ * `radius="xl"` / `elevation="lg"` resolve through the component's class map
+ * into `rounded-[var(--ds-radius-xl)]` and `shadow-[var(--ds-shadow-lg)]`, and
+ * both land on the hero frame's wrapper in the served markup. Reading them from
+ * the HTML is what proves the props were passed: a component that ignored them
+ * would still pass a stylesheet check, because the tokens exist either way.
+ */
+report(
+  /class="image-slot[^"]*rounded-\[var\(--ds-radius-xl\)\][^"]*shadow-\[var\(--ds-shadow-lg\)\]/.test(
+    heroRegion,
+  ),
+  'the hero frame floats at radius-xl with shadow-lg',
+  'the ImageSlot wrapper must carry both the xl radius and the lg elevation — see HERO_MEDIA in HeroMedia.tsx',
 );
 
 const HERO_FORBIDDEN_INLINE = [
@@ -1693,7 +1891,13 @@ group(
     'credential-icon',
     'trainer-frame',
     'trainer-halo',
-    'trainer-placeholder-icon',
+    /* Polish #7 — `trainer-placeholder-icon` is gone: the labelled icon
+       placeholder became `<ImageSlot>`'s brand-gradient fallback, so the
+       class no longer exists anywhere. `image-slot` and the session gallery
+       replace it in this list. */
+    'image-slot',
+    'session-grid',
+    'session-grid-item',
     'trainer-stat-numeral',
     'trainer-stat-strip',
     'data-tone',
@@ -1875,16 +2079,38 @@ report(
 
 const whySectionDecls = declarationsOf('.why-section');
 
+/*
+ * Polish #7 — the surface moved from `--ds-neutral-0` to `--ds-neutral-50`.
+ *
+ * It was flat white, one step off the `--prd-offwhite` Track Record below it, so
+ * that boundary had no edge. It now sits one step off white instead, which
+ * separates it from the programs above while keeping it far lighter than the
+ * dark Track Record beneath.
+ */
 report(
-  whySectionDecls.get('background-color') === 'var(--ds-neutral-0)',
-  'the why section sits on a flat white field',
-  `expected --ds-neutral-0 — served: ${whySectionDecls.get('background-color') ?? '(absent)'}`,
+  whySectionDecls.get('background-color') === 'var(--ds-neutral-50)',
+  'the why section sits one step off white',
+  `expected --ds-neutral-50 — served: ${whySectionDecls.get('background-color') ?? '(absent)'}`,
+);
+
+/*
+ * The rhythm is now the compacted section token rather than a bare spacing step,
+ * so this section and every other one cannot drift apart again. Polish #7
+ * compacted that token to 40px/64px; asserting the token rather than its value
+ * is what makes a future compaction propagate here.
+ */
+report(
+  whySectionDecls.get('padding-block') === 'var(--ds-section-padding-y-mobile)',
+  'the why section carries the mobile section rhythm',
+  `expected --ds-section-padding-y-mobile — served: ${whySectionDecls.get('padding-block') ?? '(absent)'}`,
 );
 
 report(
-  whySectionDecls.get('padding-block') === 'var(--ds-space-16)',
-  'the why section carries the mobile section rhythm',
-  `expected --ds-space-16 — served: ${whySectionDecls.get('padding-block') ?? '(absent)'}`,
+  /@media \(min-width:768px\)\{\.why-section\{padding-block:var\(--ds-section-padding-y-desktop\)/.test(
+    squash(cssText),
+  ),
+  'the why section carries the desktop section rhythm',
+  'the desktop padding must come from the same compacted token as every other section',
 );
 
 /*
@@ -2115,8 +2341,1283 @@ group(
 );
 
 /* ------------------------------------------------------------------ *
- * Summary
+ * Polish #7 — Compact + de-repetition
  * ------------------------------------------------------------------ */
+
+/*
+ * These assertions exist to keep the page SHORT. The five program bodies
+ * carried the same four blocks each — trainer strip, Before/After table, big
+ * CTA panel, and two chip grids — so the visitor met each of them five times
+ * and none of them was the definitive version.
+ *
+ * Every count below is therefore a CEILING, not a floor: the failure it catches
+ * is a block creeping back into a program body, not a block going missing. The
+ * one-instance checks name where the surviving copy lives, so "the count is 1"
+ * and "the copy is still on the page" are two separate assertions — a count of 0
+ * would satisfy a naive `<= 1` and hide a genuine deletion.
+ */
+
+const polish7Regions = [
+  region('id="fundamentals"', 'id="materials"'),
+  region('id="materials"', 'id="process-development"'),
+  region('id="process-development"', 'id="defect-troubleshooting"'),
+  region('id="defect-troubleshooting"', 'id="pathway"'),
+];
+
+report(
+  polish7Regions.every((r) => r.length > 3000),
+  'the four program bodies are locatable for the de-repetition checks',
+  `spans: ${polish7Regions.map((r) => r.length).join(', ')} — a short span makes the checks below vacuous`,
+);
+
+/* --- The trainer strip renders ONCE, in About. --- */
+
+report(
+  countOccurrences(htmlText, 'trainer-strip') === 0,
+  'no program body renders the trainer strip any more',
+  `the strip is identical in all five programs, so it read as wallpaper rather than as a credential — served: ${countOccurrences(htmlText, 'trainer-strip')}`,
+);
+
+/*
+ * ------------------------------------------------------------------
+ * POLISH #7 — de-repetition, hoisted to page level.
+ *
+ * The three blocks below are the ones the brief names explicitly, and each is
+ * asserted at PAGE scope rather than per program. That matters: a per-program
+ * check ("0 in A, 0 in B, …") passes if the block moved to a program the loop
+ * does not cover, and the failure this guards against is EXACTLY a block
+ * creeping back into one of the five. Page level has no such blind spot.
+ * ------------------------------------------------------------------
+ */
+
+/*
+ * The full `TrainerCredibility` strip: ONE, in About.
+ *
+ * The surviving copy is the `trainer-stat-strip` inside the About section, which
+ * is where a reader goes to evaluate the trainer. Each program hero keeps the
+ * one-line credit instead (`program-hero-credibility`, counted below), which is
+ * the same name and the same figure rendered as a sentence rather than as a
+ * block with headings and icons.
+ *
+ * `>= 1` rather than `=== 1`: the element doubles in the RSC payload like every
+ * other className (see the note above the string counts), so the assertion is
+ * that the strip is present and NOT replicated five times.
+ */
+report(
+  countOccurrences(htmlText, 'trainer-stat-strip') === 2,
+  'the full credential strip renders once, in About',
+  `1 element = 2 string occurrences — expected 2, served: ${countOccurrences(htmlText, 'trainer-stat-strip')}`,
+);
+
+report(
+  countOccurrences(htmlText, 'program-hero-credibility') === 10,
+  'the trainer credit is a one-liner in each of the five program heroes',
+  `the full strip is gone from the programs; the hero carries the summary line — 5 elements = 10 occurrences, served: ${countOccurrences(htmlText, 'program-hero-credibility')}`,
+);
+
+/*
+ * The ONE big CTA. `program-cta-footer` appears only in the Contact section.
+ *
+ * The brief is specific: "Remove `.program-cta-footer` from Program A-E. Keep 1
+ * big CTA in Contact section only." So this is asserted as a per-PROGRAM count of
+ * zero, which is the failure the rule exists to catch — the block creeping back
+ * into one of the five bodies.
+ *
+ * A page-level count would be wrong here, because the class legitimately appears
+ * once in Contact. `polish7Regions` covers the four programs that go through
+ * `ProgramSection`; Program E is checked separately because it composes its own
+ * body and is exactly where a regression would be easiest to miss.
+ */
+const ctaFooterInPrograms = polish7Regions.reduce(
+  (sum, r) => sum + countOccurrences(r, 'program-cta-footer'),
+  0,
+);
+
+report(
+  ctaFooterInPrograms === 0,
+  'no program body renders the big CTA block',
+  `the big CTA renders once, in §5.6 — served ${ctaFooterInPrograms} in the four ProgramSection bodies`,
+);
+
+/*
+ * Program E's body runs from its own `id="pathway"` anchor to the NEXT section
+ * boundary — `id="why"`, not `<footer>`. Using `<footer>` would swallow the
+ * whole Contact section (which legitimately contains the CTA block) and the
+ * check would fail on a correct build.
+ */
+const programERegionForCta = region('id="pathway"', 'id="why"');
+
+report(
+  countOccurrences(programERegionForCta, 'program-cta-footer') === 0,
+  'Program E does not render the big CTA block either',
+  `Program E writes its own body, so it is checked separately — served: ${countOccurrences(programERegionForCta, 'program-cta-footer')}`,
+);
+
+/*
+ * And the block must still be PRESENT, once, in Contact. Without this a
+ * `count === 0` above would be satisfied by deleting it entirely, which is the
+ * opposite of what the brief asks: the copy moves, it does not disappear.
+ */
+report(
+  countOccurrences(htmlText, 'program-cta-footer-item') >= 5,
+  'the one big CTA in §5.6 carries all five programme headlines',
+  `expected the five entries to render once — served: ${countOccurrences(htmlText, 'program-cta-footer-item')}`,
+);
+
+/*
+ * The Before/After comparison: ONE, in §5.4.
+ *
+ * The programs used to each render their own table — six variants of the same
+ * comparison, none canonical. They now render a one-line link to `#why` instead.
+ */
+report(
+  countOccurrences(htmlText, 'before-after-table') <= 2,
+  'the Before/After table renders once, in §5.4',
+  `1 element = 2 string occurrences — served: ${countOccurrences(htmlText, 'before-after-table')}`,
+);
+
+/*
+ * `See the capability shift` — the brief's replacement link text.
+ *
+ * One per program body (four via `ProgramSection`, one written out in Program
+ * E's `ClosingCta`), so five elements = ten occurrences.
+ */
+report(
+  countOccurrences(htmlText, 'See the capability shift') === 10,
+  'every program links to the canonical comparison',
+  `five links = ten occurrences — served: ${countOccurrences(htmlText, 'See the capability shift')}`,
+);
+
+/*
+ * ------------------------------------------------------------------
+ * ⚠️ WHY THESE NUMBERS ARE DOUBLE THE ELEMENT COUNT
+ * ------------------------------------------------------------------
+ * Next.js serves the RSC payload inline as `self.__next_f.push([...])`, which
+ * repeats every className string in the serialised tree. So a class applied to
+ * N elements appears 2N times in the response: N in the rendered markup, N in
+ * the payload.
+ *
+ * Verified rather than assumed: `program-hero-credibility` count 10 for 5
+ * heroes, `credential-item` 14 for 7 credentials, `See why this matters` 8 for
+ * 4 links. Every count below was taken from the served response and then
+ * halved, so the assertion holds for the number of ELEMENTS while comparing
+ * against the raw string count.
+ *
+ * The `why-*` block above hit the same doubling and asserts the raw counts
+ * directly (16 for 8 items); this block spells out the arithmetic so the next
+ * reader does not "fix" a correct number.
+ */
+
+report(
+  countOccurrences(htmlText, 'program-hero-credibility') === 10,
+  'each of the five program heroes carries the one-line trainer credit',
+  `expected 5 elements (10 string occurrences) — served: ${countOccurrences(htmlText, 'program-hero-credibility')}`,
+);
+
+report(
+  countOccurrences(htmlText, 'credential-item') === 14,
+  'the full credential list still renders once, in About',
+  `seven certificates = 7 elements = 14 occurrences — served: ${countOccurrences(htmlText, 'credential-item')}`,
+);
+
+/* --- The Before/After table is gone from the program bodies. --- */
+
+const programTableCount = polish7Regions.reduce(
+  (sum, r) => sum + countOccurrences(r, 'before-after-table'),
+  0,
+);
+
+report(
+  programTableCount === 0,
+  'no program body renders its own Before/After table',
+  `the canonical comparison is in §5.4 — served ${programTableCount} program tables`,
+);
+
+/*
+ * All five programs link to the canonical comparison — including Program E,
+ * which has no table of its own and whose closing block is written out
+ * separately rather than through `ProgramSection`. 5 links = 10 occurrences.
+ *
+ * Polish #7 renamed the link from "See why this matters" to "See the capability
+ * shift", which is what the brief specifies. The COUNT is unchanged and is the
+ * part that matters: it is the per-program link the de-repetition kept.
+ */
+report(
+  countOccurrences(htmlText, 'See the capability shift') === 10,
+  'every program links to the canonical comparison in §5.4',
+  `5 links = 10 occurrences — served: ${countOccurrences(htmlText, 'See the capability shift')}`,
+);
+
+/* --- The big CTA panel is gone; one button per program remains. --- */
+
+const programCtaPanelCount = polish7Regions.reduce(
+  (sum, r) => sum + countOccurrences(r, 'program-cta-body'),
+  0,
+);
+
+report(
+  programCtaPanelCount === 0,
+  'no program body renders the dark CTA panel',
+  `the panel's headline, body and sign-off now render once in §5.6 — served ${programCtaPanelCount} panels`,
+);
+
+report(
+  countOccurrences(htmlText, 'program-request-button') === 10,
+  'each of the five programs keeps exactly one Request a Proposal button',
+  `5 buttons = 10 occurrences — served: ${countOccurrences(htmlText, 'program-request-button')}`,
+);
+
+/*
+ * The consolidated CTA copy. Five headlines in one place, so the words the
+ * program bodies used to carry are still on the page — this is the assertion
+ * that would catch the copy being deleted rather than moved.
+ */
+report(
+  countOccurrences(htmlText, 'program-cta-footer-item') === 5,
+  'the consolidated CTA block in §5.6 carries all five programme headlines',
+  `expected 5 entries — served: ${countOccurrences(htmlText, 'program-cta-footer-item')}`,
+);
+
+for (const headline of [
+  'BUILD A STRONGER ENGINEERING FOUNDATION',
+  'REQUEST YOUR TWO-DAY IN-HOUSE TRAINING PROPOSAL',
+  'READY TO BUILD A STRONGER PROCESS-ENGINEERING TEAM?',
+  'BUILD A TEAM THAT SOLVES THE CAUSE',
+  'BUILD THE RIGHT CAPABILITY FOR YOUR MOULDING TEAM.',
+]) {
+  report(
+    htmlText.includes(headline),
+    `CTA headline preserved: ${headline}`,
+    'this program CTA headline was moved to §5.6, not deleted — a missing one means the move dropped it',
+  );
+}
+
+/* --- Who Should Attend + Learning Format collapsed to one line. --- */
+
+report(
+  countOccurrences(htmlText, 'program-audience-line') === 8,
+  'the audience/format line renders for the four programs that have that data',
+  `Program A's PDF has no "Who Should Attend" list, so 4 lines = 8 occurrences — served: ${countOccurrences(htmlText, 'program-audience-line')}`,
+);
+
+report(
+  countOccurrences(htmlText, 'program-tag-chip') === 0,
+  'the tag-chip grids no longer render as chips',
+  `the audience and format items are now one comma-joined line — served: ${countOccurrences(htmlText, 'program-tag-chip')} chips`,
+);
+
+/* --- The compact list replaced the card grid. --- */
+
+report(
+  countOccurrences(htmlText, 'program-compact-list') >= 20,
+  'the program bodies render compact lists rather than card grids',
+  `expected the numbered sets to render as compact lists — served: ${countOccurrences(htmlText, 'program-compact-list')}`,
+);
+
+report(
+  countOccurrences(htmlText, 'program-problem-card') === 0,
+  'the 64px-tile problem card grid is gone',
+  `the card grid was replaced by .program-compact-list — served: ${countOccurrences(htmlText, 'program-problem-card')}`,
+);
+
+/*
+ * The typography rule from the brief: items drop from `.text-h4` to
+ * `.text-body`. Asserted against the STYLESHEET rather than the markup, because
+ * the font-size is what the rule is about and a class name in the HTML only
+ * proves the class was not renamed.
+ */
+report(
+  declarationsOf('.program-compact-title').get('font-size') === 'var(--ds-text-body)',
+  'compact item titles use the body type step',
+  `expected --ds-text-body — served: ${declarationsOf('.program-compact-title').get('font-size') ?? '(absent)'}`,
+);
+
+report(
+  declarationsOf('.program-compact-description').get('font-size') ===
+    'var(--ds-text-body-sm)',
+  'compact item descriptions use the small body step',
+  `expected --ds-text-body-sm — served: ${declarationsOf('.program-compact-description').get('font-size') ?? '(absent)'}`,
+);
+
+report(
+  declarationsOf('.program-audience-line').get('font-style') === 'italic' &&
+    declarationsOf('.program-audience-line').get('color') === 'var(--ds-neutral-500)',
+  'the audience/format line is the italic muted treatment the brief specifies',
+  `expected italic + neutral-500 — served: ${JSON.stringify(Object.fromEntries(declarationsOf('.program-audience-line')))}`,
+);
+
+report(
+  declarationsOf('.program-compact-list').get('grid-template-columns') === '1fr',
+  'the compact list is one column on mobile',
+  `the two-column rule is behind a 768px media query — served: ${declarationsOf('.program-compact-list').get('grid-template-columns') ?? '(absent)'}`,
+);
+
+/* --- Spacing was compacted. --- */
+
+report(
+  squash(cssText).includes('--ds-section-padding-y-desktop:64px'),
+  'the desktop section rhythm is 64px',
+  'compacting the section padding is half the page-height saving',
+);
+
+report(
+  squash(cssText).includes('--ds-section-padding-y-mobile:40px'),
+  'the mobile section rhythm is 40px',
+  'compacting the section padding is half the page-height saving',
+);
+
+report(
+  squash(cssText).includes('--ds-space-16:48px') &&
+    squash(cssText).includes('--ds-space-24:80px'),
+  'the 16 and 24 spacing steps were compacted',
+  'these carry the inter-section gaps',
+);
+
+/* --- The payload budget this polish exists to hit. --- */
+
+report(
+  html.length < 400_000,
+  'the served HTML is under the 400 KB compacted budget',
+  `was ~461 KB before Polish #7 — served: ${Math.round(html.length / 1024)} KB`,
+);
+
+/* ------------------------------------------------------------------ *
+ * Polish #7 — Typography discipline
+ * ------------------------------------------------------------------ */
+
+/*
+ * TYPE WEIGHTS. The brief's scale table is 800 / 800 / 700 / 600 / 500. Before
+ * this pass it was 800 / 800 / 700 / 700 / 600 — four of five steps within 100
+ * of each other, so the hierarchy was carried by size alone.
+ *
+ * Read as DECLARATIONS off the served rules, so the check is unaffected by how
+ * the minifier orders or writes them.
+ */
+const TYPE_WEIGHTS = [
+  ['hero', '.text-hero', 800],
+  ['h1', '.text-h1', 800],
+  ['h2', '.text-h2', 700],
+  ['h3', '.text-h3', 600],
+  ['h4', '.text-h4', 500],
+];
+
+for (const [name, selector, weight] of TYPE_WEIGHTS) {
+  report(
+    declarationsOf(selector).get('font-weight') === String(weight),
+    `the ${name} step is weight ${weight}`,
+    `expected font-weight:${weight} — served: ${declarationsOf(selector).get('font-weight') ?? '(absent)'} (a flattened scale makes every level read at the same rank)`,
+  );
+}
+
+/*
+ * NO UPPERCASE ON HEADINGS. The eyebrow is the only label that may be
+ * uppercase; a heading wearing it is indistinguishable from the label that is
+ * supposed to mark it.
+ *
+ * Checked by scanning every heading rule in the served stylesheet rather than by
+ * listing class names, so a NEW heading class cannot slip past it.
+ */
+const headingRules = [...squash(cssText).matchAll(/\.(?:text-)?h[1-6][^{]*\{([^}]*)\}/g)].map(
+  ([, body]) => body,
+);
+
+report(
+  headingRules.every((body) => !body.includes('text-transform:uppercase')),
+  'no type-scale heading rule applies uppercase',
+  `the eyebrow is the only uppercase label — offending: ${JSON.stringify(headingRules.filter((b) => b.includes('text-transform:uppercase')))}`,
+);
+
+/*
+ * BODY MEASURE at 65ch, and relaxed leading on body copy. The brief's rule is
+ * "paragraph >2 lines → --ds-leading-relaxed, max-width 65ch", which is a
+ * property of the utility rather than of each paragraph.
+ */
+report(
+  declarationsOf('.text-prose').get('max-width') === '65ch',
+  'the prose utility caps its measure at 65ch',
+  `expected max-width:65ch — served: ${declarationsOf('.text-prose').get('max-width') ?? '(absent)'}`,
+);
+
+report(
+  declarationsOf('.text-body').get('line-height') === '1.65',
+  'body copy runs at 1.65 leading',
+  `expected line-height:1.65 — served: ${declarationsOf('.text-body').get('line-height') ?? '(absent)'}`,
+);
+
+/* ------------------------------------------------------------------ *
+ * Polish #7 — Layout variety, dark rhythm, testimonials, image slots
+ * ------------------------------------------------------------------ */
+
+/* --- Layout variety: four structurally distinct section grids. --- */
+
+const LAYOUT_GRIDS = [
+  ['About is asymmetric 60/40', '.about-grid', '3fr 2fr', '1024'],
+  ['Contact is asymmetric 60/40 with the form first', '.contact-grid', '3fr 2fr', '1024'],
+  ['Track Record ranks its figures 40/35/25', '.track-stats', '4fr 3.5fr 2.5fr', '768'],
+  ['Testimonials is a symmetric 3-up', '.testimonial-grid', 'repeat(3,1fr)', '768'],
+];
+
+/*
+ * Every `@media (min-width:<bp>px){…}` block in the served sheet, sliced with a
+ * brace walk so a block's own end is found even when it contains nested rules.
+ *
+ * @param {number|string} breakpoint px value of the query
+ * @returns {string[]} the block bodies, including the query's own braces
+ */
+function mediaBlocks(breakpoint) {
+  const text = squash(cssText);
+  const opener = `@media (min-width:${breakpoint}px){`;
+  const out = [];
+
+  let at = text.indexOf(opener);
+
+  while (at !== -1) {
+    const start = at + opener.length - 1;
+    let depth = 0;
+    let i = start;
+
+    for (; i < text.length; i += 1) {
+      if (text[i] === '{') depth += 1;
+      else if (text[i] === '}') {
+        depth -= 1;
+        if (depth === 0) break;
+      }
+    }
+
+    out.push(text.slice(start, i + 1));
+    at = text.indexOf(opener, i);
+  }
+
+  return out;
+}
+
+for (const [label, selector, columns, breakpoint] of LAYOUT_GRIDS) {
+  /*
+   * ⚠️ Order-independent AND block-scoped, on purpose.
+   *
+   * Two corrections went into this check, both of them failures on a CORRECT
+   * build — which is the worse kind, because the usual response to a red check is
+   * to "fix" working code:
+   *
+   *  1. The first version asserted the declared property came FIRST inside the
+   *     rule (`…{.about-grid{grid-template-columns:3fr 2fr`). The minifier
+   *     reorders declarations, so the served rule is
+   *     `.about-grid{gap:…;padding-block:…;grid-template-columns:3fr 2fr}`.
+   *
+   *  2. The second version matched `@media …{[^@]*?SELECTOR{`. `[^@]*?` is lazy
+   *     across the WHOLE stylesheet, not restricted to the media block, so it
+   *     matched the FIRST `SELECTOR{` anywhere after an `@media` rule — for
+   *     `.track-stats` that was the base rule (1fr), not the query's.
+   *
+   * So this slices the query's own block out first, then reads the rule inside it.
+   */
+  const escaped = selector.replace(/[.:[\]()]/g, '\\$&');
+  const body = mediaBlocks(breakpoint)
+    .map((block) => block.match(new RegExp(`${escaped}\\{([^}]*)\\}`))?.[1] ?? '')
+    .join(' ');
+
+  report(
+    body.includes(`grid-template-columns:${columns}`),
+    label,
+    `expected "grid-template-columns:${columns}" behind a ${breakpoint}px query — served: ${body || '(rule absent from every block at that breakpoint)'}`,
+  );
+}
+
+/*
+ * The Why section is the 50/50 one. Asserted through the same helper, for the
+ * same reason: its base rule is `1fr` and only the query carries the pair.
+ */
+report(
+  mediaBlocks(1024).some((block) =>
+    /\.why-beforeafter-grid\{[^}]*grid-template-columns:1fr 1fr/.test(block),
+  ),
+  'Why is the symmetric 50/50 comparison',
+  'the before/after columns must balance at 1fr each — this is the section the asymmetry elsewhere is measured against',
+);
+
+/* --- Dark / light rhythm. --- */
+
+report(
+  declarationsOf('.track-section').get('background-color') === 'var(--ds-neutral-900)',
+  'Track Record sits on the dark surface',
+  `expected --ds-neutral-900 — served: ${declarationsOf('.track-section').get('background-color') ?? '(absent)'}; it was off-white, which gave its boundary with Contact no edge at all`,
+);
+
+report(
+  declarationsOf('.testimonials-section').get('background-color') === 'var(--ds-neutral-0)',
+  'Testimonials sits on white, against the dark section above it',
+  `expected --ds-neutral-0 — served: ${declarationsOf('.testimonials-section').get('background-color') ?? '(absent)'}`,
+);
+
+report(
+  declarationsOf('.contact-section').get('background-color') === 'var(--ds-neutral-0)',
+  'Contact shares the white surface with Testimonials',
+  `expected --ds-neutral-0 — served: ${declarationsOf('.contact-section').get('background-color') ?? '(absent)'}; evidence and invitation are one act, not two sections`,
+);
+
+/*
+ * The dark surface's palette. Charcoal or warm grey on #1a1a1a would be
+ * unreadable, so this asserts the text colours were re-picked rather than
+ * inherited: white primary, 70% white secondary, orange for the figures.
+ */
+report(
+  declarationsOf('.track-title').get('color') === 'var(--ds-neutral-0)' &&
+    /* The minifier writes `rgba(255,255,255,0.7)` as `#ffffffb3`. Decoded rather
+       than matched as a literal, so the check survives the notation change — the
+       same correction the grid alpha and the badge tones needed. */
+    (() => {
+      const decl = declarationsOf('.track-subcopy').get('color') ?? '';
+      const hex = decl.match(/#ffffff([0-9a-f]{2})/);
+      const alpha = hex ? parseInt(hex[1], 16) / 255 : Number(decl.match(/rgba\(255,\s*255,\s*255,\s*([\d.]+)\)/)?.[1] ?? NaN);
+      return Number.isFinite(alpha) && Math.abs(alpha - 0.7) < 0.01;
+    })() &&
+    declarationsOf('.track-stat-numeral').get('color') === 'var(--ds-orange-500)',
+  'the dark section uses white, 70% white and the brand orange',
+  `served: title=${declarationsOf('.track-title').get('color') ?? '(absent)'}, subcopy=${declarationsOf('.track-subcopy').get('color') ?? '(absent)'}, figure=${declarationsOf('.track-stat-numeral').get('color') ?? '(absent)'}`,
+);
+
+
+/* --- Testimonials. --- */
+
+report(
+  countOccurrences(htmlText, 'id="testimonials"') === 1,
+  'the testimonials section renders exactly once',
+  `expected 1 — served: ${countOccurrences(htmlText, 'id="testimonials"')}`,
+);
+
+/*
+ * ⚠️ The placeholder guard, INVERTED — this FAILS while a bracket placeholder is
+ * still in the data.
+ *
+ * It reads the SOURCE, not the served HTML, because the served payload is a build
+ * artifact: a check against the output would pass on a build whose source still
+ * held the brackets. Reading the content module is the only way to assert what is
+ * actually going to be published.
+ *
+ * The docblock and comments are stripped first — the file's OWN documentation
+ * quotes the placeholders, and matching those would fail on a file whose data is
+ * clean.
+ */
+const testimonialSource = readFileSync(
+  'components/testimonials/testimonials-content.ts',
+  'utf8',
+);
+
+const testimonialData = testimonialSource
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/\/\/.*$/gm, '');
+
+report(
+  !/\[\s*(?:Name|Role|Company|Testimonial text)/.test(testimonialData),
+  'no bracketed testimonial placeholder remains in the data',
+  'CONTENT REQUIRED — replace the three entries in components/testimonials/testimonials-content.ts with real, permissioned quotes before launch',
+);
+
+/* --- Image slots. --- */
+
+/*
+ * ⚠️ The path is asserted in BOTH forms.
+ *
+ * `next/image` rewrites `src` into an optimizer URL and percent-encodes it:
+ *   /images/hero-training.jpg  →  /_next/image?url=%2Fimages%2Fhero-training.jpg
+ *
+ * So a check for the plain path finds it only in the RSC payload (which carries
+ * the literal string), not in the rendered `<img>`. Searching for both is what
+ * proves the slot is wired END TO END — a component that held the right string
+ * but rendered no image would pass a payload-only test.
+ */
+const IMAGE_ASSETS = [
+  ['hero image', '/images/hero-training.jpg'],
+  ['trainer portrait', '/images/trainer-portrait.jpg'],
+  ['session 1', '/images/session-1.jpg'],
+  ['session 2', '/images/session-2.jpg'],
+  ['session 3', '/images/session-3.jpg'],
+  ['session 4', '/images/session-4.jpg'],
+];
+
+for (const [label, path] of IMAGE_ASSETS) {
+  const encoded = path.replace(/\//g, '%2F');
+  const servedOptimised = countOccurrences(htmlText, `/_next/image?url=${encoded}`);
+
+  report(
+    countOccurrences(htmlText, path) >= 1 && servedOptimised >= 1,
+    `the ${label} slot renders through next/image at ${path}`,
+    `expected the path in the payload AND an optimised /_next/image URL — payload: ${countOccurrences(htmlText, path)}, optimised: ${servedOptimised}`,
+  );
+}
+
+report(
+  countOccurrences(htmlText, 'image-slot') >= 12,
+  'every image position renders through ImageSlot',
+  `six slots = at least twelve occurrences of the class — served: ${countOccurrences(htmlText, 'image-slot')}`,
+);
+
+/*
+ * The fallback must be a gradient and nothing else. A shimmer or a skeleton is
+ * both a continuous animation AND a claim that the page is still loading, which
+ * is the pair the brief rules out.
+ */
+report(
+  !/shimmer|skeleton|@keyframes [^{]*(?:shimmer|pulse|skeleton)/i.test(squash(cssText)),
+  'no shimmer or skeleton animation ships',
+  `served: ${(squash(cssText).match(/shimmer|skeleton/gi) ?? []).join(', ') || '(none)'}`,
+);
+
+/* --- The stat counter. --- */
+
+report(
+  countOccurrences(htmlText, 'tabular-nums') >= 4,
+  'the figures carry tabular numerals',
+  `expected the counter and the tile numerals to render tabular figures — served: ${countOccurrences(htmlText, 'tabular-nums')}`,
+);
+
+/*
+ * The counter is a `requestAnimationFrame` loop, which the CSS
+ * `transition-duration` guard cannot reach. It must read the preference itself,
+ * so this asserts the media query is present in the hook.
+ */
+report(
+  readFileSync('components/shared/useCountUp.ts', 'utf8').includes(
+    "matchMedia('(prefers-reduced-motion: reduce)')",
+  ),
+  'the stat counter skips its animation under reduced motion',
+  'a requestAnimationFrame loop is invisible to the CSS duration guard, so it must read the preference itself',
+);
+
+/* ------------------------------------------------------------------ *
+ * Polish #7 Session 2 — Contact, Footer, Mobile bar, Resend
+ * ------------------------------------------------------------------ */
+
+/*
+ * FORM FIELDS — asserted as DECLARATIONS, not class names.
+ *
+ * This is the check that the Session 2 bug needed and did not have. Four classes
+ * (`field-label`, `field-input`, `field-error`, `checkbox-row`) were referenced
+ * in twelve places across two components and defined in NO stylesheet, so the
+ * form rendered as raw browser defaults with no focus or error styling. Every
+ * markup-side check passed the whole time, because the classes were present in
+ * the HTML.
+ *
+ * A class in the markup proves nothing if nothing styles it. So each of these
+ * reads the served rule and asserts the value that makes the class do its job.
+ */
+const FORM_FIELD_DECLS = [
+  ['the text input is 48px tall', '.field-input', 'height', '48px'],
+  ['the text input uses the md radius', '.field-input', 'border-radius', 'var(--ds-radius-md)'],
+  ['the text input carries the hairline border', '.field-input', 'border', '1px solid var(--ds-neutral-200)'],
+  ['the text input is white', '.field-input', 'background-color', 'var(--ds-neutral-0)'],
+  ['the label sits above its field', '.field-label', 'margin-bottom', 'var(--ds-space-2)'],
+  ['the error message is its own weight', '.field-error', 'font-weight', '500'],
+  ['the checkbox row is a 44px target', '.checkbox-row', 'min-height', '44px'],
+];
+
+for (const [label, selector, prop, value] of FORM_FIELD_DECLS) {
+  const served = declarationsOf(selector).get(prop) ?? '(absent)';
+
+  report(
+    served === value,
+    label,
+    `expected ${prop}:${value} on ${selector} — served: ${served}. A class with no rule renders as a browser default, and no markup-side check can see that.`,
+  );
+}
+
+report(
+  declarationsOf('.field-input:focus').get('border-color') === 'var(--ds-orange-500)' &&
+    declarationsOf('.field-input:focus').get('box-shadow') === 'var(--ds-ring-orange)',
+  'the text input has a real focus state',
+  `expected an orange border plus the shared ring — served: ${JSON.stringify(Object.fromEntries(declarationsOf('.field-input:focus')))}`,
+);
+
+report(
+  declarationsOf('.field-input').get('transition')?.includes('border-color') === true,
+  'the input transitions specific properties, not all',
+  `\`transition: all\` re-runs layout for every property change — served: ${declarationsOf('.field-input').get('transition') ?? '(absent)'}`,
+);
+
+report(
+  declarationsOf('.field-input::placeholder').get('opacity') === '1',
+  'the placeholder contrast is not defeated by the browser default',
+  'Firefox applies opacity 0.54 to placeholders, which drags --ds-neutral-500 below the 4.5:1 floor',
+);
+
+/* --- The submit button and the success card. --- */
+
+report(
+  declarationsOf('.contact-submit').get('height') === '56px' &&
+    declarationsOf('.contact-submit').get('border-radius') === 'var(--ds-radius-lg)',
+  'the submit button is 56px at radius-lg',
+  `expected 56px + radius-lg — served: ${declarationsOf('.contact-submit').get('height') ?? '(absent)'} / ${declarationsOf('.contact-submit').get('border-radius') ?? '(absent)'}`,
+);
+
+/*
+ * The hover rule's selector is `.contact-submit:hover:not(:disabled)`, and
+ * `declarationsOf` matches a bare selector. So this reads the rule body directly
+ * rather than through the helper — the `:not()` chain is part of what makes the
+ * hover correct, and stripping it to fit the helper would stop testing the rule
+ * that actually ships.
+ */
+report(
+  /\.contact-submit:hover:not\(:disabled\)\{[^}]*background-color:var\(--ds-orange-600\)/.test(
+    squash(cssText),
+  ),
+  'the submit button darkens on hover',
+  'a hover that lightens or holds still leaves the button looking inert',
+);
+
+report(
+  declarationsOf('.contact-success').get('background-color') === 'var(--ds-yellow-100)' &&
+    declarationsOf('.contact-success').get('border-left') === '4px solid var(--ds-orange-500)',
+  'the success card uses the brand tint plus an orange rule',
+  `expected yellow-100 + a 4px orange left border — served: ${declarationsOf('.contact-success').get('background-color') ?? '(absent)'} / ${declarationsOf('.contact-success').get('border-left') ?? '(absent)'}`,
+);
+
+/*
+ * The green success tint and the old error red, gone.
+ *
+ * Scoped to the four hex values the components used to carry, NOT to "any red".
+ * `#c62828` is still the error colour — a semantic red is the one non-palette
+ * value a form needs, and banning the hue would ban the state. What is banned is
+ * the palette fork: a second green family that appears nowhere else on the page.
+ */
+report(
+  !/#e8f5e9|#4caf50|#1b5e20/i.test(cssText) && !/#e8f5e9|#4caf50|#1b5e20/i.test(html),
+  'the green success tint and its border are gone',
+  `green appears nowhere else in the palette, so it made the one moment the visitor most needs to trust read as a different site — served: ${(cssText.match(/#e8f5e9|#4caf50|#1b5e20/gi) ?? []).join(', ') || '(none)'}`,
+);
+
+/* --- Form structure: the fields a lead needs. --- */
+
+const FORM_FIELDS = ['name', 'company', 'jobTitle', 'email', 'phone'];
+const missingFields = FORM_FIELDS.filter(
+  (field) => !new RegExp(`name="${field}"`).test(htmlText),
+);
+
+report(
+  missingFields.length === 0,
+  'every required enquiry field renders',
+  `a lead missing one of these is not actionable — absent: ${missingFields.join(', ')}`,
+);
+
+report(
+  countOccurrences(htmlText, 'name="consent"') === 1,
+  'the consent checkbox renders exactly once',
+  `expected 1 — served: ${countOccurrences(htmlText, 'name="consent"')}`,
+);
+
+report(
+  /name="consent"[^>]*required|required[^>]*name="consent"/.test(htmlText),
+  'consent is required without JavaScript',
+  'PDPA depends on being able to show the enquirer agreed; a no-JS submit must not slip through',
+);
+
+/*
+ * The honeypot. Named `website` because that is what a naive scraper fills in.
+ * `tabindex="-1"` is asserted alongside the name, so the field is out of the tab
+ * order as well as out of sight — a real user must not reach it by keyboard.
+ */
+report(
+  countOccurrences(htmlText, 'name="website"') === 1,
+  'the honeypot field renders exactly once',
+  `expected 1 — served: ${countOccurrences(htmlText, 'name="website"')}`,
+);
+
+report(
+  countOccurrences(htmlText, 'href="/privacy"') >= 1,
+  'the consent text links to the privacy policy',
+  'consent to a policy the visitor cannot read is not informed consent',
+);
+
+/* --- Footer. --- */
+
+report(
+  declarationsOf('.footer').get('background-color') === 'var(--ds-neutral-900)',
+  'the footer sits on the dark surface',
+  `expected --ds-neutral-900 — served: ${declarationsOf('.footer').get('background-color') ?? '(absent)'}; it read --pdf-dark, which is the program PDFs' palette and not the footer's to use`,
+);
+
+report(
+  declarationsOf('.footer').get('padding-top') === 'var(--ds-space-16)' &&
+    declarationsOf('.footer').get('padding-bottom')?.includes('var(--ds-space-10)'),
+  'the footer uses the brief’s 64px / 40px padding',
+  `expected space-16 top and space-10 bottom — served: ${declarationsOf('.footer').get('padding-top') ?? '(absent)'} / ${declarationsOf('.footer').get('padding-bottom') ?? '(absent)'}`,
+);
+
+/*
+ * Footer link colours, decoded rather than matched as literals.
+ *
+ * The minifier writes `rgba(255, 255, 255, 0.7)` as `#ffffffb3` and
+ * `rgba(255, 255, 255, 0.5)` as `#ffffff80`. Two of the three corrections this
+ * file needed in Session 2 were exactly this, so the pattern is worth stating:
+ * any assertion about a colour must read the value and decode it, never compare
+ * the source spelling.
+ *
+ * @param {string} selector
+ * @returns {number} the alpha in the served `color`, or NaN when unreadable
+ */
+function servedAlpha(selector) {
+  const decl = declarationsOf(selector).get('color') ?? '';
+  const hex = decl.match(/#ffffff([0-9a-f]{2})/);
+
+  if (hex) return parseInt(hex[1], 16) / 255;
+
+  const rgba = decl.match(/rgba\(255,\s*255,\s*255,\s*([\d.]+)\)/);
+  return rgba ? Number(rgba[1]) : NaN;
+}
+
+report(
+  Math.abs(servedAlpha('.footer-link') - 0.7) < 0.01 &&
+    declarationsOf('.footer-link:hover').get('color') === 'var(--ds-orange-500)',
+  'footer links are 70% white and warm to orange on hover',
+  `served: rest alpha=${servedAlpha('.footer-link')} (expected 0.7), hover=${declarationsOf('.footer-link:hover').get('color') ?? '(absent)'}`,
+);
+
+report(
+  Math.abs(servedAlpha('.footer-legal') - 0.5) < 0.01,
+  'the legal line sits below the links in presence',
+  `expected 50% white — served alpha: ${servedAlpha('.footer-legal')}`,
+);
+
+report(
+  declarationsOf('.footer-badge').get('border') === '1px solid var(--ds-orange-500)',
+  'the HRDC badge is an orange outline pill',
+  `expected a 1px orange border — served: ${declarationsOf('.footer-badge').get('border') ?? '(absent)'}`,
+);
+
+group(
+  'Footer columns',
+  ['Contact', 'Quick Links', 'Legal', 'Privacy Policy'],
+  (needle) => htmlText.includes(needle),
+);
+
+/* --- The mobile sticky bar. --- */
+
+report(
+  declarationsOf('.mobile-sticky-bar').get('z-index') === '40',
+  'the sticky bar sits below the header and the nav panel',
+  `expected z-index:40 — served: ${declarationsOf('.mobile-sticky-bar').get('z-index') ?? '(absent)'}; above the panel would cover the mobile nav`,
+);
+
+report(
+  declarationsOf('.mobile-sticky-bar').get('background-color') === 'var(--ds-orange-500)',
+  'the sticky bar is brand orange',
+  `expected --ds-orange-500 — served: ${declarationsOf('.mobile-sticky-bar').get('background-color') ?? '(absent)'}`,
+);
+
+report(
+  declarationsOf('.mobile-sticky-bar').get('height')?.includes('64px') &&
+    declarationsOf('.mobile-sticky-bar').get('height')?.includes('env(safe-area-inset-bottom)'),
+  'the sticky bar clears the home indicator',
+  `expected height:calc(64px + env(safe-area-inset-bottom)) — served: ${declarationsOf('.mobile-sticky-bar').get('height') ?? '(absent)'}`,
+);
+
+/*
+ * The three routes, asserted as RENDERED LINKS rather than as copy.
+ *
+ * `wa.me` is the one that matters most: it is the route a Malaysian B2B visitor
+ * actually uses, and a wrong number there is a silent failure — the link works,
+ * the message goes nowhere.
+ */
+report(
+  countOccurrences(htmlText, 'tel:+60124885247') >= 2,
+  'the phone route renders in the hero and the sticky bar',
+  `expected at least 2 (hero CTA + sticky bar) — served: ${countOccurrences(htmlText, 'tel:+60124885247')}`,
+);
+
+report(
+  countOccurrences(htmlText, 'https://wa.me/60124885247') >= 1,
+  'the WhatsApp route renders',
+  `expected at least 1 — served: ${countOccurrences(htmlText, 'https://wa.me/60124885247')}`,
+);
+
+report(
+  countOccurrences(htmlText, 'mailto:hafiedzzul@gmail.com') >= 2,
+  'the email route renders in the hero and the sticky bar',
+  `expected at least 2 — served: ${countOccurrences(htmlText, 'mailto:hafiedzzul@gmail.com')}`,
+);
+
+report(
+  declarationsOf('.mobile-sticky-link:focus-visible').get('box-shadow') ===
+    'var(--ds-ring-orange)',
+  'the sticky bar links carry the shared focus ring',
+  `the ring is not expressible inline, which is why these links had no keyboard focus indicator before — served: ${declarationsOf('.mobile-sticky-link:focus-visible').get('box-shadow') ?? '(absent)'}`,
+);
+
+/*
+ * The bar must not sit on top of the page's last controls. A bottom pad equal to
+ * the bar's height on the two sections a visitor ends at is what guarantees it.
+ */
+report(
+  /@media \(max-width:1023px\)\{[^@]*?\.contact-section,\.footer\{padding-bottom:calc\(64px \+ env\(safe-area-inset-bottom\)\)/.test(
+    squash(cssText),
+  ),
+  'the sticky bar cannot obscure the contact form or the footer',
+  'without this pad the bar covers the submit button and the legal line, and a tap lands on the bar instead',
+);
+
+/* --- The contact API contract. --- */
+
+/*
+ * Read from the SOURCE, not the output.
+ *
+ * A route handler is not part of the served HTML, so there is no output-level
+ * assertion available for it. Reading the file is the honest alternative, and it
+ * is paired with the live endpoint tests below rather than replacing them.
+ */
+const routeSource = readFileSync('app/api/contact/route.ts', 'utf8');
+
+const API_CONTRACT = [
+  ['the route keeps its reply-to contract', 'replyTo: enquiry.email'],
+  ['the honeypot returns a plain success', "data: { message: 'received' }"],
+  ['a missing key is fatal in production', 'if (!mailConfigured && IS_PRODUCTION)'],
+  ['the production failure is a 500', 'status: 500'],
+  ['the rate limiter returns 429', 'status: 429'],
+  ['validation failures return 400', 'status: 400'],
+  ['the IP is masked before it is logged or emailed', 'maskIp('],
+];
+
+for (const [label, needle] of API_CONTRACT) {
+  report(
+    routeSource.includes(needle),
+    label,
+    `the API contract must not drift — missing: ${needle}`,
+  );
+}
+
+/*
+ * The secret must never reach the client. `NEXT_PUBLIC_` is the prefix Next.js
+ * inlines into the browser bundle, so a key declared with it would ship to every
+ * visitor. Nothing in the route may reference it.
+ */
+report(
+  !/NEXT_PUBLIC_RESEND/.test(routeSource) && !/NEXT_PUBLIC_RESEND/.test(html),
+  'the Resend key is server-only',
+  'a NEXT_PUBLIC_ prefix inlines the value into the client bundle, publishing the key',
+);
+
+/*
+ * And the key itself must not be logged. The test-mode log prints the payload and
+ * a preview of the rendered email; neither may contain the key.
+ */
+report(
+  !/console\.(log|info|warn|error)\([^)]*apiKey/.test(routeSource),
+  'the route never logs the API key',
+  'the test-mode log prints the payload and an email preview — the key must not be among them',
+);
+
+report(
+  readFileSync('.env.local.example', 'utf8').includes('RESEND_API_KEY=') &&
+    !/RESEND_API_KEY=re_/.test(readFileSync('.env.local.example', 'utf8')),
+  'the env template names the key without a real value',
+  'a template containing a live key is how a secret reaches a public repo',
+);
+
+/* --- Touch targets. --- */
+
+/*
+ * Every interactive control meets the 44px minimum.
+ *
+ * This caught a real regression: `.footer-link` was 32px, and the footer is a
+ * column of short links stacked directly on top of one another. A 32px row
+ * leaves a 12px miss zone between neighbours, so a tap aimed at one link
+ * activates the next — and the browser gives no signal that it did.
+ */
+const TAP_TARGETS = [
+  ['the text input', '.field-input', 'height'],
+  ['a programme checkbox row', '.checkbox-row', 'min-height'],
+  ['the submit button', '.contact-submit', 'height'],
+  ['a footer link', '.footer-link', 'min-height'],
+];
+
+for (const [label, selector, prop] of TAP_TARGETS) {
+  const served = declarationsOf(selector).get(prop) ?? '';
+  const px = Number.parseInt(served, 10);
+
+  report(
+    Number.isFinite(px) && px >= 44,
+    `${label} is at least 44px tall`,
+    `expected >=44px on ${selector} — served: ${served || '(absent)'}. A sub-44px target is a mis-tap on a phone, and stacked links make it a wrong-navigation.`,
+  );
+}
+
+report(
+  declarationsOf('.mobile-sticky-bar').get('height')?.includes('64px') === true,
+  'the sticky bar row clears the minimum in one piece',
+  `64px for three buttons side by side — served: ${declarationsOf('.mobile-sticky-bar').get('height') ?? '(absent)'}`,
+);
+
+/* --- Responsive: the base rules are single-column, the queries add columns. --- */
+
+/*
+ * Mobile-first, asserted as a PAIR per section: the base rule must be one column
+ * and the query must introduce the grid.
+ *
+ * Asserting only that the multi-column rule exists would pass on a desktop-first
+ * stylesheet, where the base rule is `3fr 2fr` and the mobile override is inside
+ * a `max-width` query — which renders correctly only if the override is not lost.
+ * It also would not catch a section that never gets a mobile rule at all.
+ */
+const RESPONSIVE_GRIDS = [
+  ['the contact form', '.contact-grid', '3fr 2fr', '1024'],
+  ['the testimonial row', '.testimonial-grid', 'repeat(3,1fr)', '768'],
+  ['the footer columns', '.footer-grid', '1fr 1fr', '640'],
+];
+
+for (const [label, selector, columns, breakpoint] of RESPONSIVE_GRIDS) {
+  const base = declarationsOf(selector).get('grid-template-columns') ?? '';
+  const wide = mediaBlocks(breakpoint)
+    .map((block) => block.match(new RegExp(`${selector.replace(/[.:[\]()]/g, '\\$&')}\\{([^}]*)\\}`))?.[1] ?? '')
+    .join(' ');
+
+  report(
+    base.includes('1fr') && !base.includes(' '),
+    `${label} is one column at base`,
+    `expected a single-column base rule — served: ${base || '(absent)'}`,
+  );
+
+  report(
+    wide.includes(`grid-template-columns:${columns}`),
+    `${label} gains its columns at ${breakpoint}px`,
+    `expected "${columns}" in the ${breakpoint}px query — served: ${wide || '(rule absent)'}`,
+  );
+}
+
+/* --- Heading outline. --- */
+
+/*
+ * The heading structure, computed from the served markup.
+ *
+ * Two distinct failures, and the existing `<h1>`-in-the-markup checks caught
+ * neither:
+ *
+ *   1. **A SKIP** — h1 → h3 with no h2 between. A screen-reader user navigating
+ *      by heading loses the level they were on.
+ *   2. **TOO MANY h1s** — the page shipped six (the site headline plus five
+ *      program heroes), so "the h1 of this page" had no single answer and the
+ *      H shortcut stopped being a shortcut. A skip check passed on six h1s,
+ *      because a level appearing too often is not a missing level. That is why
+ *      both are asserted.
+ */
+
+/* --- Contrast: every text-on-surface pair the page actually renders. --- */
+
+/**
+ * Relative luminance of a hex colour, per WCAG 2.1.
+ * @param {string} hex e.g. "#1a1a1a"
+ * @returns {number} 0 (black) to 1 (white)
+ */
+function luminance(hex) {
+  const [r, g, b] = [1, 3, 5].map((i) => {
+    const c = Number.parseInt(hex.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/**
+ * Contrast ratio between two colours, compositing a translucent foreground.
+ *
+ * The compositing matters: three of the pairs below are white at 50–70% on the
+ * dark surface, and testing the raw `#ffffff` against `#1a1a1a` would report
+ * 17.4:1 for a colour that actually renders at 5.2:1. Reading the alpha out of
+ * the token and blending it is the only way the number means anything.
+ *
+ * @param {string} fg hex foreground
+ * @param {string} bg hex background
+ * @param {number} [alpha] 0–1, defaults to opaque
+ * @returns {number} the ratio, 1–21
+ */
+function contrast(fg, bg, alpha = 1) {
+  const blend = (i) => {
+    const f = Number.parseInt(fg.slice(i, i + 2), 16);
+    const b = Number.parseInt(bg.slice(i, i + 2), 16);
+    return Math.round(f * alpha + b * (1 - alpha))
+      .toString(16)
+      .padStart(2, '0');
+  };
+
+  const front = alpha < 1 ? `#${blend(1)}${blend(3)}${blend(5)}` : fg;
+  const [hi, lo] = [luminance(front), luminance(bg)].sort((a, b) => b - a);
+
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+const CONTRAST_TOKENS = {
+  white: '#ffffff',
+  n0: '#ffffff',
+  n50: '#fdfbf7',
+  n100: '#f3f1ec',
+  n500: '#6b6b63',
+  n800: '#2a2a2a',
+  n900: '#1a1a1a',
+  o500: '#e8631c',
+  o600: '#d9541c',
+  y100: '#fff6dd',
+  y500: '#ffc93c',
+  red: '#c62828',
+  redTint: '#fdecea',
+};
+
+/*
+ * Every pair, with the minimum it must clear.
+ *
+ * `min` is 4.5 for body-size text and 3.0 for large text — the WCAG AA rule,
+ * where "large" is >=18.66px bold or >=24px regular. Each entry below carries a
+ * note saying which the element actually is, so the threshold is a decision
+ * rather than a blank.
+ */
+const CONTRAST_PAIRS = [
+  ['body copy on white', 'n800', 'n0', 1, 4.5],
+  ['muted copy on white', 'n500', 'n0', 1, 4.5],
+  ['placeholder on white', 'n500', 'n0', 1, 4.5],
+  ['error text on its tint', 'red', 'redTint', 1, 4.5],
+  ['input text on white', 'n800', 'n0', 1, 4.5],
+  ['success body on yellow-100', 'n800', 'y100', 1, 4.5],
+  /* The reset action is 14px semibold — NOT large, so it needs 4.5. This is the
+     pair that was orange at 3.13 and was corrected to charcoal at 13.3. */
+  ['success reset link on yellow-100', 'n800', 'y100', 1, 4.5],
+  ['footer link, 70% white on dark', 'white', 'n900', 0.7, 4.5],
+  ['footer legal, 50% white on dark', 'white', 'n900', 0.5, 4.5],
+  ['footer name on dark', 'white', 'n900', 1, 4.5],
+  ['track sub-copy, 70% white on dark', 'white', 'n900', 0.7, 4.5],
+  ['track figure, orange on dark', 'o500', 'n900', 1, 4.5],
+  ['footer HRDC badge on dark', 'o500', 'n900', 1, 4.5],
+  ['card body on neutral-50', 'n800', 'n50', 1, 4.5],
+  /* --- Large text: clears 3.0 rather than 4.5 --- */
+  ['program button label, orange on white', 'o500', 'n0', 1, 3.0],
+  ['program why-link, orange on white', 'o500', 'n0', 1, 3.0],
+  ['submit label, white on orange', 'n0', 'o500', 1, 3.0],
+  ['sticky bar label, white on orange', 'n0', 'o500', 1, 3.0],
+  ['hero CTA label, white on orange', 'n0', 'o500', 1, 3.0],
+  ['hero CTA hover, white on orange-600', 'n0', 'o600', 1, 3.0],
+  ['numeral tile, white on orange', 'n0', 'o500', 1, 3.0],
+  ['numeral tile, charcoal on yellow-500', 'n900', 'y500', 1, 3.0],
+  ['track figure on dark (display size)', 'o500', 'n900', 1, 3.0],
+];
+
+const contrastFailures = [];
+
+for (const [label, fgKey, bgKey, alpha, min] of CONTRAST_PAIRS) {
+  const value = contrast(CONTRAST_TOKENS[fgKey], CONTRAST_TOKENS[bgKey], alpha);
+
+  if (value < min) contrastFailures.push(`${label} = ${value.toFixed(2)} (needs ${min})`);
+}
+
+report(
+  contrastFailures.length === 0,
+  `all ${CONTRAST_PAIRS.length} text-on-surface pairs clear WCAG AA`,
+  `these render below their floor: ${contrastFailures.join('; ')}`,
+);
+
+/*
+ * And the specific correction, pinned. The reset link was orange on the yellow
+ * tint at 3.13:1 — the most tempting colour on the page for that element, and
+ * the wrong one. Asserting the pair rather than the declaration means a future
+ * edit can restyle it freely as long as it stays legible.
+ */
+report(
+  contrast(CONTRAST_TOKENS.n800, TOKENS.y100, 1) >= 4.5,
+  'the success card text is legible on its own tint',
+  `served ratio: ${contrast(CONTRAST_TOKENS.n800, TOKENS.y100, 1).toFixed(2)}`,
+);
+
+/*
+ * The heading structure, computed from the served markup.
+ *
+ * Two distinct failures, and the existing `<h1>`-in-the-markup checks caught
+ * neither:
+ *
+ *   1. **A SKIP** — h1 → h3 with no h2 between. A screen-reader user navigating
+ *      by heading loses the level they were on.
+ *   2. **TOO MANY h1s** — the page shipped six (the site headline plus five
+ *      program heroes), so "the h1 of this page" had no single answer and the
+ *      H shortcut stopped being a shortcut. A skip check passes on six h1s,
+ *      because a level appearing too often is not a missing level. That is why
+ *      both are asserted.
+ */
+const headingLevels = [...htmlText.matchAll(/<h([1-6])[\s>]/g)].map((m) => Number(m[1]));
+
+report(
+  headingLevels.length > 20,
+  'the heading outline is locatable',
+  `only ${headingLevels.length} headings found — the checks below would be vacuous`,
+);
+
+report(
+  headingLevels.filter((level) => level === 1).length === 1,
+  'the page has exactly one h1',
+  `expected 1 (the site headline), served ${headingLevels.filter((l) => l === 1).length}. Each program hero used to be an h1, so the document carried six top-level titles and the H shortcut had no single origin.`,
+);
+
+const headingSkips = headingLevels
+  .map((level, i) => (i > 0 && level - headingLevels[i - 1] > 1 ? `h${headingLevels[i - 1]}→h${level}` : null))
+  .filter(Boolean);
+
+report(
+  headingSkips.length === 0,
+  'the heading outline has no skipped levels',
+  `a screen-reader user navigating by heading loses their place at: ${headingSkips.join(', ')}`,
+);
+
+/*
+ * Every h2 needs an id, so the outline is addressable. The nav scrollspy and the
+ * footer links both target section ids; a heading without one is a section that
+ * cannot be linked to.
+ */
+report(
+  countOccurrences(htmlText, 'aria-labelledby') >= 9,
+  'every section names itself from its own heading',
+  `sections should reference their heading with aria-labelledby — served: ${countOccurrences(htmlText, 'aria-labelledby')}`,
+);
+
+/* --- Session 2 did not widen the design system. --- */
+
+/*
+ * No new custom properties outside the four allowed namespaces.
+ *
+ * This is the load-bearing constraint of the whole polish: every value must come
+ * from a token that already exists, so the page cannot grow a second palette one
+ * convenient `--foo-bar` at a time. `tw` is included because Tailwind v4 emits
+ * its own theme variables and those are not ours to police.
+ */
+const strayCustomProps = [
+  ...new Set(
+    [...readFileSync('app/globals.css', 'utf8').matchAll(/--([a-z][a-z0-9-]*)\s*:/g)].map(
+      (m) => m[1],
+    ),
+  ),
+].filter((name) => !/^(ds|prd|pdf|font|tw)-/.test(name));
+
+report(
+  strayCustomProps.length === 0,
+  'no custom property outside the ds / prd / pdf / font namespaces',
+  `these would be a second palette by another name: ${strayCustomProps.join(', ')}`,
+);
+
+/*
+ * No emoji in anything the visitor reads.
+ *
+ * Asserted on the SERVED HTML rather than on the source, because the source
+ * legitimately uses ⚠️ inside code comments — including the ones marking the
+ * testimonial gate. Those never reach a browser; an emoji in the markup does.
+ */
+report(
+  !/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/u.test(html),
+  'no emoji is served to the visitor',
+  `found in the output: ${(html.match(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]/gu) ?? []).join(' ')}`,
+);
+
+/*
+ * The brand orange, and not the one the brief forbids. `#FF6B35` is a different
+ * orange that appears nowhere in the palette; if it is ever introduced it will be
+ * indistinguishable by eye from the real one at a glance.
+ */
+report(
+  !/#ff6b35/i.test(cssText) && !/#ff6b35/i.test(html),
+  'the forbidden orange never appears',
+  'the brand orange is #E8631C; #FF6B35 is close enough to pass a visual check and would silently fork the palette',
+);
+
 
 console.log('');
 if (failures === 0) {
@@ -2125,10 +3626,31 @@ if (failures === 0) {
 }
 
 console.log(`  \u001b[31m${failures} CHECK(S) FAILED\u001b[0m\n`);
+
+/*
+ * The testimonial placeholder gate is the ONE expected failure until real quotes
+ * are supplied, so the hint names it rather than sending the reader after a stale
+ * build. Without this the message below is actively misleading: it would suggest
+ * restarting the server, and the check would keep failing for a reason that has
+ * nothing to do with the server.
+ */
+if (failures === 1 && /testimonial placeholder/.test(lastFailureLabel)) {
+  console.log('  \u001b[33mEXPECTED — CONTENT REQUIRED\u001b[0m');
+  console.log('  The only failure is the testimonial placeholder gate. This is the');
+  console.log('  correct state until real, permissioned quotes are supplied:');
+  console.log('');
+  console.log('    components/testimonials/testimonials-content.ts');
+  console.log('');
+  console.log('  Replace the three bracketed entries (name, role, company, quote,');
+  console.log('  avatar and rating) and this check passes. See the file docblock for');
+  console.log('  what each field needs.\n');
+  process.exit(1);
+}
+
 console.log('  If the copy checks fail but the build was clean, you are likely');
 console.log('  reading a stale server — an old `next start` still holding the');
 console.log('  port. Stop it and restart:\n');
-console.log('    fuser -k 3210/tcp || true');
-console.log('    npm run build && npx next start -p 3210\n');
+console.log('    fuser -k 5555/tcp || true');
+console.log('    npm run build && npx next start -p 5555\n');
 process.exit(1);
 

@@ -9,11 +9,9 @@
 
 import ProgramHero from './ProgramHero';
 import ProgramSection, { Statements } from '../shared/ProgramSection';
+import { ctaLabelFor } from './program-cta-content';
 import {
   PROGRAM_C_AUDIENCE,
-  PROGRAM_C_BEFORE_AFTER,
-  PROGRAM_C_BEFORE_AFTER_HEADING,
-  PROGRAM_C_BEFORE_AFTER_LABELS,
   PROGRAM_C_BENEFITS,
   PROGRAM_C_CTA,
   PROGRAM_C_DAYS,
@@ -51,13 +49,6 @@ export default function ProgramProcessDevelopment() {
             ...item,
           })),
         }}
-        beforeAfter={{
-          heading: PROGRAM_C_BEFORE_AFTER_HEADING,
-          caption:
-            'Before and after comparison for Scientific Moulding Process Development',
-          labels: PROGRAM_C_BEFORE_AFTER_LABELS,
-          rows: PROGRAM_C_BEFORE_AFTER,
-        }}
         outcomes={{
           heading: 'Five Outcomes',
           items: PROGRAM_C_OUTCOMES.map((item, i) => ({
@@ -75,8 +66,8 @@ export default function ProgramProcessDevelopment() {
           steps: PROGRAM_C_PERSPECTIVES.items,
         }}
         days={{ heading: PROGRAM_C_DAYS.heading, items: PROGRAM_C_DAYS.items }}
-        chips={[PROGRAM_C_AUDIENCE]}
-        cta={PROGRAM_C_CTA}
+        audience={PROGRAM_C_AUDIENCE}
+        cta={{ ...PROGRAM_C_CTA, label: ctaLabelFor(PROGRAM_C_HERO.id) }}
       >
         {/* "Take Back" has two items and the source gives each as two
             sentences, so it renders as a plain statement block rather than the

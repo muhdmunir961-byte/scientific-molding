@@ -7,9 +7,8 @@
 
 import ProgramHero from './ProgramHero';
 import ProgramSection from '../shared/ProgramSection';
+import { ctaLabelFor } from './program-cta-content';
 import {
-  PROGRAM_A_BEFORE_AFTER,
-  PROGRAM_A_BEFORE_AFTER_LABELS,
   PROGRAM_A_BENEFITS,
   PROGRAM_A_CTA,
   PROGRAM_A_DAYS,
@@ -41,13 +40,6 @@ export default function ProgramFundamentals() {
         tone="offwhite"
         problems={PROGRAM_A_PROBLEMS}
         benefits={{ heading: 'Five Measurable Benefits', items: PROGRAM_A_BENEFITS }}
-        beforeAfter={{
-          heading: 'Before & After',
-          caption:
-            'Before and after comparison for Scientific Moulding Fundamentals',
-          labels: PROGRAM_A_BEFORE_AFTER_LABELS,
-          rows: PROGRAM_A_BEFORE_AFTER,
-        }}
         statement={{
           heading: PROGRAM_A_WHY_MATTERS.heading,
           text: PROGRAM_A_WHY_MATTERS.statement,
@@ -69,8 +61,8 @@ export default function ProgramFundamentals() {
           })),
         }}
         days={{ heading: 'Two-Day Journey', items: PROGRAM_A_DAYS }}
-        chips={[PROGRAM_A_LEARNING_FORMAT]}
-        cta={PROGRAM_A_CTA}
+        format={PROGRAM_A_LEARNING_FORMAT}
+        cta={{ ...PROGRAM_A_CTA, label: ctaLabelFor(PROGRAM_A_HERO.id) }}
       />
     </section>
   );

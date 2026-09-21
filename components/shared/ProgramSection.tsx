@@ -19,12 +19,10 @@
  * breaks the outline a screen reader navigates by.
  */
 
-import type { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
 import ScrollReveal from '../about/ScrollReveal';
 import BeforeAfterTable, { type BeforeAfterRow } from './BeforeAfterTable';
-import NumberedProblemCard from './NumberedProblemCard';
-import TrainerCredibility from './TrainerCredibility';
 
 /** A numbered card: problems, benefits, capabilities, outcomes. */
 export interface NumberedItem {
@@ -100,19 +98,40 @@ export interface ProgramSectionProps {
     linkedin?: string;
     linkedinHref?: string;
     /**
-     * Programme slug for the "Request a Proposal" link.
+     * Programme slug for the "Request for [Program]" link.
      *
-     * When set, the CTA gains a primary button that jumps to the §5.6 form with
-     * this programme's checkbox already ticked (`#contact?program=<slug>` — see
-     * the `Contact` docblock for why the param follows the hash).
+     * When set, the CTA gains a small outline button that jumps to the §5.6 form
+     * with this programme's checkbox already ticked (`#contact?program=<slug>` —
+     * see the `Contact` docblock for why the param follows the hash).
      *
      * Optional, because a program with no natural enquiry path should not
-     * invent one. Sections that omit it simply show email and phone.
+     * invent one. Sections that omit it simply show the comparison link.
      */
     programSlug?: string;
+    /**
+     * The programme's own name, used to build the button label ("Request for
+     * Fundamentals"). Comes from `PROGRAM_CTA_FOOTERS`' `label`, which is the
+     * one place the five names are spelled for a button.
+     *
+     * Why a label rather than "Request a Proposal" everywhere: five identical
+     * buttons on one page read as one button. Naming the programme makes each
+     * one a distinct action, and the label is the same string the Contact
+     * section's consolidated CTA uses, so the two cannot drift.
+     */
+    label?: string;
   };
   /** Show the reusable trainer strip. */
   showTrainer?: boolean;
+  /**
+   * Who the programme is for, in the source's own words.
+   *
+   * Rendered as one comma-joined line beside `format`, not as a tag-chip grid.
+   * The chips version gave six items their own pills and a heading, which made
+   * a one-sentence statement about the audience look like a feature list.
+   */
+  audience?: { heading?: string; items: readonly string[] };
+  /** Learning format, in the source's own words. Pairs with `audience`. */
+  format?: { heading?: string; items: readonly string[] };
   children?: ReactNode;
 }
 
@@ -121,12 +140,23 @@ export interface ProgramSectionProps {
  * Primitives
  * ------------------------------------------------------------------ */
 
-/** A section heading inside a program body. */
+/**
+ * A section heading inside a program body.
+ *
+ * `--ds-space-12` (48px) above, and `--ds-space-6` (24px) below when a list
+ * follows. Polish #7 compacted this from `mt-16` / `mt-8`: across five programs
+ * with six headings each, 64px of margin above every heading was ~2,000px of
+ * scroll the visitor paid for nothing.
+ *
+ * The type step is the h3 clamp at weight 600 — sentence case, per the brief's
+ * "NO uppercase for h2/h3/h4". It was `text-2xl … sm:text-3xl font-extrabold`,
+ * two bespoke sizes approximating a step the scale already defines.
+ */
 function Heading({ id, children }: { id: string; children: ReactNode }) {
   return (
     <h2
       id={id}
-      className="mt-16 text-2xl font-extrabold leading-tight tracking-[-0.01em] text-[var(--pdf-charcoal)] sm:text-3xl"
+      className="mt-12 text-h3 font-semibold text-[var(--ds-neutral-800)]"
     >
       {children}
     </h2>
@@ -134,35 +164,54 @@ function Heading({ id, children }: { id: string; children: ReactNode }) {
 }
 
 /**
- * A grid of numbered cards.
- *
- * The numeral tile alternates orange and yellow, the Section 13.1 badge
- * treatment. `aria-hidden` on the tile because the card's own heading carries
- * the meaning — exposing it would announce the number twice.
+ * Zero-pad a position to two digits.
+ * @param position 1-based index
+ * @returns the padded numeral, e.g. "03"
  */
-function NumberedGrid({
-  items,
-  columns = 3,
-}: {
-  items: readonly NumberedItem[];
-  columns?: 2 | 3;
-}) {
-  const gridCols =
-    columns === 2
-      ? 'grid-cols-1 md:grid-cols-2'
-      : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3';
+function pad(position: number): string {
+  return String(position).padStart(2, '0');
+}
 
+/**
+ * A compact two-column list replacing the old numbered card grid.
+ *
+ * ── Why this is not a card grid any more ────────────────────────────
+ * The card version (`.program-problem-card`, 64px numeral tile, white fill,
+ * `--ds-shadow-sm`, hover lift) is correct for ONE grid per page and was
+ * originally used for five. Across five programs it produced 40–60 equal-weight
+ * boxes with identical hover behaviour, which reads as a template rather than
+ * as content — and the visual weight of each box fought the section heading for
+ * attention.
+ *
+ * Here the items are a plain list: a 24px numeral, the title, the description.
+ * No fill, no border, no shadow, no hover. The section heading and the one
+ * remaining CTA are the only elements with elevation on a program body, which
+ * is what makes them read as the ranked elements they are.
+ *
+ * ── Why `<ol>` and not `<ul>` ───────────────────────────────────────
+ * The source PDFs number these sets ("01"…"06") and the numerals are asserted
+ * verbatim by the output checker, so the order is meaningful and `<ol>` is the
+ * element that says so. The numeral is `aria-hidden` because the list position
+ * already announces it — a screen reader would otherwise say "1, 01".
+ */
+function NumberedList({ items }: { items: readonly NumberedItem[] }) {
   return (
-    <ol className={`mt-8 grid list-none gap-8 p-0 ${gridCols}`}>
+    <ol className="program-compact-list">
       {items.map((item, i) => (
-        <li key={item.title} className="flex">
-          <NumberedProblemCard
-            index={i + 1}
-            number={item.number}
-            title={item.title}
-            description={item.description}
-            category={item.category}
-          />
+        <li key={item.title} className="program-compact-item">
+          <span aria-hidden="true" className="program-compact-numeral">
+            {item.number ?? pad(i + 1)}
+          </span>
+
+          <div className="program-compact-body">
+            <h3 className="program-compact-title">
+              {item.title}
+              {item.category && (
+                <span className="program-compact-category">{item.category}</span>
+              )}
+            </h3>
+            <p className="program-compact-description">{item.description}</p>
+          </div>
         </li>
       ))}
     </ol>
@@ -230,28 +279,21 @@ export function Statements({
 }) {
   return (
     <ScrollReveal>
-      <h2 className="mt-16 text-2xl font-extrabold leading-tight tracking-[-0.01em] text-[var(--pdf-charcoal)] sm:text-3xl">
+      <h2 className="mt-12 text-h3 font-semibold text-[var(--ds-neutral-800)]">
         {heading}
       </h2>
 
-      <ul className="mt-8 list-none space-y-4 p-0">
+      {/* Compact rows, not `p-8` cards. Same reasoning as the numbered list:
+          a set of short statements does not need a box and an elevation each —
+          four bordered boxes make a paragraph of prose look like a feature
+          grid. The orange dash marks each item's start. */}
+      <ul className="program-statement-list">
         {items.map((text) => (
-          <li
-            key={text}
-            className="flex gap-4 p-8 text-[0.9375rem] leading-relaxed"
-            style={{
-              backgroundColor: 'var(--pdf-white)',
-              color: 'var(--pdf-charcoal)',
-              borderRadius: 'var(--prd-radius)',
-              border: '1px solid var(--prd-border)',
-            }}
-          >
-            <span aria-hidden="true" style={{ color: 'var(--pdf-orange)' }}>
+          <li key={text} className="program-statement">
+            <span aria-hidden="true" className="program-statement-mark">
               &mdash;
             </span>
-            <span className="min-w-0" style={{ textWrap: 'pretty' }}>
-              {text}
-            </span>
+            <span className="min-w-0">{text}</span>
           </li>
         ))}
       </ul>
@@ -281,7 +323,9 @@ export default function ProgramSection({
   categories,
   chips,
   cta,
-  showTrainer = true,
+  audience,
+  format,
+  showTrainer,
   children,
 }: ProgramSectionProps) {
   return (
@@ -294,14 +338,24 @@ export default function ProgramSection({
         className="hero-grid hero-grid-mask pointer-events-none absolute inset-0 -z-10"
       />
 
-      <div className="mx-auto w-full max-w-[1400px] px-8 py-16 sm:px-12 lg:px-16 lg:py-24">
+      <div className="container program-section-inner">
         {problems && problems.length > 0 && (
           <ScrollReveal>
             <Heading id={`${id}-problems`}>Problems We Solve</Heading>
-            <NumberedGrid items={problems} />
+            <NumberedList items={problems} />
           </ScrollReveal>
         )}
 
+        {/*
+         * The Before/After table is NOT rendered here any more.
+         *
+         * It appeared in all five programs and again in §5.4, so the visitor met
+         * six variants of the same comparison and none of them was the canonical
+         * one. The table now lives only in §5.4 (`#why`), and `beforeAfterLink`
+         * below leaves a one-line path to it. The `beforeAfter` prop is still
+         * accepted for now so a program can opt back in, but no program passes
+         * it — see the `beforeAfterHref` slot for what replaced it.
+         */}
         {beforeAfter && (
           <ScrollReveal>
             <Heading id={`${id}-before-after`}>{beforeAfter.heading}</Heading>
@@ -340,21 +394,21 @@ export default function ProgramSection({
         {benefits && (
           <ScrollReveal>
             <Heading id={`${id}-benefits`}>{benefits.heading}</Heading>
-            <NumberedGrid items={benefits.items} />
+            <NumberedList items={benefits.items} />
           </ScrollReveal>
         )}
 
         {outcomes && (
           <ScrollReveal>
             <Heading id={`${id}-outcomes`}>{outcomes.heading}</Heading>
-            <NumberedGrid items={outcomes.items} />
+            <NumberedList items={outcomes.items} />
           </ScrollReveal>
         )}
 
         {capabilities && (
           <ScrollReveal>
             <Heading id={`${id}-capabilities`}>{capabilities.heading}</Heading>
-            <NumberedGrid items={capabilities.items} />
+            <NumberedList items={capabilities.items} />
           </ScrollReveal>
         )}
 
@@ -363,13 +417,9 @@ export default function ProgramSection({
             <Heading id={`${id}-philosophy`}>{philosophy.heading}</Heading>
 
             {philosophy.lines && (
-              <ul className="mt-8 list-none space-y-2 p-0">
+              <ul className="program-philosophy-lines">
                 {philosophy.lines.map((line) => (
-                  <li
-                    key={line}
-                    className="text-xl font-extrabold uppercase leading-snug tracking-[-0.01em] sm:text-2xl"
-                    style={{ color: 'var(--pdf-orange)' }}
-                  >
+                  <li key={line} className="program-philosophy-line">
                     {line}
                   </li>
                 ))}
@@ -381,54 +431,30 @@ export default function ProgramSection({
         {framework && (
           <ScrollReveal>
             <Heading id={`${id}-framework`}>{framework.heading}</Heading>
-            <ol className="mt-8 grid list-none grid-cols-1 gap-8 p-0 md:grid-cols-2 lg:grid-cols-3">
+
+            {/* Compact steps: a 32px numeral tile and the text beside it, in a
+                2-column grid at `md` and 3 at `lg`. The `p-8` card it was is
+                the same box the rest of this pass removed. */}
+            <ol className="program-modules-list">
               {framework.steps.map((step, i) => (
-                <li
-                  key={step.title}
-                  className="flex gap-4 p-8"
-                  style={{
-                    backgroundColor: 'var(--pdf-white)',
-                    borderRadius: 'var(--prd-radius)',
-                    border: '1px solid var(--prd-border)',
-                  }}
-                >
+                <li key={step.title}>
                   <span
                     aria-hidden="true"
-                    className="flex h-10 w-10 shrink-0 items-center justify-center text-sm font-extrabold leading-none"
-                    style={{
-                      backgroundColor:
-                        i % 2 === 0 ? 'var(--pdf-orange)' : 'var(--prd-yellow)',
-                      color:
-                        i % 2 === 0 ? 'var(--pdf-white)' : 'var(--pdf-charcoal)',
-                      borderRadius: 'var(--prd-radius-pill)',
-                      fontVariantNumeric: 'tabular-nums',
-                    }}
+                    className={`program-module-tile-${i % 2 === 0 ? 'orange' : 'yellow'}`}
                   >
                     {String(i + 1).padStart(2, '0')}
                   </span>
 
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-base font-extrabold leading-snug text-[var(--pdf-charcoal)]">
-                      {step.title}
-                    </h3>
-                    <p className="mt-2 text-[0.9375rem] leading-relaxed text-[var(--pdf-warm-grey)]">
-                      {step.description}
-                    </p>
+                    <h3 className="program-module-title">{step.title}</h3>
+                    <p className="program-module-problem">{step.description}</p>
                   </div>
                 </li>
               ))}
             </ol>
 
             {framework.note && (
-              <p
-                className="mt-8 border-l-4 pl-4 text-[0.9375rem] italic leading-relaxed"
-                style={{
-                  borderColor: 'var(--pdf-orange)',
-                  color: 'var(--pdf-warm-grey)',
-                }}
-              >
-                {framework.note}
-              </p>
+              <p className="program-frame-note">{framework.note}</p>
             )}
           </ScrollReveal>
         )}
@@ -436,7 +462,7 @@ export default function ProgramSection({
         {modules && (
           <ScrollReveal>
             <Heading id={`${id}-modules`}>{modules.heading}</Heading>
-            <NumberedGrid items={modules.items} />
+            <NumberedList items={modules.items} />
           </ScrollReveal>
         )}
 
@@ -445,51 +471,26 @@ export default function ProgramSection({
             <Heading id={`${id}-modules-secondary`}>
               {modulesSecondary.heading}
               {modulesSecondary.note && (
-                <span
-                  className="ml-2 text-sm font-semibold normal-case tracking-normal"
-                  style={{ color: 'var(--pdf-warm-grey)' }}
-                >
+                <span className="ml-2 program-modules-note">
                   ({modulesSecondary.note})
                 </span>
               )}
             </Heading>
 
-            <ol className="mt-8 list-none space-y-4 p-0">
+            <ol className="program-modules-list">
               {modulesSecondary.items.map((item, i) => (
-                <li
-                  key={item.title}
-                  className="flex flex-col gap-4 p-8 sm:flex-row sm:items-start sm:gap-8"
-                  style={{
-                    backgroundColor: 'var(--pdf-white)',
-                    borderRadius: 'var(--prd-radius)',
-                    border: '1px solid var(--prd-border)',
-                  }}
-                >
+                <li key={item.title}>
                   <span
                     aria-hidden="true"
-                    className="flex h-10 w-10 shrink-0 items-center justify-center text-sm font-extrabold leading-none"
-                    style={{
-                      backgroundColor:
-                        i % 2 === 0 ? 'var(--pdf-orange)' : 'var(--prd-yellow)',
-                      color:
-                        i % 2 === 0 ? 'var(--pdf-white)' : 'var(--pdf-charcoal)',
-                      borderRadius: 'var(--prd-radius-pill)',
-                      fontVariantNumeric: 'tabular-nums',
-                    }}
+                    className={`program-module-tile-${i % 2 === 0 ? 'orange' : 'yellow'}`}
                   >
                     {String(i + 1).padStart(2, '0')}
                   </span>
 
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-base font-extrabold uppercase leading-snug text-[var(--pdf-charcoal)]">
-                      {item.title}
-                    </h3>
-                    <p className="mt-2 text-[0.9375rem] leading-relaxed text-[var(--pdf-warm-grey)]">
-                      {item.problem}
-                    </p>
-                    <p className="mt-2 text-[0.9375rem] font-semibold leading-relaxed text-[var(--pdf-charcoal)]">
-                      {item.outcome}
-                    </p>
+                    <h3 className="program-module-title">{item.title}</h3>
+                    <p className="program-module-problem">{item.problem}</p>
+                    <p className="program-module-outcome">{item.outcome}</p>
                   </div>
                 </li>
               ))}
@@ -500,30 +501,14 @@ export default function ProgramSection({
         {days && (
           <ScrollReveal>
             <Heading id={`${id}-days`}>{days.heading}</Heading>
-            <dl className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            <dl className="program-day-list">
               {days.items.map((day) => (
-                <div
-                  key={day.label}
-                  className="p-8"
-                  style={{
-                    backgroundColor: 'var(--pdf-white)',
-                    borderRadius: 'var(--prd-radius)',
-                    border: '1px solid var(--prd-border)',
-                  }}
-                >
-                  <dt className="text-sm font-extrabold uppercase tracking-[0.12em] text-[var(--pdf-orange)]">
-                    {day.label}
-                  </dt>
+                <div key={day.label} className="program-day-item">
+                  <dt className="program-day-label">{day.label}</dt>
 
-                  {day.stage && (
-                    <p className="mt-2 text-lg font-extrabold uppercase leading-tight text-[var(--pdf-charcoal)]">
-                      {day.stage}
-                    </p>
-                  )}
+                  {day.stage && <p className="program-day-stage">{day.stage}</p>}
 
-                  <dd className="m-0 mt-2 text-[0.9375rem] leading-relaxed text-[var(--pdf-warm-grey)]">
-                    {day.summary}
-                  </dd>
+                  <dd className="program-day-summary">{day.summary}</dd>
                 </div>
               ))}
             </dl>
@@ -533,24 +518,10 @@ export default function ProgramSection({
         {statements && (
           <ScrollReveal>
             <Heading id={`${id}-statements`}>{statements.heading}</Heading>
-            <ul className="mt-8 list-none space-y-4 p-0">
+            <ul className="program-pill-list">
               {statements.items.map((text) => (
-                <li
-                  key={text}
-                  className="flex gap-4 p-8 text-[0.9375rem] leading-relaxed"
-                  style={{
-                    backgroundColor: 'var(--pdf-white)',
-                    color: 'var(--pdf-charcoal)',
-                    borderRadius: 'var(--prd-radius)',
-                    border: '1px solid var(--prd-border)',
-                  }}
-                >
-                  <span aria-hidden="true" style={{ color: 'var(--pdf-orange)' }}>
-                    &mdash;
-                  </span>
-                  <span className="min-w-0" style={{ textWrap: 'pretty' }}>
-                    {text}
-                  </span>
+                <li key={text} className="program-pill">
+                  {text}
                 </li>
               ))}
             </ul>
@@ -561,23 +532,15 @@ export default function ProgramSection({
         {categories && (
           <ScrollReveal>
             <Heading id={`${id}-categories`}>{categories.heading}</Heading>
-            <ul className="mt-8 grid list-none grid-cols-1 gap-8 p-0 md:grid-cols-3">
+
+            {/* Compact rows with a colour-keyed category label. The `p-8`
+                bordered card it was made three categories look like three
+                products; they are three headings over a list of defects. */}
+            <ul className="program-category-list">
               {categories.items.map((category) => (
-                <li
-                  key={category.title}
-                  className="p-8"
-                  style={{
-                    backgroundColor: 'var(--pdf-white)',
-                    borderRadius: 'var(--prd-radius)',
-                    border: '1px solid var(--prd-border)',
-                  }}
-                >
-                  <h3 className="text-sm font-extrabold uppercase tracking-[0.12em] text-[var(--pdf-orange)]">
-                    {category.title}
-                  </h3>
-                  <p className="mt-4 text-[0.9375rem] leading-relaxed text-[var(--pdf-warm-grey)]">
-                    {category.items}
-                  </p>
+                <li key={category.title} className="program-category">
+                  <h3 className="program-category-title">{category.title}</h3>
+                  <p className="program-category-items">{category.items}</p>
                 </li>
               ))}
             </ul>
@@ -611,79 +574,61 @@ export default function ProgramSection({
 
         {children}
 
-        {cta && (
-          <ScrollReveal>
-            <div
-              className="mt-16 p-8 sm:p-12"
-              style={{
-                backgroundColor: 'var(--pdf-dark)',
-                borderRadius: 'var(--prd-radius)',
-              }}
-            >
-              <h2 className="text-xl font-extrabold uppercase leading-tight text-[var(--pdf-white)] sm:text-2xl">
-                {cta.headline}
-              </h2>
-
-              {cta.body && (
-                <p className="mt-4 program-cta-body">{cta.body}</p>
-              )}
-
-              <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap program-cta-buttons">
-                {/*
-                 * The primary action: into the form, with this programme ticked.
-                 * Rendered first so it reads as the main path, with email and
-                 * phone as the fallbacks beside it.
-                 */}
-                {cta.programSlug && (
-                  <a
-                    href={`#contact?program=${cta.programSlug}`}
-                    className="inline-flex min-h-[56px] items-center justify-center px-8 text-base font-bold program-request-button"
-                  >
-                    Request a Proposal
-                  </a>
-                )}
-
-                {cta.email && cta.emailHref && (
-                  <a
-                    href={cta.emailHref}
-                    className="inline-flex min-h-[56px] items-center justify-center px-8 text-base font-bold program-contact-button"
-                  >
-                    {cta.email}
-                  </a>
-                )}
-
-                {cta.phone && cta.phoneHref && (
-                  <a
-                    href={cta.phoneHref}
-                    className="inline-flex min-h-[56px] items-center justify-center px-8 text-base font-bold program-contact-link"
-                  >
-                    {cta.phone}
-                  </a>
-                )}
-              </div>
-
-              {(cta.signoff || cta.linkedin) && (
-                <p className="mt-8 program-cta-signoff">
-                  {cta.signoff}
-                  {cta.signoffTrailing && ` — ${cta.signoffTrailing}`}
-                  {cta.linkedin && cta.linkedinHref && (
-                    <>
-                      {cta.signoff ? ' · ' : ''}
-                      <a
-                        href={cta.linkedinHref}
-                        className="underline program-linkedin-link"
-                      >
-                        {cta.linkedin}
-                      </a>
-                    </>
-                  )}
-                </p>
-              )}
-            </div>
-          </ScrollReveal>
+        {/*
+         * The closing CTA is now ONE line plus ONE button.
+         *
+         * It used to be a dark `p-12` panel carrying a headline, a body, three
+         * 56px buttons and a sign-off — repeated in all five programs. Forty per
+         * cent of a program body's vertical weight was the same "Request a
+         * Proposal" block, which meant the visitor saw the page's real
+         * conversion path five times and stopped reading it as an action.
+         *
+         * The headline, body and sign-off copy are NOT deleted: they render in
+         * the §5.6 Contact section, which is the one place a decision to enquire
+         * is actually made. See `ProgramCtaFooter` — the copy moved, it did not
+         * disappear.
+         *
+         * What remains here is the local affordance: the audience line (who this
+         * is for, in the program's own words) and a single button that jumps into
+         * the form with this programme pre-ticked.
+         */}
+        {(audience || format) && (
+          <p className="program-audience-line">
+            {audience && (
+              <>
+                <span className="program-audience-key">For:</span>{' '}
+                {audience.items.join(', ')}
+              </>
+            )}
+            {audience && format && (
+              <span aria-hidden="true" className="program-audience-sep">
+                {' · '}
+              </span>
+            )}
+            {format && (
+              <>
+                <span className="program-audience-key">Format:</span>{' '}
+                {format.items.join(', ')}
+              </>
+            )}
+          </p>
         )}
 
-        {showTrainer && <TrainerCredibility />}
+        <div className="program-cta-row">
+          {cta?.programSlug && (
+            <a
+              href={`#contact?program=${cta.programSlug}`}
+              className="program-request-button"
+            >
+              Request for {cta.label}
+            </a>
+          )}
+
+          <a href="#why" className="program-why-link">
+            See the capability shift
+            <span aria-hidden="true"> →</span>
+          </a>
+        </div>
       </div>
     </div>
   );

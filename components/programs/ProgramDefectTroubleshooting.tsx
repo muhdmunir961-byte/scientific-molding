@@ -9,11 +9,9 @@
 
 import ProgramHero from './ProgramHero';
 import ProgramSection, { Statements } from '../shared/ProgramSection';
+import { ctaLabelFor } from './program-cta-content';
 import {
   PROGRAM_D_AUDIENCE,
-  PROGRAM_D_BEFORE_AFTER,
-  PROGRAM_D_BEFORE_AFTER_HEADING,
-  PROGRAM_D_BEFORE_AFTER_LABELS,
   PROGRAM_D_BUSINESS_OUTCOMES,
   PROGRAM_D_CAPABILITIES,
   PROGRAM_D_CTA,
@@ -61,12 +59,6 @@ export default function ProgramDefectTroubleshooting() {
             description: text,
           })),
         }}
-        beforeAfter={{
-          heading: PROGRAM_D_BEFORE_AFTER_HEADING,
-          caption: 'Before and after capability change for Defect Troubleshooting',
-          labels: PROGRAM_D_BEFORE_AFTER_LABELS,
-          rows: PROGRAM_D_BEFORE_AFTER,
-        }}
         statement={{
           heading: PROGRAM_D_MANAGEMENT_TAKEAWAY.heading,
           text: PROGRAM_D_MANAGEMENT_TAKEAWAY.statement,
@@ -84,11 +76,12 @@ export default function ProgramDefectTroubleshooting() {
           heading: PROGRAM_D_DEFECTS_COVERED.heading,
           items: PROGRAM_D_DEFECTS_COVERED.categories,
         }}
-        chips={[
-          PROGRAM_D_AUDIENCE,
-          { heading: PROGRAM_D_LEARNING_FORMAT.heading, items: PROGRAM_D_LEARNING_FORMAT.items },
-        ]}
-        cta={PROGRAM_D_CTA}
+        audience={PROGRAM_D_AUDIENCE}
+        format={{
+          heading: PROGRAM_D_LEARNING_FORMAT.heading,
+          items: PROGRAM_D_LEARNING_FORMAT.items,
+        }}
+        cta={{ ...PROGRAM_D_CTA, label: ctaLabelFor(PROGRAM_D_HERO.id) }}
       >
         <Statements
           heading={PROGRAM_D_WHY_ESSENTIAL.heading}

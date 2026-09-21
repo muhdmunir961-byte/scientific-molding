@@ -1,100 +1,92 @@
 /**
- * TrainerPhoto — the trainer portrait frame.
+ * TrainerPhoto — the trainer portrait frame plus the session gallery.
  *
- * ── Placeholder by design, not by omission ──────────────────────────
- * PRD Section 5.2: "Photo gallery (training session photos from source PDFs —
- * **replace with licensed/owned photography, do not reuse third-party stock
- * without rights**)."
+ * ── Polish #7 ───────────────────────────────────────────────────────
+ * The bespoke placeholder (a `UserRound` icon in a `hero-grid` frame captioned
+ * "Photo placeholder") is gone. Both image positions now render through
+ * `<ImageSlot>`, so:
  *
- * No owned photograph was supplied, so this renders a labelled frame. It does
- * NOT reach for a stock portrait or an invented `/images/trainer.jpg` path: the
- * PRD explicitly warns against third-party stock without rights, and a broken
- * request is worse than an honest empty frame.
+ *   - an empty frame is a brand gradient rather than a labelled icon, which
+ *     reads as "a photograph goes here" instead of "something is broken";
+ *   - the internal note ("Awaiting owned photography — PRD Section 5.2 …") is
+ *     no longer customer-facing copy;
+ *   - the four session photographs the PRD's "photo gallery" asks for have a
+ *     home, in `TRAINER_SESSIONS`.
  *
- * Setting `TRAINER_PHOTO.src` in `about-content.ts` swaps this for the real
- * `next/image` with no other change.
+ * ── Frames, per the brief ───────────────────────────────────────────
+ *   Portrait  3:4, radius XL, warm shadow. `--ds-shadow-warm` because the frame
+ *             sits beside a yellow-tinted credential list — a brand-adjacent
+ *             surface takes the warm shadow per docs/design-system.md.
+ *   Sessions  4:3, radius MD, `sm` at rest and `md` on hover. Small frames in a
+ *             2×2 grid: one rung of elevation each, so the grid reads as a set
+ *             rather than as four competing cards.
  *
- * ── Why width/height are always passed ──────────────────────────────
- * The frame reserves its space from first paint, so revealing the section
- * cannot shift the layout — the Web Interface Guidelines require explicit
- * dimensions on images for exactly this reason.
- *
- * ── Height cap and radius ───────────────────────────────────────────
- * A 4:5 portrait at full column width is very tall on a wide desktop. The frame
- * is capped at 32rem so the section stays balanced against the bio column,
- * which is shorter. On hover the frame scales 1% and its halo opens — a frame
- * around a bitmap has no text to re-rasterise, so `scale()` is the right
- * transform here (docs/design-system.md). The cap and the ratio stay inline:
- * both are computed from `TRAINER_PHOTO`, and a hover cannot be declared
- * inline anyway, which is why the rest moved to `.trainer-frame`.
+ * ── Why the session grid is a `<ul>` ────────────────────────────────
+ * Four photographs with no order and no caption pair are a set, which is what a
+ * list is for. A screen reader reports "list, 4 items" and can skip it in one
+ * action; four bare figures would be announced as they arrive.
  */
 
-import Image from 'next/image';
-import { UserRound } from 'lucide-react';
-
-import { TRAINER_PHOTO } from './about-content';
-
-/** The frame ratio. 4:5 portrait reads as a formal bio photograph. */
-const ASPECT = `${TRAINER_PHOTO.width} / ${TRAINER_PHOTO.height}`;
+import ImageSlot from '../shared/ImageSlot';
+import { TRAINER_PHOTO, TRAINER_SESSIONS } from './about-content';
 
 /**
- * The portrait frame.
+ * The portrait and the gallery.
  *
- * Ratio and cap come from `TRAINER_PHOTO`, so they stay inline; everything
- * that has to respond to a hover lives in `.trainer-frame` in `globals.css`.
+ * The portrait keeps its 32rem cap: a 3:4 frame at full column width is still
+ * very tall on a wide desktop, and the bio column beside it is shorter, so an
+ * uncapped frame would leave the two columns visibly out of balance.
  */
 export default function TrainerPhoto() {
   return (
-    <figure className="relative m-0 w-full">
-      {/* Warm halo behind the frame. Decorative, and `aria-hidden` for that
-          reason. Its geometry and gradient live in `.trainer-halo` so the
-          hover can drive them. */}
-      <div aria-hidden="true" className="trainer-halo" />
+    <div className="flex w-full flex-col gap-6">
+      <figure className="relative m-0 w-full">
+        {/* Warm halo behind the frame. Decorative, and `aria-hidden` for that
+            reason. Its geometry and gradient live in `.trainer-halo` so the
+            hover can drive them. */}
+        <div aria-hidden="true" className="trainer-halo" />
 
-      <div
-        className="trainer-frame mx-auto"
-        style={{ aspectRatio: ASPECT, maxWidth: '32rem' }}
-      >
-        {TRAINER_PHOTO.src ? (
-          <Image
-            src={TRAINER_PHOTO.src}
-            alt={TRAINER_PHOTO.alt}
-            width={TRAINER_PHOTO.width}
-            height={TRAINER_PHOTO.height}
-            sizes="(max-width: 1024px) 100vw, 50vw"
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <PlaceholderFrame />
-        )}
-      </div>
-    </figure>
+        <ImageSlot
+          src={TRAINER_PHOTO.src}
+          width={TRAINER_PHOTO.width}
+          height={TRAINER_PHOTO.height}
+          alt={TRAINER_PHOTO.alt}
+          radius="xl"
+          elevation="warm"
+          sizes="(max-width: 1024px) 100vw, 40vw"
+          objectPosition="50% 25%"
+          className="trainer-frame mx-auto"
+        />
+      </figure>
+
+      <SessionGallery />
+    </div>
   );
 }
 
 /**
- * The stand-in frame.
+ * The four training-session photographs.
  *
- * States plainly what belongs here so nobody ships it by accident, and uses the
- * blueprint grid the Hero already defines so it reads as part of the design
- * system rather than a broken slot.
+ * 2×2 from the `sm` breakpoint, one column below it. Two rather than one at the
+ * smallest width because a 4:3 photograph at 320px wide is a 240px-tall frame —
+ * two of those side by side still read as photographs rather than as thumbnails.
  */
-function PlaceholderFrame() {
+function SessionGallery() {
   return (
-    <div
-      role="img"
-      aria-label={TRAINER_PHOTO.alt}
-      className="hero-grid flex h-full w-full flex-col items-center justify-center gap-4 p-8 text-center"
-    >
-      <span className="trainer-placeholder-icon flex h-16 w-16 items-center justify-center">
-        <UserRound size={28} strokeWidth={2} aria-hidden="true" />
-      </span>
-
-      <p className="eyebrow text-[var(--ds-neutral-500)]">Photo placeholder</p>
-      <p className="max-w-[26ch] text-caption leading-relaxed text-[var(--ds-neutral-500)]">
-        Awaiting owned photography — PRD Section 5.2 specifies training-session
-        photos, licensed or owned, not third-party stock.
-      </p>
-    </div>
+    <ul className="session-grid">
+      {TRAINER_SESSIONS.map((session) => (
+        <li key={session.src} className="session-grid-item">
+          <ImageSlot
+            src={session.src}
+            width={session.width}
+            height={session.height}
+            alt={session.alt}
+            radius="md"
+            elevation="sm"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
+          />
+        </li>
+      ))}
+    </ul>
   );
 }

@@ -86,7 +86,14 @@ ${headerBar()}
       <tr><td style="padding:24px">
         ${sectionHeading('What you sent us')}
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-          ${echoRows}
+          ${
+            echoRows ||
+            /* Nothing was filled in beyond the required fields. Rendering an
+               empty table here would make the echo section look broken in the
+               visitor's own inbox — the one place the message must read as
+               intentional. */
+            `<tr><td style="padding:4px 0;font-family:${FONT};font-size:14px;font-style:italic;color:${EMAIL_BRAND.warmGrey}">No programme, participant count or dates specified yet &mdash; we&rsquo;ll suggest options.</td></tr>`
+          }
         </table>
         <p style="margin:12px 0 0;font-family:${FONT};font-size:13px;color:${EMAIL_BRAND.warmGrey}">
           If anything above is wrong, just reply to this email and we&rsquo;ll correct it.

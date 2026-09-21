@@ -8,6 +8,7 @@ import ProgramDefectTroubleshooting from '@/components/programs/ProgramDefectTro
 import ProgramPathway from '@/components/programs/ProgramPathway';
 import Why from '@/components/why/Why';
 import TrackRecord from '@/components/track-record/TrackRecord';
+import Testimonials from '@/components/testimonials/Testimonials';
 import Contact from '@/components/contact/Contact';
 import Footer from '@/components/footer/Footer';
 import NavChrome from '@/components/nav/NavChrome';
@@ -23,8 +24,9 @@ import NavChrome from '@/components/nav/NavChrome';
  *   3. `#fundamentals` …      the five programs, A → E (`#pathway` last)
  *   4. `#why`                 Why Scientific Molding
  *   5. `#track-record`        Track Record
- *   6. `#contact`             Request a Proposal
- *   7. —                        Footer (no anchor; the end of the page)
+ *   6. `#testimonials`        Testimonials        (Polish #7)
+ *   7. `#contact`             Request a Proposal
+ *   8. —                        Footer (no anchor; the end of the page)
  *
  * `#why` sits AFTER the programs, not before: the PRD lists it as a
  * "cross-cutting problem/benefit summary", which only reads as a summary once
@@ -50,20 +52,27 @@ import NavChrome from '@/components/nav/NavChrome';
  * The dark program heroes separate the programs visually; the light bodies
  * underneath alternate so no two adjacent sections merge:
  *
- *   About                    --prd-white      (white)
+ *   About                    --ds-neutral-0    (white)
  *   Program A body           off-white
  *   Program B body           white
  *   Program C body           off-white
  *   Program D body           white
  *   Program E body           off-white
- *   Why                      --pdf-white      (white)
- *   Track Record             --prd-offwhite   (warm off-white)
- *   Contact                  --pdf-white      (white)
- *   Footer                   --pdf-dark       (dark, matching program heroes)
+ *   Why                      --ds-neutral-50   (off-white)
+ *   Track Record             --ds-neutral-900  (DARK — Polish #7)
+ *   Testimonials             --ds-neutral-0    (white)
+ *   Contact                  --pdf-white       (white)
+ *   Footer                   --pdf-dark        (dark)
  *
- * Note the two white tokens are not interchangeable: About and Track Record
- * follow the PRD 13.1 palette, while Why and Contact follow the PDF palette
- * along with the programs. The values happen to match; the tokens do not.
+ * The dark Track Record was off-white until Polish #7. Two near-white surfaces
+ * in a row (Track Record → Contact) gave that boundary no edge at all, and
+ * everything from Program E's hero to the footer was light. The dark block puts
+ * the page's strongest claim on its strongest surface and restores the
+ * dark/light rhythm for the lower half of the page.
+ *
+ * Testimonials and Contact are both white deliberately: they are one act —
+ * evidence, then the invitation that answers it — so they share a surface
+ * rather than being split by a boundary that would mark nothing.
  */
 export default function HomePage() {
   return (
@@ -80,6 +89,7 @@ export default function HomePage() {
       <ProgramPathway />
       <Why />
       <TrackRecord />
+      <Testimonials />
       <Contact />
       <Footer />
     </>

@@ -149,7 +149,6 @@
   --ds-duration-slower: 600ms;
 }
 
-
 /* ==================================================================
    PDF palette override — the five program PDFs win over PRD 13.1
    ==================================================================
@@ -207,18 +206,22 @@
   --ds-space-8: 32px;
   --ds-space-10: 40px;
   --ds-space-12: 48px;
-  --ds-space-16: 64px;
-  --ds-space-20: 80px;
-  --ds-space-24: 96px;
+  --ds-space-16: 48px;
+  --ds-space-20: 64px;
+  --ds-space-24: 80px;
   --ds-space-32: 128px;
 
   /* --- Section rhythm.
-         96px desktop / 64px mobile, applied through `.section`. The same
-         padding top and bottom, so two adjacent sections produce exactly
-         192px of separation — enough that a background change reads as a
-         boundary rather than as a stripe. --- */
-  --ds-section-padding-y-desktop: 96px;
-  --ds-section-padding-y-mobile: 64px;
+         Polish #7 COMPACTED these from 96px/64px to 64px/40px, and the
+         16/20/24 spacing steps with them (64/80/96 → 48/64/80).
+
+         The same padding top and bottom, so two adjacent sections produce
+         exactly 128px of separation — still enough that a background change
+         reads as an intentional boundary rather than as a stripe, at two-thirds
+         of the vertical cost. Across the eleven sections on this page that is
+         ~700px of scroll removed without deleting a single line of copy. --- */
+  --ds-section-padding-y-desktop: 64px;
+  --ds-section-padding-y-mobile: 40px;
 
   /* --- Container.
          1280px, not the 1400px several components use today. Those are
@@ -427,24 +430,74 @@
    stay legible — two coordinated values, not one.
    ================================================================== */
 
+/*
+ * Hero primary CTA.
+ *
+ * ════════════════════════════════════════════════════════════════════
+ *  POLISH #7 — THE GRADIENT IS GONE, AND THE HOVER CHANGED DIRECTION.
+ *
+ *  The gradient (`--prd-gradient`, #F07C23 → #FFC93C) was a PRD section 13.1
+ *  option ("Gradient accent (optional, hero/CTA)"), and it was the one place on
+ *  the page where a surface was painted with two brand hues at once. Against a
+ *  page whose whole language is flat fills and hairline rules, that read as a
+ *  different design system rather than as emphasis.
+ *
+ *  It is a RESTRAINED premium treatment now: one solid brand colour at the base
+ *  (`--ds-orange-500`, the same orange the program CTAs and the numerals use),
+ *  darkening on hover to `--ds-orange-600`.
+ *
+ *  Note what that does to the old contrast problem. The previous hover moved to
+ *  yellow and had to flip the label to charcoal, because white on `#FFC93C` is
+ *  ~1.9:1. A hover that darkens does not: white on `--ds-orange-600` is ~4.0:1
+ *  and on `--ds-orange-500` ~3.2:1 — both clear AA for the 16px bold label this
+ *  carries. So the "two coordinated values" complication is simply gone, and
+ *  the label colour is declared once.
+ *
+ *  The active state darkens one rung further, to `--ds-orange-700` (~5.5:1), so
+ *  pressing the button reads as the same gesture continuing rather than as a
+ *  reset.
+ * ════════════════════════════════════════════════════════════════════
+ */
 .cta-primary {
-  background-image: var(--prd-gradient);
-  color: var(--prd-white);
-  border-radius: var(--prd-radius-pill);
-  box-shadow: var(--prd-shadow-warm);
+  background-color: var(--ds-orange-500);
+  color: var(--ds-neutral-0);
+  border-radius: var(--ds-radius-full);
+  /* Warm, per the shadow table: a brand-coloured surface takes the orange-tinted
+     shadow so it reads as glowing rather than as a grey blur behind it. */
+  box-shadow: var(--ds-shadow-warm);
+  transition:
+    background-color var(--ds-duration-normal) var(--ds-ease-out),
+    box-shadow var(--ds-duration-normal) var(--ds-ease-out),
+    transform var(--ds-duration-normal) var(--ds-ease-out);
 }
 
 .cta-primary:hover {
-  background-image: none;
-  background-color: var(--prd-yellow);
-  color: var(--prd-ink);
-  box-shadow: var(--prd-shadow-warm-hover);
+  background-color: var(--ds-orange-600);
+  box-shadow: var(--ds-shadow-warm);
   transform: translateY(-2px);
 }
 
 .cta-primary:active {
-  background-color: var(--prd-orange-deep);
-  color: var(--prd-white);
+  background-color: var(--ds-orange-700);
+  transform: translateY(0);
+}
+
+/*
+ * The arrow slides 0 → 4px on hover.
+ *
+ * `transform` only, and on the icon rather than the button: a transform on the
+ * button already carries the 2px lift, and stacking a translateX on the same
+ * element would need the two values kept in sync. The icon's own transform
+ * composes with the parent's, so the arrow slides *within* a button that is
+ * also rising — which is what makes the gesture read as forward motion.
+ */
+.cta-primary-arrow {
+  flex-shrink: 0;
+  transition: transform var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.cta-primary:hover .cta-primary-arrow {
+  transform: translateX(4px);
 }
 
 /* Phase 4B — focus ring aligned with the global `:focus-visible` rule.
@@ -492,11 +545,30 @@
    the two in the same family without tinting the page: the gradient is
    anchored to the top-left corner and fully spent by 55%, so the headline
    and the stat cards sit on effectively white pixels and their contrast is
-   unchanged. Depth, not colour. */
+   unchanged. Depth, not colour.
+
+   Polish #7 split the wash out of this shorthand into `.hero-wash`, a layered
+   sibling. The section is a flat white field; the wash is painted over it. */
 .hero-section {
-  background:
-    radial-gradient(ellipse 60% 55% at 0% 0%, var(--ds-orange-50) 0%, transparent 55%),
-    var(--ds-neutral-0);
+  background-color: var(--ds-neutral-0);
+}
+
+/*
+ * The radial wash, as its own layer.
+ *
+ * `background` on a pseudo-layer rather than the section's shorthand, so it
+ * composites in an explicit order against `.hero-grid` (which is `-z-10` inside
+ * the isolated section — see `Hero.tsx`'s comment). Opacity is 0.5, inside the
+ * brief's 0.4–0.6 band: strong enough to read as a light source at the corner,
+ * weak enough that body text over it is unchanged.
+ */
+.hero-wash {
+  opacity: 0.5;
+  background: radial-gradient(
+    ellipse 60% 55% at 0% 0%,
+    var(--ds-orange-50) 0%,
+    transparent 60%
+  );
 }
 
 /* --- Blueprint grid, held at 0.03. ---
@@ -539,6 +611,33 @@
 .hero-stat:hover {
   box-shadow: var(--ds-shadow-md);
   transform: translateY(-2px);
+}
+
+/*
+ * The numeral tiles.
+ *
+ * Polish #7 moved the fill and the label colour off inline styles and onto two
+ * classes keyed by `data-tone`. The values are identical; what changes is that
+ * the pairing now has one owner. Two coordinated properties (fill and label)
+ * declared in two places is how a tile ends up white-on-yellow — ~1.9:1 — the
+ * first time one of them is edited.
+ *
+ * Charcoal on `--ds-yellow-500` measures ~9:1, so the yellow tone is safe with
+ * dark text. White on `--ds-orange-500` is ~3.2:1, which clears AA for the
+ * large display figures these are.
+ */
+.hero-stat-numeral {
+  border-radius: var(--ds-radius-md);
+}
+
+.hero-stat-numeral[data-tone='orange'] {
+  background-color: var(--ds-orange-500);
+  color: var(--ds-neutral-0);
+}
+
+.hero-stat-numeral[data-tone='yellow'] {
+  background-color: var(--ds-yellow-500);
+  color: var(--ds-neutral-900);
 }
 
 /* The strip renders as a `<dl>` with top and bottom rules on the 8px grid. */
@@ -587,37 +686,58 @@
   color: var(--ds-neutral-0);
 }
 
-/* --- Hero image frame. --- */
-.hero-frame {
-  position: relative;
+/* The label/value pair inside a secondary CTA.
+   The label keeps the uppercase eyebrow treatment — it is a control's name
+   ("CALL NOW"), which is a label, not a heading. `--ds-tracking-wider` (0.1em)
+   rather than the 0.12em it carried: that value was off the tracking scale, and
+   every other label on the page uses the token. */
+.cta-secondary-label {
+  font-size: var(--ds-text-caption);
+  font-weight: 600;
+  letter-spacing: var(--ds-tracking-wider);
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--ds-neutral-500);
+}
+
+.cta-secondary-value {
   overflow: hidden;
-  border-radius: var(--ds-radius-xl);
-  box-shadow: var(--ds-shadow-lg);
-  border: 1px solid var(--ds-neutral-200);
-  background-color: var(--ds-neutral-0);
+  font-size: var(--ds-text-body-sm);
+  font-weight: 600;
+  line-height: var(--ds-leading-normal);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ds-neutral-900);
+}
+
+/* --- Hero image frame. ---
+   Polish #7: the radius, the elevation and the border moved to `<ImageSlot>`,
+   which now owns every image position on the page (see the component's
+   docblock). `.hero-frame` keeps only what is specific to THIS frame — the
+   hover scale — and takes `scale()` rather than `translateY` because a frame
+   around a bitmap has no text to re-rasterise (docs/design-system.md). */
+.hero-frame {
   transition: transform var(--ds-duration-slow) var(--ds-ease-out);
 }
 
 /* 1% on hover. Safe on this element specifically because it wraps a
-   photograph or the short placeholder — no body copy is re-rasterised. */
+   photograph — no body copy is re-rasterised. */
 .hero-frame:hover {
   transform: scale(1.01);
 }
 
-/* Grounding gradient. Runs `to top` and is transparent by 60%, so it
-   darkens only the bottom edge and never reaches the subject. */
-.hero-frame::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(26, 26, 26, 0.15), transparent 60%);
-  pointer-events: none;
-  border-radius: inherit;
-}
-
 /* --- Scroll cue. ---
-   The bob is a `translateY` on the icon, which composes with the chevron's
-   own `currentColor` stroke without needing a `rotate` on the wrapper. */
+   The cue is a statically positioned chevron.
+   
+   Polish #7 REMOVED the infinite `hero-cue-bob` animation. It was a continuous
+   2.4s translateY loop — the one animation on the page that never stopped, and
+   exactly the "continuous background/decorative motion" the brief rules out. A
+   chevron pointing down at the fold reads as "there is more below" without
+   moving; the motion added nothing a static arrow did not already say.
+   
+   The class names are kept (rather than the markup being rewritten) because the
+   reduced-motion assertions and the markup-group checks reference them, and
+   because a future non-continuous treatment has an obvious home. */
 .hero-scroll-cue {
   display: inline-flex;
   align-items: center;
@@ -625,18 +745,9 @@
   color: var(--ds-neutral-500);
 }
 
-@keyframes hero-cue-bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(6px);
-  }
-}
-
 .hero-scroll-cue-icon {
-  animation: hero-cue-bob 2.4s var(--ds-ease-in-out) infinite;
+  /* No animation. See above. */
+  display: block;
 }
 
 /* ==================================================================
@@ -681,6 +792,74 @@
     linear-gradient(to bottom, rgba(42, 42, 42, 0.025) 1px, transparent 1px),
     linear-gradient(to right, rgba(42, 42, 42, 0.04) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(42, 42, 42, 0.04) 1px, transparent 1px);
+}
+
+/* --- The section grid. ---
+   Polish #7 — LAYOUT VARIETY, and a measure fix.
+
+   This was `grid-cols-2` with a 64px gap inside a 1400px container, which made
+   the bio column ~660px. At body size that is roughly 85 characters per line:
+   past the 65ch where the eye starts losing the return to the next line.
+
+   It is a 60/40 split now (three iterations of `3fr 2fr`), with the bio on the
+   left at ~700px of a 1280px container — still wide, but the paragraphs inside
+   it cap themselves at 65ch, and the portrait gets a column that is actually
+   portrait-shaped rather than a 660px-wide 3:4 frame capped at 32rem anyway.
+
+   The four section grids on this page are deliberately not the same shape:
+   About is 60/40, Why is 50/50, Track Record is a 3-up stat row, Contact is
+   60/40 with the form on the LEFT. Repetition of a layout reads as a template
+   just as fast as repetition of a block. */
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: start;
+  gap: var(--ds-space-8);
+  padding-block: var(--ds-space-12);
+}
+
+@media (min-width: 1024px) {
+  .about-grid {
+    grid-template-columns: 3fr 2fr;
+    gap: var(--ds-space-16);
+    padding-block: var(--ds-section-padding-y-desktop);
+  }
+}
+
+/* --- Session photographs. ---
+   2×2 from 640px. Each frame is 4:3 at radius-md with one elevation rung; on
+   hover the rung steps to `md` and the frame lifts 2px, which is the page's one
+   card-hover language (docs/design-system.md). No scale — these frames carry no
+   text, but the grid's rhythm is what would visibly break if four frames each
+   grew 1% at slightly different times. */
+.session-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--ds-space-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.session-grid-item {
+  min-width: 0;
+}
+
+.session-grid-item .image-slot {
+  transition:
+    box-shadow var(--ds-duration-normal) var(--ds-ease-out),
+    transform var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.session-grid-item .image-slot:hover {
+  box-shadow: var(--ds-shadow-md);
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .session-grid-item .image-slot:hover {
+    transform: none;
+  }
 }
 
 /* --- Credential rows. ---
@@ -857,6 +1036,7 @@ figure:hover .trainer-halo {
 /* Rules above and below the strip, matching the Hero's `.hero-stat-strip`. */
 .trainer-stat-strip {
   border-color: var(--ds-neutral-200);
+}
 
 /* ==================================================================
    §6.3 — Program Sections (Template for B, C, D, E)
@@ -895,22 +1075,63 @@ figure:hover .trainer-halo {
   color: var(--ds-neutral-0);
 }
 
+/* The program hero's eyebrow — the section's only uppercase on any program, per
+   the brief. Uses the shared `.eyebrow` step rather than a bespoke one. */
+.program-hero-eyebrow {
+  color: var(--ds-orange-500);
+}
+
+/* The hero heading. `--ds-text-h1` rather than the old bespoke
+   `font-extrabold tracking-tighter leading-[1.05]` triple: the step already
+   declares the size clamp, the weight and the tracking.
+
+   NOTE the copy itself IS uppercase — "SCIENTIFIC MOULDING FUNDAMENTALS." is
+   the PDF's own casing, supplied verbatim, and content is immutable. So the
+   uppercase here is a CONTENT decision, not a type-style one, and no
+   `text-transform` is applied: the string already carries it. */
+.program-hero-heading {
+  font-size: var(--ds-text-h1);
+  font-weight: 800;
+  line-height: var(--ds-leading-tight);
+  letter-spacing: var(--ds-tracking-tight);
+}
+
+.program-hero-tagline {
+  color: var(--ds-neutral-0);
+  font-size: var(--ds-text-h4);
+  font-weight: 500;
+  line-height: 1.4;
+  max-width: 65ch;
+}
+
 .program-hero-subcopy {
   color: rgba(255, 255, 255, 0.7);
+  font-size: var(--ds-text-body);
+  line-height: 1.65;
+  max-width: 65ch;
+  text-wrap: pretty;
 }
 
-.program-hero-trainer-strip {
-  background-color: var(--ds-neutral-900);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+/* Badges are the other permitted uppercase: they are labels, and `.eyebrow` is
+   the only heading-adjacent thing that may shout. */
+.program-hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+  list-style: none;
+  padding: 0;
 }
 
-.program-hero-trainer-numeral {
-  color: var(--ds-orange-500);
-  font-variant-numeric: tabular-nums;
+/* Vertical padding only — `.container` owns the horizontal gutter. 40px mobile /
+   64px desktop, matching the section rhythm the body beneath it uses. */
+.program-hero-inner {
+  padding-block: var(--ds-section-padding-y-mobile);
 }
 
-.program-hero-trainer-label {
-  color: var(--ds-neutral-0);
+@media (min-width: 768px) {
+  .program-hero-inner {
+    padding-block: var(--ds-section-padding-y-desktop);
+  }
 }
 
 .program-hero-grid {
@@ -924,323 +1145,829 @@ figure:hover .trainer-halo {
   background-size: 64px 64px;
 }
 
-/* --- Problem Cards (numbered cards) --- */
-.program-problem-card {
-  background-color: var(--ds-neutral-0);
-  border-radius: var(--ds-radius-lg);
-  box-shadow: var(--ds-shadow-sm);
-  transition:
-    box-shadow var(--ds-duration-normal) var(--ds-ease-out),
-    transform var(--ds-duration-normal) var(--ds-ease-out);
+/* ==================================================================
+   §5.3 — Compact program body  (Polish #7)
+   ==================================================================
+   The five program bodies used to be built from 64px-tile card grids with
+   white fills, borders and hover lifts — repeated across five programs, which
+   produced 40–60 equal-weight boxes on one page. The rules below replace that
+   with flat, dense lists.
+
+   The design reasoning is in `ProgramSection.tsx`'s docblocks; the short
+   version is that elevation and elevation-adjacent affordances (hover, focus
+   ring, shadow) are now reserved for the elements that are actually ranked:
+   the section headings and the two remaining CTAs.
+   ================================================================== */
+
+/* --- The compact numbered list ---------------------------------- */
+
+/*
+ * Two columns from 768px. The single-column mobile layout keeps the numeral
+ * inline with its text so a narrow screen does not spend 32px of width on a
+ * gutter.
+ */
+.program-compact-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ds-space-4);
+  list-style: none;
+  margin: var(--ds-space-6) 0 0;
+  padding: 0;
 }
 
-.program-problem-card:hover {
-  box-shadow: var(--ds-shadow-md);
-  transform: translateY(-2px);
+@media (min-width: 768px) {
+  .program-compact-list {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ds-space-4) var(--ds-space-8);
+  }
 }
 
-.program-problem-card:focus-visible {
-  outline: none;
-  box-shadow: var(--ds-ring-orange), var(--ds-shadow-md);
+/* No padding, no fill, no border. The list is text, not a card rack. */
+.program-compact-item {
+  display: flex;
+  gap: var(--ds-space-3);
+  align-items: flex-start;
 }
 
-.program-problem-tile-orange {
-  background-color: var(--ds-orange-500);
-  color: var(--ds-neutral-0);
-}
-
-.program-problem-tile-yellow {
-  background-color: var(--ds-yellow-500);
-  color: var(--ds-neutral-800);
-}
-
-.program-problem-numeral {
+/*
+ * The numeral is text, not a tile.
+ *
+ * The old version put each numeral in a 64px orange or yellow square, which
+ * claimed the strongest colour on the page for a position marker. At 24px in
+ * the accent colour the numeral still scans as a sequence without competing
+ * with the heading.
+ */
+.program-compact-numeral {
+  flex-shrink: 0;
+  width: 24px;
+  font-size: var(--ds-text-body-sm);
+  font-weight: 800;
+  line-height: var(--ds-leading-normal);
   font-variant-numeric: tabular-nums;
-}
-
-/* --- Benefit Cards (numbered benefits) --- */
-.program-benefit-card {
-  background-color: var(--ds-neutral-0);
-  border-radius: var(--ds-radius-lg);
-  border-top: 3px solid var(--ds-orange-500);
-  padding: var(--ds-space-6);
-  transition:
-    box-shadow var(--ds-duration-normal) var(--ds-ease-out),
-    border-color var(--ds-duration-normal) var(--ds-ease-out),
-    transform var(--ds-duration-normal) var(--ds-ease-out);
-}
-
-.program-benefit-card:hover {
-  box-shadow: var(--ds-shadow-md);
-  border-color: var(--ds-orange-600);
-  transform: translateY(-2px);
-}
-
-.program-benefit-card:focus-visible {
-  outline: none;
-  box-shadow: var(--ds-ring-orange), var(--ds-shadow-md);
-}
-
-.program-benefit-number {
   color: var(--ds-orange-500);
-  font-variant-numeric: tabular-nums;
 }
 
-/* --- Before/After Table --- */
-.program-beforeafter-container {
-  overflow: hidden;
-  border-radius: var(--ds-radius-lg);
+.program-compact-body {
+  min-width: 0;
+  flex: 1;
 }
 
-.program-beforeafter-header {
-  background-color: var(--ds-orange-500);
-  color: var(--ds-neutral-0);
-}
-
-.program-beforeafter-row-even {
-  background-color: var(--ds-neutral-100);
-}
-
-.program-beforeafter-row-odd {
-  background-color: var(--ds-yellow-100);
-}
-
-.program-beforeafter-row:hover {
-  background-color: var(--ds-neutral-200);
-}
-
-/* --- Philosophy Block (three lines) --- */
-.program-philosophy {
-  text-align: center;
-  max-width: 60ch;
-  margin-inline: auto;
-}
-
-.program-philosophy-line {
-  letter-spacing: var(--ds-tracking-tight);
-  line-height: var(--ds-leading-snug);
-}
-
-.program-philosophy-line-primary {
+.program-compact-title {
+  font-size: var(--ds-text-body);
+  font-weight: 700;
+  line-height: var(--ds-leading-normal);
   color: var(--ds-neutral-900);
 }
 
-.program-philosophy-line-accent {
-  color: var(--ds-orange-500);
-}
-
-.program-philosophy-line-secondary {
+/* The category tag sits inline after the title rather than on its own line —
+   a whole line for "(QUALITY COST)" made a one-word label cost 24px. */
+.program-compact-category {
+  margin-left: var(--ds-space-2);
+  font-size: var(--ds-text-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--ds-neutral-500);
 }
 
-/* --- Foundations Table (four connected learning foundations) --- */
-.program-foundations-table {
-  overflow: hidden;
-  border-radius: var(--ds-radius-lg);
-}
-
-.program-foundations-header {
-  background-color: var(--ds-neutral-900);
-  color: var(--ds-neutral-0);
-}
-
-.program-foundations-row {
-  transition: background-color var(--ds-duration-normal) var(--ds-ease-out);
-}
-
-.program-foundations-row-even {
-  background-color: var(--ds-neutral-50);
-}
-
-.program-foundations-row-odd {
-  background-color: var(--ds-neutral-0);
-}
-
-.program-foundations-row:hover {
-  background-color: var(--ds-orange-50);
-}
-
-.program-foundations-number {
-  color: var(--ds-orange-500);
-  font-variant-numeric: tabular-nums;
-}
-
-/* --- Days Breakdown (Day 1 / Day 2) --- */
-.program-days-card {
-  border-radius: var(--ds-radius-lg);
-}
-
-.program-days-card-day1 {
-  background-color: var(--ds-neutral-100);
-}
-
-.program-days-card-day2 {
-  background-color: var(--ds-yellow-100);
-}
-
-/* --- Module Cards --- */
-.program-module-card {
-  background-color: var(--ds-neutral-0);
-  border-radius: var(--ds-radius-lg);
-  box-shadow: var(--ds-shadow-sm);
-  transition:
-    box-shadow var(--ds-duration-normal) var(--ds-ease-out),
-    transform var(--ds-duration-normal) var(--ds-ease-out);
-}
-
-.program-module-card:hover {
-  box-shadow: var(--ds-shadow-md);
-  transform: translateY(-2px);
-}
-
-.program-module-card:focus-visible {
-  outline: none;
-  box-shadow: var(--ds-ring-orange), var(--ds-shadow-md);
-}
-
-.program-module-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--ds-radius-md);
-  background-color: var(--ds-orange-500);
-  color: var(--ds-neutral-0);
-  transition:
-    background-color var(--ds-duration-normal) var(--ds-ease-out),
-    color var(--ds-duration-normal) var(--ds-ease-out);
-}
-
-.program-module-card:hover .program-module-icon {
-  background-color: var(--ds-orange-600);
-  color: var(--ds-neutral-0);
-}
-
-/* --- Take Back Benefits --- */
-.program-takeback-card {
-  background-color: var(--ds-neutral-0);
-  border-radius: var(--ds-radius-lg);
-  transition: box-shadow var(--ds-duration-normal) var(--ds-ease-out);
-}
-
-.program-takeback-card:hover {
-  box-shadow: var(--ds-shadow-md);
-}
-
-.program-takeback-card:focus-visible {
-  outline: none;
-  box-shadow: var(--ds-ring-orange);
-}
-
-/* --- Tag Chips (audience, learning format) --- */
-.program-tag-chip {
-  display: inline-flex;
-  padding: 6px 14px;
+.program-compact-description {
+  margin-top: var(--ds-space-1);
   font-size: var(--ds-text-body-sm);
-  background-color: var(--ds-neutral-100);
-  color: var(--ds-neutral-800);
-  border-radius: var(--ds-radius-full);
-  margin-right: var(--ds-space-2);
-  transition:
-    background-color var(--ds-duration-normal) var(--ds-ease-out),
-    color var(--ds-duration-normal) var(--ds-ease-out);
+  line-height: var(--ds-leading-normal);
+  color: var(--ds-neutral-500);
+  text-wrap: pretty;
 }
 
-.program-tag-chip:hover {
-  background-color: var(--ds-orange-50);
+/* --- Program E's own body  (Polish #7) -----------------------------
+   Program E composes its own body rather than going through
+   `ProgramSection`, so its blocks need their own classes. They resolve to the
+   same tokens and the same compact treatment as the shared ones, so the two
+   paths cannot render two different-looking programs. */
+
+.program-e-subline {
+  margin-top: var(--ds-space-2);
+  font-size: var(--ds-text-body);
+  font-weight: 400;
+  line-height: 1.65;
+  color: var(--ds-neutral-500);
+  max-width: 65ch;
+}
+
+.program-e-note {
+  margin-top: var(--ds-space-2);
+  font-size: var(--ds-text-body-sm);
+  line-height: 1.6;
+  color: var(--ds-neutral-500);
+  max-width: 65ch;
+  text-wrap: pretty;
+}
+
+/* The four programme-E figures. A ruled row rather than four cards: these are
+   context figures above the module list, not the section's headline claim (that
+   is Track Record's job), so they get a rule and no elevation. */
+.program-e-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--ds-space-6);
+  padding-block: var(--ds-space-6);
+  border-block: 1px solid var(--ds-neutral-200);
+}
+
+@media (min-width: 1024px) {
+  .program-e-stats {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.program-e-stat-value {
+  font-size: var(--ds-text-h3);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: var(--ds-tracking-tight);
+  font-variant-numeric: tabular-nums;
   color: var(--ds-orange-500);
 }
 
-.program-tag-chip:focus-visible {
+.program-e-stat-label {
+  margin-top: var(--ds-space-2);
+  font-size: var(--ds-text-body-sm);
+  font-weight: 500;
+  line-height: var(--ds-leading-snug);
+  color: var(--ds-neutral-500);
+}
+
+/* The pathway stepper. Inline pills, because it is a sequence the visitor reads
+   as one line: "M1 → M2 → M3 → …". As a wrapped row of bordered pills it read as
+   seven separate things. */
+.program-e-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+  list-style: none;
+  margin: var(--ds-space-6) 0 0;
+  padding: 0;
+}
+
+.program-e-step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  padding: var(--ds-space-1) var(--ds-space-3);
+  background-color: var(--ds-neutral-0);
+  border: 1px solid var(--ds-orange-500);
+  border-radius: var(--ds-radius-full);
+}
+
+.program-e-step-code {
+  font-size: var(--ds-text-body-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ds-orange-500);
+}
+
+.program-e-step-label {
+  font-size: var(--ds-text-caption);
+  font-weight: 500;
+  letter-spacing: var(--ds-tracking-wide);
+  color: var(--ds-neutral-800);
+}
+
+/* --- Program E's module grid ---
+   Three columns at `lg` rather than the shared two: the seven modules are the
+   section's whole subject. `program-e-build` is the Organisation block, which is
+   three items and wants three columns at `md`. */
+@media (min-width: 1024px) {
+  .program-e-modules {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.program-e-module-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ds-space-2);
+}
+
+.program-e-module-meta {
+  font-size: var(--ds-text-caption);
+  font-weight: 500;
+  letter-spacing: var(--ds-tracking-wide);
+  color: var(--ds-neutral-500);
+}
+
+.program-e-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-1);
+  list-style: none;
+  margin: var(--ds-space-2) 0 0;
+  padding: 0;
+}
+
+.program-e-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--ds-space-2);
+  font-size: var(--ds-text-caption);
+  font-weight: 500;
+  letter-spacing: var(--ds-tracking-wide);
+  color: var(--ds-neutral-800);
+  background-color: var(--ds-neutral-100);
+  border-radius: var(--ds-radius-full);
+}
+
+@media (min-width: 768px) {
+  .program-e-build {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* --- Philosophy lines ---
+   Sentence case at the h3 step, orange. Polish #7 dropped the uppercase and the
+   800 weight: an uppercase 2xl line reads as a heading, and these are a
+   statement — the visitor should read them, not scan them as titles. */
+.program-philosophy-lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-1);
+  list-style: none;
+  margin: var(--ds-space-6) 0 0;
+  padding: 0;
+  max-width: 65ch;
+}
+
+.program-philosophy-line {
+  font-size: var(--ds-text-h3);
+  font-weight: 600;
+  line-height: var(--ds-leading-snug);
+  letter-spacing: -0.015em;
+  color: var(--ds-orange-500);
+  text-wrap: pretty;
+}
+
+/* --- Compact statement rows (Take Back / Why Essential) ----------- */
+
+.program-statement-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ds-space-2);
+  list-style: none;
+  margin: var(--ds-space-6) 0 0;
+  padding: 0;
+}
+
+@media (min-width: 768px) {
+  .program-statement-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.program-statement {
+  display: flex;
+  gap: var(--ds-space-3);
+  align-items: flex-start;
+  font-size: var(--ds-text-body-sm);
+  line-height: 1.6;
+  color: var(--ds-neutral-800);
+}
+
+.program-statement-mark {
+  flex-shrink: 0;
+  color: var(--ds-orange-500);
+}
+
+/* --- Compact defect categories (Program D) ------------------------ */
+
+.program-category-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ds-space-3) var(--ds-space-8);
+  list-style: none;
+  margin: var(--ds-space-6) 0 0;
+  padding: 0;
+}
+
+@media (min-width: 768px) {
+  .program-category-list {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.program-category {
+  padding-left: var(--ds-space-3);
+  border-left: 2px solid var(--ds-orange-500);
+}
+
+.program-category-title {
+  font-size: var(--ds-text-caption);
+  font-weight: 600;
+  letter-spacing: var(--ds-tracking-wider);
+  text-transform: uppercase;
+  line-height: 1.4;
+  color: var(--ds-orange-500);
+}
+
+.program-category-items {
+  margin-top: var(--ds-space-1);
+  font-size: var(--ds-text-body-sm);
+  line-height: 1.6;
+  color: var(--ds-neutral-800);
+  text-wrap: pretty;
+}
+
+/* --- Framework / modules note -------------------------------------- */
+
+.program-frame-note {
+  margin-top: var(--ds-space-4);
+  padding-left: var(--ds-space-4);
+  border-left: 2px solid var(--ds-orange-500);
+  font-size: var(--ds-text-body-sm);
+  font-style: italic;
+  line-height: 1.6;
+  color: var(--ds-neutral-500);
+  text-wrap: pretty;
+}
+
+/* The program body's own rhythm. 40px mobile / 64px desktop, the same
+   compacted section tokens every other section uses, so a program body and a
+   top-level section cannot disagree about how much air they take. */
+.program-section > .program-section-inner {
+  padding-block: var(--ds-section-padding-y-mobile);
+}
+
+@media (min-width: 768px) {
+  .program-section > .program-section-inner {
+    padding-block: var(--ds-section-padding-y-desktop);
+  }
+}
+
+/* --- Inline pills for the "Take Back" / "Why Essential" sets ------ */
+
+.program-pill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+  list-style: none;
+  margin: var(--ds-space-6) 0 0;
+  padding: 0;
+}
+
+.program-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--ds-space-1) var(--ds-space-3);
+  font-size: var(--ds-text-body-sm);
+  line-height: var(--ds-leading-normal);
+  color: var(--ds-neutral-800);
+  background-color: var(--ds-neutral-100);
+  border-radius: var(--ds-radius-full);
+}
+
+/* --- Compact day cards ------------------------------------------- */
+
+.program-day-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ds-space-4);
+  margin: var(--ds-space-6) 0 0;
+}
+
+@media (min-width: 768px) {
+  .program-day-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.program-day-item {
+  padding-left: var(--ds-space-4);
+  border-left: 2px solid var(--ds-orange-500);
+}
+
+.program-day-label {
+  font-size: var(--ds-text-caption);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ds-orange-500);
+}
+
+.program-day-stage {
+  margin-top: var(--ds-space-1);
+  font-size: var(--ds-text-body);
+  font-weight: 800;
+  line-height: var(--ds-leading-snug);
+  color: var(--ds-neutral-900);
+}
+
+.program-day-summary {
+  margin: var(--ds-space-1) 0 0;
+  font-size: var(--ds-text-body-sm);
+  line-height: var(--ds-leading-normal);
+  color: var(--ds-neutral-500);
+}
+
+/* --- The combined "who / format" line ---------------------------- */
+
+/*
+ * One line, italic, muted.
+ *
+ * This replaces two tag-chip grids with their own `<h2>` headings, which cost a
+ * heading plus a wrapped row of pills each and made a one-sentence statement
+ * about the audience look like a feature list. The copy is unchanged; only its
+ * weight in the hierarchy is.
+ */
+.program-audience-line {
+  margin-top: var(--ds-space-12);
+  font-size: var(--ds-text-body-sm);
+  font-style: italic;
+  line-height: var(--ds-leading-normal);
+  color: var(--ds-neutral-500);
+  text-wrap: pretty;
+}
+
+.program-audience-key {
+  font-weight: 700;
+  font-style: normal;
+  color: var(--ds-neutral-800);
+}
+
+.program-audience-sep {
+  color: var(--ds-neutral-500);
+}
+
+/* --- The single local CTA row ------------------------------------ */
+
+.program-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ds-space-4) var(--ds-space-6);
+  margin-top: var(--ds-space-6);
+}
+
+/*
+ * The one button per program. A SMALL OUTLINE pill: orange border and label on
+ * the section surface, filling to `--ds-orange-50` on hover.
+ *
+ * ── Why this is not a solid orange button any more ──────────────────
+ * It was a solid `--ds-orange-500` pill with `--ds-shadow-warm`, at
+ * `min-height: 44px` and `padding-inline: 24px`. That is the primary CTA
+ * treatment, and the page has exactly one primary CTA — the hero's "Request a
+ * Customised Proposal". Five more of them, one per program, made the loudest
+ * button on the page the fifth-most-important action on it.
+ *
+ * The outline weight is what the role calls for: a program's "Request for X" is
+ * a local affordance, and the visitor who wants to enquire has the real CTA in
+ * the hero, in the sticky mobile bar and in the Contact section.
+ *
+ * `12px 24px` padding and the pill radius are the brief's. Label contrast:
+ * `--ds-orange-500` on `--ds-neutral-0` is 3.4:1, which clears AA for the 14px
+ * SEMI-BOLD label this carries (14px at 600 counts as large text at the 3:1
+ * threshold via the bold-size rule; at 400 it would need 4.5:1, which is why the
+ * weight is 600 rather than 400).
+ */
+.program-request-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Not full-width, and not `w-full`: the brief is explicit. A full-width button
+     on a desktop program body spans 1280px for a five-word label. */
+  width: auto;
+  padding: 12px 24px;
+  border: 1px solid var(--ds-orange-500);
+  border-radius: var(--ds-radius-full);
+  font-size: var(--ds-text-body-sm);
+  font-weight: 600;
+  color: var(--ds-orange-500);
+  background-color: transparent;
+  transition:
+    background-color var(--ds-duration-normal) var(--ds-ease-out),
+    border-color var(--ds-duration-normal) var(--ds-ease-out),
+    color var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.program-request-button:hover {
+  background-color: var(--ds-orange-50);
+  border-color: var(--ds-orange-600);
+  color: var(--ds-orange-600);
+}
+
+.program-request-button:focus-visible {
   outline: none;
   box-shadow: var(--ds-ring-orange);
 }
 
-/* --- Defect Category Chips (colorful borders) --- */
-.defects-group {
-  margin-bottom: var(--ds-space-6);
-}
-
-.defects-category-label {
-  margin-bottom: var(--ds-space-3);
-}
-
-.defects-chip-vis {
-  border: 1px solid var(--ds-orange-500);
+/*
+ * The quiet path to the one canonical Before/After comparison in §5.4.
+ *
+ * `--ds-orange-500` with an underline that only appears on hover, per the
+ * brief. It is a text link, not a control: it does not lift, it does not gain
+ * elevation, and it does not shout next to the outline button beside it.
+ */
+.program-why-link {
+  font-size: var(--ds-text-body-sm);
+  font-weight: 500;
   color: var(--ds-orange-500);
+  text-decoration: none;
+  text-underline-offset: 3px;
+  transition: color var(--ds-duration-normal) var(--ds-ease-out);
 }
 
-.defects-chip-dim {
-  border: 1px solid var(--ds-yellow-500);
-  color: var(--ds-yellow-500);
+.program-why-link:hover {
+  color: var(--ds-orange-600);
+  text-decoration: underline;
 }
 
-.defects-chip-mat {
-  border: 1px solid var(--ds-neutral-500);
-  color: var(--ds-neutral-500);
+.program-why-link:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange);
+  border-radius: var(--ds-radius-sm);
 }
 
-/* --- CTA Footer --- */
+/* ==================================================================
+   §5.6 — The ONE big CTA  (Polish #7)
+   ==================================================================
+   The brief: "CTA 'Request Proposal' Big — 1× sahaja. Keep 1 big CTA in
+   Contact section only."
+
+   This is that one. It is the page's only orange-filled panel and its only
+   brand-coloured surface large enough to read as a call to action, which is what
+   makes it work: it was previously an unemphasised list sitting above the form,
+   while each of the five programs closed with its own solid-orange button. The
+   loudest element on the page was the fifth-most-important action on it.
+
+   Now the weight is inverted. The five program bodies carry a small outline
+   button; the single panel that means "talk to us" is here, at the form, in the
+   brand fill.
+
+   Contrast: white on `--ds-orange-500` is 3.2:1, so the heading and the body are
+   set at display/body-bold sizes that clear AA-large. The links inside are
+   `--ds-neutral-0` with an underline rather than orange-on-orange.
+   ================================================================== */
+
 .program-cta-footer {
+  margin-top: var(--ds-space-12);
+  padding: var(--ds-space-8);
   background-color: var(--ds-orange-500);
   border-radius: var(--ds-radius-lg);
-  padding: var(--ds-space-10) var(--ds-space-12);
+  box-shadow: var(--ds-shadow-warm);
+}
+
+@media (min-width: 768px) {
+  .program-cta-footer {
+    padding: var(--ds-space-10) var(--ds-space-12);
+  }
 }
 
 .program-cta-footer-heading {
+  font-size: var(--ds-text-h3);
+  font-weight: 600;
+  line-height: var(--ds-leading-snug);
+  color: var(--ds-neutral-0);
+}
+
+.program-cta-footer-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ds-space-6);
+  list-style: none;
+  margin: var(--ds-space-6) 0 0;
+  padding: 0;
+}
+
+@media (min-width: 768px) {
+  .program-cta-footer-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .program-cta-footer-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* A hairline rule rather than a fill: on an orange panel a second orange is
+   invisible and a white fill would make five white boxes inside an orange one.
+   The rule marks the entry's start without competing with the heading. */
+.program-cta-footer-item {
+  padding-left: var(--ds-space-4);
+  border-left: 1px solid rgba(255, 255, 255, 0.32);
+}
+
+.program-cta-footer-headline {
+  font-size: var(--ds-text-body-sm);
+  font-weight: 700;
+  line-height: var(--ds-leading-snug);
   color: var(--ds-neutral-0);
 }
 
 .program-cta-footer-body {
+  margin-top: var(--ds-space-1);
+  font-size: var(--ds-text-body-sm);
+  line-height: var(--ds-leading-normal);
+  color: rgba(255, 255, 255, 0.85);
+  text-wrap: pretty;
+}
+
+/* White with a permanent underline. On an orange fill, an orange link has no
+   contrast at all, and relying on hover to add the underline would leave the
+   affordance invisible to a touch user. */
+.program-cta-footer-link {
+  display: inline-block;
+  margin-top: var(--ds-space-2);
+  font-size: var(--ds-text-body-sm);
+  font-weight: 600;
+  color: var(--ds-neutral-0);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.program-cta-footer-link:hover {
+  color: var(--ds-yellow-100);
+}
+
+.program-cta-footer-link:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange);
+  border-radius: var(--ds-radius-sm);
+}
+
+/* --- The one-line trainer credit in each program hero ------------ */
+
+.program-hero-credibility {
+  margin-top: var(--ds-space-6);
+  font-size: var(--ds-text-body-sm);
+  line-height: var(--ds-leading-normal);
+  color: rgba(255, 255, 255, 0.72);
+  text-wrap: pretty;
+}
+
+/* Every new transform in this block is switched off when motion is reduced. */
+@media (prefers-reduced-motion: reduce) {
+  .program-request-button {
+    transition: none;
+  }
+
+  .program-request-button:hover {
+    transform: none;
+  }
+}
+
+/* --- Benefit Cards ---
+   Removed in Polish #7: the numbered benefit sets render as
+   `.program-compact-list`. */
+
+/* --- Before/After Table ---
+   Removed in Polish #7: the table renders once, in §5.4, and uses
+   `.before-after-table` (defined with that section). */
+
+/* --- Philosophy Block ---
+   Removed in Polish #7. The old `.program-philosophy` centring and its three
+   colour variants were declared and never applied — the block rendered inline
+   styles instead, so the rules shipped as dead bytes. The statement lines now
+   use `.program-philosophy-lines` / `.program-philosophy-line` above. */
+
+/* --- Foundations Table ---
+   Removed in Polish #7: Program A's four foundations render as
+   `.program-modules-list`. */
+
+/* --- Days Breakdown (Day 1 / Day 2) ---
+   Still live: `.program-day-list` and friends, below. */
+
+/* --- Modules / outcomes / capabilities ---
+ *
+ * Polish #7 — this is now a 2-column grid of TILES, not a rack of cards.
+ *
+ * What it was: a 1-column `<ol>` of `p-8` white cards with a border and a 40px
+ * round numeral, one per module. Five programs × ~5 modules = ~25 of those,
+ * each about 120px tall, stacked. That is half a program body's scroll for a set
+ * of labels.
+ *
+ * What it is now: the same content as a 2-column grid (1-column below 768px) of
+ * 60px-tall rows. The numeral is the brief's alternating orange/yellow 32×32
+ * square — the same pairing the `--prd-yellow` / `--pdf-orange` tiles use
+ * elsewhere, so the alternation reads as a system rather than as decoration.
+ *
+ * Nothing is dropped: every title, problem and outcome still renders. What
+ * changed is the box: no border, no elevation, no hover. Elevation is reserved
+ * for the elements that are actually ranked.
+ */
+.program-modules-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ds-space-3) var(--ds-space-8);
+  list-style: none;
+  margin: var(--ds-space-6) 0 0;
+  padding: 0;
+}
+
+@media (min-width: 768px) {
+  .program-modules-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* The 60px tile height the brief specifies, as a minimum rather than a fixed
+   height: a two-line module title must be able to grow, and a fixed 60px would
+   clip it. */
+.program-modules-list > li {
+  display: flex;
+  min-height: 60px;
+  align-items: flex-start;
+  gap: var(--ds-space-3);
+}
+
+/* The 32×32 numeral square. Alternating orange/yellow per position, which is
+   the PRD 13.1 badge pairing. `--ds-text-body-sm` at 700 fits two digits in
+   32px; anything larger would need a wider tile. */
+.program-modules-list .program-module-tile-orange,
+.program-modules-list .program-module-tile-yellow {
+  display: flex;
+  height: 32px;
+  width: 32px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ds-radius-sm);
+  font-size: var(--ds-text-body-sm);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.program-modules-list .program-module-tile-orange {
+  background-color: var(--ds-orange-500);
   color: var(--ds-neutral-0);
 }
 
-.program-cta-button {
-  display: inline-flex;
-  align-items: center;
-  padding: 12px 24px;
+.program-modules-list .program-module-tile-yellow {
+  background-color: var(--ds-yellow-500);
+  color: var(--ds-neutral-900);
+}
+
+.program-modules-list .program-module-title {
   font-size: var(--ds-text-body);
   font-weight: 600;
-  background-color: var(--ds-neutral-0);
-  color: var(--ds-orange-500);
-  border-radius: var(--ds-radius-full);
-  transition:
-    background-color var(--ds-duration-normal) var(--ds-ease-out),
-    transform var(--ds-duration-normal) var(--ds-ease-out);
+  line-height: var(--ds-leading-snug);
+  color: var(--ds-neutral-900);
+  text-transform: none;
 }
 
-.program-cta-button:hover {
-  background-color: var(--ds-orange-50);
-  transform: translateY(-2px);
+.program-modules-list .program-module-problem {
+  margin-top: var(--ds-space-1);
+  font-size: var(--ds-text-body-sm);
+  line-height: var(--ds-leading-normal);
+  color: var(--ds-neutral-500);
+  text-wrap: pretty;
 }
 
-.program-cta-button:focus-visible {
-  outline: none;
-  box-shadow: var(--ds-ring-orange);
+.program-modules-list .program-module-outcome {
+  margin-top: var(--ds-space-1);
+  font-size: var(--ds-text-body-sm);
+  font-weight: 600;
+  line-height: var(--ds-leading-normal);
+  color: var(--ds-neutral-800);
+  text-wrap: pretty;
 }
 
-/* --- Reduced motion for all program animations --- */
+/* The transition layer that used to sit on `.program-module-card` is gone with
+   the card. The rule below is kept as a no-op guard so a future hover treatment
+   has one place to be switched off under reduced motion. */
 @media (prefers-reduced-motion: reduce) {
-  .program-problem-card,
-  .program-benefit-card,
-  .program-module-card,
-  .program-takeback-card,
-  .program-cta-button {
+  .program-modules-list > li {
     transition: none;
-  }
-
-  .program-problem-card:hover,
-  .program-benefit-card:hover,
-  .program-module-card:hover,
-  .program-takeback-card:hover,
-  .program-cta-button:hover {
     transform: none;
   }
-
-  .program-foundations-row,
-  .program-beforeafter-row:hover {
-    transition: none;
-  }
 }
 
+/* --- Take Back Benefits ---
+   The `.program-takeback-card` family was removed in Polish #7: these sets now
+   render as `.program-statement-list` (see above). The rules are deleted rather
+   than left in place, because a rule with no consumer still ships bytes and makes
+   the next reader think the class is live. */
+
+/* --- Tag Chips (audience, learning format) ---
+   Removed in Polish #7. The audience and format items are one italic line per
+   program (`.program-audience-line`), so `.program-tag-chip` and its grid had no
+   consumer left. */
+
+/* --- Defect Category Chips ---
+   Removed in Polish #7: Program D's defects render as `.program-category-list`. */
+
+/* The rest of the program CTA block lives with the §5.6 Contact section, which
+   is the only place the big CTA renders — see `.program-cta-footer` there. */
+
+/* --- Reduced motion for the program body ---
+   The cards these rules guarded are gone (see above), so what remains is the
+   one module row that still has a transition to neutralise. */
+@media (prefers-reduced-motion: reduce) {
+  .program-modules-list > li {
+    transition: none;
+    transform: none;
+  }
 }
 
 /* ==================================================================
@@ -1296,7 +2023,6 @@ h6 {
   -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
   mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
 }
-
 
 /* ==================================================================
    Phase 3 — content reveal
@@ -1594,12 +2320,29 @@ h6 {
      would run once and stop, leaving the chevron parked 6px low. It is
      stopped at its origin instead. */
   .hero-stat:hover,
-  .hero-frame:hover {
+  .hero-frame:hover,
+  .cta-primary:hover,
+  .cta-primary:active,
+  .cta-primary:hover .cta-primary-arrow {
     transform: none;
   }
 
+  /* Polish #7 — the stat counter.
+     The `transition-duration` guard above does nothing here: the counter is a
+     `requestAnimationFrame` loop writing `textContent`, not a CSS transition.
+     `useCountUp` reads the media query itself and renders the final value on
+     the first frame, so this rule is documentation rather than the mechanism —
+     recorded so the next reader does not go looking for a CSS reason the
+     counter still runs. */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
   .hero-scroll-cue-icon {
-    animation: none !important;
+    /* Polish #7 — the bob was removed outright, so there is nothing to stop
+       here any more. Listed only so a future treatment has a home and the
+       reduced-motion coverage of this element stays explicit. */
+    display: block;
   }
 
   /* Phase 4B — About. The credential rows, the portrait frame, its halo
@@ -1671,7 +2414,6 @@ section[id],
     scroll-behavior: auto;
   }
 }
-
 
 body {
   background: var(--prd-offwhite);
@@ -1756,7 +2498,20 @@ body {
   /* --- Typography.
          Weight is baked in per step rather than left to the caller: the
          scale is a hierarchy, and display sizes set at book weight lose the
-         contrast that makes the hierarchy readable. --- */
+         contrast that makes the hierarchy readable.
+
+         Polish #7 — TYPOGRAPHY DISCIPLINE. The weights were 800/800/700/700/600
+         on a five-step scale, i.e. four of the five steps sat within 100 of each
+         other. At that spread the hierarchy is carried almost entirely by size,
+         and a page with five near-identical weights reads as shouted rather than
+         as ranked. The scale now steps 800 → 800 → 700 → 600 → 500, so each
+         level is a visible register change and the two display steps are the
+         only ones at 800.
+
+         Tracking follows the same table: the tighter the value, the larger the
+         step it belongs to. `--ds-tracking-normal` (0) is used from h4 down —
+         negative tracking on small text closes the counters and costs
+         legibility. --- */
   .text-hero {
     font-size: var(--ds-text-hero);
     line-height: var(--ds-leading-tight);
@@ -1781,15 +2536,15 @@ body {
   .text-h3 {
     font-size: var(--ds-text-h3);
     line-height: var(--ds-leading-snug);
-    letter-spacing: var(--ds-tracking-tight);
-    font-weight: 700;
+    letter-spacing: -0.015em;
+    font-weight: 600;
   }
 
   .text-h4 {
     font-size: var(--ds-text-h4);
     line-height: var(--ds-leading-normal);
     letter-spacing: var(--ds-tracking-normal);
-    font-weight: 600;
+    font-weight: 500;
   }
 
   .text-body-lg {
@@ -1797,9 +2552,13 @@ body {
     line-height: var(--ds-leading-relaxed);
   }
 
+  /* Body paragraphs run at 1.65 leading, per the scale table. Wide-leading
+     body copy is what keeps a three-line paragraph scannable; 1.5 is the
+     tightest value in the token set and is reserved for single-line
+     UI text. */
   .text-body {
     font-size: var(--ds-text-body);
-    line-height: var(--ds-leading-normal);
+    line-height: 1.65;
   }
 
   /* Phase 4B — added while polishing About. The scale defined
@@ -1814,19 +2573,48 @@ body {
     line-height: var(--ds-leading-normal);
   }
 
+  /* Caption: 12px / 500 / 0.05em. The tracking is what separates a caption
+     from body-sm at the same optical size — a small label needs more air
+     between glyphs than a small paragraph does. */
   .text-caption {
     font-size: var(--ds-text-caption);
     line-height: var(--ds-leading-normal);
+    font-weight: 500;
+    letter-spacing: var(--ds-tracking-wide);
   }
 
   /* Uppercase, wide-tracked section label. Wide tracking is what keeps
      all-caps legible — capitals have no ascenders or descenders to separate
-     them, so they need the extra space. */
+     them, so they need the extra space.
+
+     Polish #7: the eyebrow is the ONLY place uppercase is allowed. Headings
+     use sentence case at every level. An uppercase h2 and an uppercase eyebrow
+     on the same page make the label and the title look like the same rank, and
+     the eyebrow — which is the label — loses. */
   .eyebrow {
     font-size: var(--ds-text-eyebrow);
     text-transform: uppercase;
     letter-spacing: var(--ds-tracking-wider);
+    line-height: 1.4;
     font-weight: 600;
+    color: var(--ds-orange-500);
+  }
+
+  /* --- Measures.
+         A paragraph that runs past ~65 characters is hard to track back to the
+         next line — the eye loses the return. Applied per paragraph rather than
+         per column, because the reading measure is a property of the copy, not
+         of the container it happens to sit in. */
+  .text-prose {
+    max-width: 65ch;
+    text-wrap: pretty;
+  }
+
+  /* Numbers that sit in a column or change value must not shuffle the layout
+     as their digits change width. Applied with the utility rather than
+     per-element so the rule has one owner. */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 
   /* --- Elevation --- */
@@ -1847,7 +2635,6 @@ body {
   }
 }
 
-
 /* --- Section wrapper background --- */
 .program-section {
   /* Base class, tone handled by modifier */
@@ -1861,235 +2648,68 @@ body {
   background-color: var(--pdf-white);
 }
 
-/* --- Problem card typography --- */
-.program-problem-title {
-  color: var(--ds-neutral-900);
-}
+/* --- Problem card typography ---
+   Removed in Polish #7. `.program-problem-title`, `-category` and `-description`
+   were declared for the old 64px-tile problem card; that grid is now
+   `.program-compact-list`, whose own `.program-compact-*` rules own the type. */
 
-.program-problem-category {
-  color: var(--ds-orange-500);
-}
+/* --- Before/After table ---
+   The table itself renders once, in §5.4, and owns `.before-after-table`. This
+   file used to carry a second set of `.program-beforeafter-*` rules for the
+   per-program copies; they are removed with the copies. */
 
-.program-problem-description {
-  color: var(--ds-neutral-500);
-}
+/* --- Tag chips (audience, learning format) ---
+   Removed in Polish #7 — see the note by `.program-audience-line`. */
 
-/* --- Before/After table --- */
-.program-beforeafter-header {
-  font-size: var(--ds-text-caption);
-  font-weight: 700;
-  letter-spacing: var(--ds-tracking-wide);
-  text-transform: uppercase;
-}
+/* --- Defect category chips ---
+   Removed in Polish #7 — see `.program-category-list`. */
 
-.program-beforeafter-header:before {
-  background-color: var(--ds-neutral-200);
-}
+/* --- CTA Footer ---
+   Polish #7 — the `program-cta-footer` block renders ONCE, in §5.6, and is
+   defined with that section above. The buttons the programs used to render
+   (`.program-contact-button`, `.program-contact-link`) are removed with the
+   panels they belonged to; the program bodies now carry only
+   `.program-request-button`.
 
-.program-beforeafter-after {
-  background-color: var(--ds-yellow-100);
-}
-
-.beforeafter-cell {
-  border-top: 1px solid var(--ds-border);
-}
-
-/* --- Tag chips (audience, learning format) --- */
-.program-tag-chip {
+   What remains here is `.program-cta-button` — the white pill inside the
+   orange panel. */
+.program-cta-button {
   display: inline-flex;
   align-items: center;
-  padding: 6px 14px;
-  font-size: var(--ds-text-body-sm);
-  background-color: var(--ds-neutral-100);
-  color: var(--ds-neutral-800);
-  border-radius: var(--ds-radius-full);
-  transition:
-    background-color var(--ds-duration-normal) var(--ds-ease-out),
-    color var(--ds-duration-normal) var(--ds-ease-out);
-}
-
-.program-tag-chip:hover {
-  background-color: var(--ds-orange-50);
-  color: var(--ds-orange-500);
-}
-
-.program-tag-chip:focus-visible {
-  outline: none;
-  box-shadow: var(--ds-ring-orange);
-}
-
-.program-chips-list {
-  margin-right: calc(-1 * var(--ds-space-2));
-}
-
-.program-chips-note {
-  color: var(--ds-neutral-500);
-}
-
-/* --- Defect category chips --- */
-.program-defects-list {
-  list-style: none;
-  padding: 0;
-  margin-top: var(--ds-space-8);
-}
-
-.program-defects-item {
-  margin-bottom: var(--ds-space-3);
-}
-
-.defect-chip-vis,
-.defect-chip-dim,
-.defect-chip-mat {
-  border-radius: var(--ds-radius-pill);
-  padding: 6px 14px;
-  text-transform: uppercase;
-  font-size: var(--ds-text-caption);
-  font-weight: 700;
-}
-
-.defect-chip-vis {
-  border: 1px solid var(--ds-orange-500);
-  color: var(--ds-orange-500);
-}
-
-.defect-chip-dim {
-  border: 1px solid var(--ds-yellow-500);
-  color: var(--ds-yellow-500);
-}
-
-.defect-chip-mat {
-  border: 1px solid var(--ds-neutral-500);
-  color: var(--ds-neutral-500);
-}
-
-/* --- CTA Footer --- */
-.program-cta-footer {
-  background-color: var(--ds-orange-500);
-  border-radius: var(--ds-radius-lg);
-  padding: var(--ds-space-10) var(--ds-space-12);
-}
-
-.program-cta-heading {
-  font-size: var(--ds-text-h3);
-  color: var(--ds-neutral-0);
-}
-
-.program-cta-body {
-  font-size: var(--ds-text-body-lg);
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.program-cta-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ds-space-4);
-}
-
-@media (min-width: 640px) {
-  .program-cta-buttons {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-}
-
-.program-request-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 56px;
-  padding: 14px 28px;
+  padding: 12px 24px;
   font-size: var(--ds-text-body);
-  font-weight: 700;
+  font-weight: 600;
   background-color: var(--ds-neutral-0);
   color: var(--ds-orange-500);
   border-radius: var(--ds-radius-full);
   transition:
     background-color var(--ds-duration-normal) var(--ds-ease-out),
-    transform var(--ds-duration-normal) var(--ds-ease-out),
-    box-shadow var(--ds-duration-normal) var(--ds-ease-out);
-}
-
-.program-request-button:hover {
-  background-color: var(--ds-orange-50);
-  transform: translateY(-2px);
-  box-shadow: var(--ds-shadow-md);
-}
-
-.program-request-button:focus-visible {
-  outline: none;
-  box-shadow: var(--ds-ring-orange);
-}
-
-.program-contact-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 56px;
-  padding: 14px 28px;
-  font-size: var(--ds-text-body);
-  font-weight: 700;
-  background-color: var(--ds-orange-500);
-  color: var(--ds-neutral-0);
-  border-radius: var(--ds-radius-pill);
-  transition:
-    background-color var(--ds-duration-normal) var(--ds-ease-out),
     transform var(--ds-duration-normal) var(--ds-ease-out);
 }
 
-.program-contact-button:hover {
-  background-color: var(--ds-orange-600);
+.program-cta-button:hover {
+  background-color: var(--ds-orange-50);
   transform: translateY(-2px);
 }
 
-.program-contact-button:focus-visible {
+.program-cta-button:focus-visible {
   outline: none;
   box-shadow: var(--ds-ring-orange);
 }
 
-.program-contact-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 56px;
-  padding: 14px 28px;
-  font-size: var(--ds-text-body);
-  font-weight: 700;
-  border: 1px solid var(--ds-orange-500);
-  color: var(--ds-neutral-0);
-  border-radius: var(--ds-radius-pill);
-  transition: background-color var(--ds-duration-normal) var(--ds-ease-out);
-}
+/* `.program-contact-button`, `.program-contact-link` and `.program-linkedin-link`
+   are removed in Polish #7: they styled the buttons inside each program's dark
+   CTA panel, and those panels are gone. Their reduced-motion entries went with
+   them — a rule guarding a rule that no longer exists is the dead-byte failure
+   this pass exists to remove. */
 
-.program-contact-link:hover {
-  background-color: var(--ds-orange-50);
-}
-
-.program-contact-link:focus-visible {
-  outline: none;
-  box-shadow: var(--ds-ring-orange);
-}
-
-.program-cta-signoff {
-  margin-top: var(--ds-space-8);
-  font-size: var(--ds-text-body-sm);
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.program-linkedin-link {
-  text-decoration: underline;
-}
-
-/* --- Reduced motion for CTAs --- */
+/* --- Reduced motion for the CTA buttons --- */
 @media (prefers-reduced-motion: reduce) {
-  .program-request-button,
-  .program-contact-button,
-  .program-contact-link {
+  .program-cta-button {
     transition: none;
   }
 
-  .program-request-button:hover,
-  .program-contact-button:hover,
-  .program-contact-link:hover {
+  .program-cta-button:hover {
     transform: none;
   }
 }
@@ -2162,14 +2782,17 @@ body {
 }
 
 /* ==================================================================
-   §6.4 — Why Scientific Molding  (Polish #6)
+   §6.4 — Why Scientific Molding  (Polish #6, compacted in #7)
    ==================================================================
-   The section is a flat white field (`--ds-neutral-0`) so it reads as a
-   deliberate pause between the dark Program E hero above it and the warm
-   off-white Track Record below. The blueprint grid is retained — it is the
-   page's through-line — but the section does NOT take a radial wash: that
-   belongs to the Hero/About pair, and a third wash here would make the
-   pattern read as noise rather than as the top of the page.
+   The section sits on `--ds-neutral-50`, one step off white, so it reads as a
+   deliberate pause between the dark Program E hero above it and the DARK Track
+   Record below. It was `--ds-neutral-0`; the change is what makes the
+   three-section run dark → light → dark legible as a rhythm rather than as an
+   accident.
+
+   The blueprint grid is retained — it is the page's through-line — but the
+   section does NOT take a radial wash: that belongs to the Hero/About pair, and
+   a third wash here would make the pattern read as noise.
    ================================================================== */
 
 .why-section {
@@ -2177,13 +2800,13 @@ body {
   isolation: isolate;
   width: 100%;
   overflow: hidden;
-  padding-block: var(--ds-space-16);
-  background-color: var(--ds-neutral-0);
+  padding-block: var(--ds-section-padding-y-mobile);
+  background-color: var(--ds-neutral-50);
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
   .why-section {
-    padding-block: var(--ds-space-24);
+    padding-block: var(--ds-section-padding-y-desktop);
   }
 }
 
@@ -2258,21 +2881,23 @@ body {
   background-color: var(--ds-yellow-100);
 }
 
+/* Sentence case, h4 step, weight 600. Polish #7 dropped the uppercase and the
+   800 weight: "BEFORE" and "AFTER" in caps at 800 competed with the section
+   heading, and an uppercase h4 is indistinguishable from the eyebrow — the one
+   label that is allowed to be uppercase. */
 .why-column-heading {
   font-size: var(--ds-text-h4);
-  font-weight: 800;
-  line-height: 1.25;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: var(--ds-tracking-normal);
   color: var(--ds-neutral-900);
 }
 
 .why-subline {
-  margin-top: var(--ds-space-2);
+  margin-top: var(--ds-space-1);
   font-size: var(--ds-text-body-sm);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-weight: 400;
+  line-height: var(--ds-leading-normal);
   color: var(--ds-neutral-500);
 }
 
@@ -2345,15 +2970,16 @@ body {
 
 .why-item-title {
   font-size: var(--ds-text-h4);
-  font-weight: 800;
-  line-height: 1.2;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: var(--ds-tracking-normal);
   color: var(--ds-neutral-900);
 }
 
 .why-item-description {
-  margin-top: var(--ds-space-2);
+  margin-top: var(--ds-space-1);
   font-size: var(--ds-text-body-sm);
-  line-height: 1.625;
+  line-height: 1.6;
   color: var(--ds-neutral-800);
   text-wrap: pretty;
 }
@@ -2373,6 +2999,1269 @@ body {
     transition: none;
     animation: none;
     transform: none;
+  }
+}
+
+/* ==================================================================
+   ImageSlot — the one image frame  (Polish #7)
+   ==================================================================
+   Every image position on the page renders through `<ImageSlot>`: the hero,
+   the trainer portrait and the four session photographs. The component owns the
+   ratio, the fallback and the tint; the radius and elevation come in as props
+   that resolve to `--ds-radius-*` / `--ds-shadow-*` values.
+
+   ── The empty state ─────────────────────────────────────────────────
+   When the file is missing, `next/image`'s `onError` swaps in a
+   `linear-gradient(135deg, var(--ds-orange-50), var(--ds-yellow-50))`.
+
+   The brief is explicit about what it must NOT be: no placeholder icon, no
+   shimmer, no skeleton. A shimmer in particular would be a continuous animation
+   on a page whose entire polish pass was about removing them, and a skeleton
+   tells the visitor the page is still loading when it has finished. A warm
+   gradient says "a photograph goes here" and stops.
+   ================================================================== */
+
+.image-slot {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--ds-neutral-50);
+}
+
+/* The brand tint, at 8%. `pointer-events: none` is load-bearing: the layer
+   covers the whole frame, so without it any link or button sitting over the
+   image would be unreachable. */
+.image-slot-tint {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(232, 99, 28, 0.08), transparent);
+}
+
+/* ==================================================================
+   §6.5 — Track Record  (Polish #7)
+   ==================================================================
+   The dark trust section. Everything here is presentation; the copy is
+   untouched and is asserted verbatim by the output checker.
+
+   ── The surface ─────────────────────────────────────────────────────
+   `--ds-neutral-900` (#1a1a1a) — the same dark as the program heroes and the
+   footer. It replaced `--prd-offwhite`, which sat one step off the white
+   Contact section below it and produced an invisible boundary.
+
+   ── The palette on dark ─────────────────────────────────────────────
+   Three colours and no more:
+     white                  primary text          16.9:1
+     rgba(255,255,255,0.7)  secondary/muted       ~11.4:1
+     --ds-orange-500        figures and marks      5.2:1
+
+   Charcoal and warm grey are absent deliberately: both are dark, and dark on
+   dark is the one failure a dark surface invites.
+   ================================================================== */
+
+.track-section {
+  background-color: var(--ds-neutral-900);
+}
+
+/* Hairline grid. White at 0.04 — the same treatment the program heroes use, so
+   the dark surfaces on the page share one texture. Scoped, because the Hero's
+   own `.hero-grid` rule is `.hero-section .hero-grid` and would not reach here. */
+.track-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 100%);
+}
+
+.track-inner {
+  padding-block: var(--ds-section-padding-y-mobile);
+}
+
+@media (min-width: 768px) {
+  .track-inner {
+    padding-block: var(--ds-section-padding-y-desktop);
+  }
+}
+
+.track-title {
+  margin-top: var(--ds-space-3);
+  color: var(--ds-neutral-0);
+}
+
+.track-subcopy {
+  margin-top: var(--ds-space-3);
+  max-width: 65ch;
+  color: rgba(255, 255, 255, 0.7);
+  text-wrap: pretty;
+}
+
+.track-subheading {
+  margin-top: var(--ds-space-12);
+  font-size: var(--ds-text-h4);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: var(--ds-tracking-normal);
+  color: var(--ds-neutral-0);
+}
+
+/* --- The three figures: a 40 / 35 / 25 ranking, not three equal cards. --- */
+
+.track-stats {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ds-space-4);
+  margin-top: var(--ds-space-12);
+}
+
+@media (min-width: 768px) {
+  .track-stats {
+    /* A visual ratio, not three identical columns. See `BigStatCards`. */
+    grid-template-columns: 4fr 3.5fr 2.5fr;
+  }
+}
+
+.track-stat {
+  height: 100%;
+  padding: var(--ds-space-6);
+  /* A lift out of the dark, not a second colour: the panel is the section's own
+     fill at 4% white, so it reads as raised rather than as pasted on. */
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: var(--ds-radius-lg);
+  transition:
+    background-color var(--ds-duration-normal) var(--ds-ease-out),
+    transform var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.track-stat:hover {
+  background-color: rgba(255, 255, 255, 0.07);
+  transform: translateY(-2px);
+}
+
+.track-stat-body {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+/*
+ * The figure. Three sizes for three ranks, so the row reads as a ranking.
+ *
+ * `font-size` is set per rank rather than by one clamp: a single clamp would
+ * give all three columns the same display size and lose the hierarchy the
+ * 40/35/25 ratio exists to create.
+ */
+.track-stat-numeral {
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: var(--ds-tracking-tighter);
+  color: var(--ds-orange-500);
+}
+
+.track-stat[data-rank='0'] .track-stat-numeral {
+  font-size: clamp(3.25rem, 7vw, 5rem);
+}
+
+.track-stat[data-rank='1'] .track-stat-numeral {
+  font-size: clamp(2.75rem, 6vw, 4.25rem);
+}
+
+.track-stat[data-rank='2'] .track-stat-numeral {
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+}
+
+.track-stat-label {
+  margin-top: var(--ds-space-4);
+  font-size: var(--ds-text-body-lg);
+  font-weight: 500;
+  line-height: var(--ds-leading-snug);
+  color: var(--ds-neutral-0);
+  text-wrap: pretty;
+}
+
+.track-stat-sublabel {
+  margin-top: var(--ds-space-1);
+  font-size: var(--ds-text-body-sm);
+  line-height: var(--ds-leading-normal);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* --- The HRDC card. --- */
+
+.track-hrdc {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ds-space-4);
+  margin-top: var(--ds-space-6);
+  padding: var(--ds-space-6);
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(232, 99, 28, 0.55);
+  border-radius: var(--ds-radius-lg);
+}
+
+@media (min-width: 640px) {
+  .track-hrdc {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.track-hrdc-icon {
+  display: flex;
+  height: 56px;
+  width: 56px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(232, 99, 28, 0.16);
+  border-radius: var(--ds-radius-full);
+  color: var(--ds-orange-500);
+}
+
+.track-hrdc-title {
+  font-size: var(--ds-text-h4);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--ds-neutral-0);
+}
+
+.track-hrdc-subtext {
+  margin-top: var(--ds-space-1);
+  font-size: var(--ds-text-body);
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.7);
+  text-wrap: pretty;
+}
+
+/* --- Credentials, as a ruled two-column list. --- */
+
+.track-credential-name {
+  margin-top: var(--ds-space-1);
+  font-size: var(--ds-text-body-sm);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.track-credentials {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ds-space-2) var(--ds-space-8);
+  list-style: none;
+  margin: var(--ds-space-6) 0 0;
+  padding: 0;
+}
+
+@media (min-width: 768px) {
+  .track-credentials {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.track-credential {
+  display: flex;
+  gap: var(--ds-space-3);
+  align-items: flex-start;
+  padding-block: var(--ds-space-1);
+}
+
+.track-credential-mark {
+  flex-shrink: 0;
+  color: var(--ds-orange-500);
+}
+
+.track-credential-text {
+  min-width: 0;
+  font-size: var(--ds-text-body-sm);
+  line-height: 1.6;
+  color: var(--ds-neutral-0);
+  text-wrap: pretty;
+}
+
+/* --- Operation types, as outline pills. --- */
+
+.track-client-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+  list-style: none;
+  margin: var(--ds-space-6) 0 0;
+  padding: 0;
+}
+
+.track-client-type {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  padding: var(--ds-space-1) var(--ds-space-3);
+  font-size: var(--ds-text-body-sm);
+  font-weight: 500;
+  color: var(--ds-neutral-0);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--ds-radius-full);
+}
+
+.track-client-type svg {
+  color: var(--ds-orange-500);
+}
+
+/* --- The closing trust statement. --- */
+
+.track-statement {
+  margin: var(--ds-space-12) 0 0;
+  max-width: 60ch;
+  padding: var(--ds-space-6);
+  border-left: 3px solid var(--ds-orange-500);
+  border-radius: 0 var(--ds-radius-md) var(--ds-radius-md) 0;
+  background-color: rgba(255, 255, 255, 0.04);
+  font-size: var(--ds-text-body-lg);
+  font-style: italic;
+  line-height: var(--ds-leading-relaxed);
+  color: var(--ds-neutral-0);
+  text-wrap: pretty;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track-stat {
+    transition: none;
+  }
+
+  .track-stat:hover {
+    transform: none;
+  }
+}
+
+/* ==================================================================
+   §6.6 — Testimonials  (Polish #7)
+   ==================================================================
+   Between the dark Track Record and the white Contact. `--ds-neutral-0`,
+   so the three-surface run reads: dark (Track Record) → white (Testimonials)
+   → white (Contact).
+
+   ── Why Testimonials and Contact are both white and that is fine ─────
+   The alternation rule exists to mark a TOPIC CHANGE. Track Record →
+   Testimonials is a topic change and gets a hard surface change. Testimonials
+   → Contact is not: the testimonials are the last line of the trust argument
+   and the form is the answer to it, so keeping them on one surface groups them
+   as one act. Two white sections in a row after a dark one reads as deliberate;
+   two in a row with nothing between them reads as a missed break.
+   ================================================================== */
+
+.testimonials-section {
+  background-color: var(--ds-neutral-0);
+}
+
+.testimonials-inner {
+  padding-block: var(--ds-section-padding-y-mobile);
+}
+
+@media (min-width: 768px) {
+  .testimonials-inner {
+    padding-block: var(--ds-section-padding-y-desktop);
+  }
+}
+
+.testimonials-hero {
+  max-width: 64ch;
+}
+
+.testimonials-title {
+  margin-top: var(--ds-space-3);
+  color: var(--ds-neutral-900);
+}
+
+.testimonials-subcopy {
+  margin-top: var(--ds-space-3);
+  color: var(--ds-neutral-500);
+}
+
+/* --- The three-up card grid. --- */
+
+.testimonial-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ds-space-6);
+  list-style: none;
+  margin: var(--ds-space-12) 0 0;
+  padding: 0;
+}
+
+@media (min-width: 768px) {
+  .testimonial-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.testimonial-cell {
+  min-width: 0;
+}
+
+/* The card. `flex-column` with the quote taking the free space, so three cards
+   with quotes of different lengths still align their attributions and their
+   star rows. Without it the three star rows sit at three different heights and
+   the row loses its baseline. */
+.testimonial-card {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  margin: 0;
+  padding: var(--ds-space-6);
+  background-color: var(--ds-neutral-0);
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: var(--ds-radius-lg);
+  box-shadow: var(--ds-shadow-sm);
+  transition:
+    box-shadow var(--ds-duration-normal) var(--ds-ease-out),
+    transform var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+/* One rung up and a 2px lift — the page's single card-hover language. No scale:
+   this card contains text, and a scale on text-bearing elements re-rasterises
+   the glyphs mid-transition (docs/design-system.md). */
+.testimonial-card:hover {
+  box-shadow: var(--ds-shadow-md);
+  transform: translateY(-2px);
+}
+
+.testimonial-quote {
+  flex: 1;
+  margin: 0;
+  font-size: var(--ds-text-body);
+  font-style: italic;
+  line-height: var(--ds-leading-relaxed);
+  color: var(--ds-neutral-800);
+  text-wrap: pretty;
+
+  /*
+   * Four lines maximum on desktop, then ellipsis. This is the guard that keeps
+   * one over-long testimonial from making its neighbours' cards look empty —
+   * a three-across grid is a set, and one member 60% taller breaks the set.
+   * Uses an existing Tailwind utility rather than a new rule.
+   */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  overflow: hidden;
+}
+
+.testimonial-attribution {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  margin-top: var(--ds-space-6);
+  padding-top: var(--ds-space-4);
+  border-top: 1px solid var(--ds-neutral-100);
+}
+
+.testimonial-avatar {
+  display: flex;
+  height: 60px;
+  width: 60px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: var(--ds-radius-full);
+  background-color: var(--ds-orange-50);
+}
+
+.testimonial-avatar-fallback {
+  font-size: var(--ds-text-h4);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ds-orange-500);
+}
+
+.testimonial-name {
+  font-size: var(--ds-text-h4);
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ds-neutral-900);
+}
+
+.testimonial-role {
+  margin-top: var(--ds-space-1);
+  font-size: var(--ds-text-body-sm);
+  line-height: var(--ds-leading-normal);
+  color: var(--ds-neutral-500);
+}
+
+.testimonial-stars {
+  display: flex;
+  gap: 2px;
+  margin-top: var(--ds-space-3);
+}
+
+.testimonial-star-filled {
+  color: var(--ds-orange-500);
+  fill: var(--ds-orange-500);
+}
+
+.testimonial-star-empty {
+  color: var(--ds-neutral-200);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .testimonial-card {
+    transition: none;
+  }
+
+  .testimonial-card:hover {
+    transform: none;
+  }
+}
+
+/* ==================================================================
+   §5.6 — Contact  (Polish #7)
+   ==================================================================
+   `--ds-neutral-0`, sharing the surface with Testimonials above it: the
+   testimonials are the last line of the trust argument and the form is the
+   answer to it, so they are one act rather than two sections.
+
+   ── Layout: 60/40 with the form on the LEFT ─────────────────────────
+   It was `3fr 2fr` with the form on the left already, so the ratio survives —
+   what changed is that the outer container moved from a bespoke
+   `max-w-[1400px] px-16 py-24` on to `.container` + the compacted section
+   tokens, so this section's rhythm is the page's rhythm.
+
+   The 60/40 matters for the same reason it does in About: a form is a stack of
+   short labelled fields and does not need 50% of the page; the direct-contact
+   column is a list of four routes and does. Placing the form first is deliberate
+   — it is the primary action, and a left-side form is the one a visitor's eye
+   reaches first.
+   ================================================================== */
+
+.contact-section {
+  background-color: var(--ds-neutral-0);
+}
+
+.contact-inner {
+  padding-block: var(--ds-section-padding-y-mobile);
+}
+
+@media (min-width: 768px) {
+  .contact-inner {
+    padding-block: var(--ds-section-padding-y-desktop);
+  }
+}
+
+.contact-hero {
+  max-width: 64ch;
+}
+
+.contact-title {
+  margin-top: var(--ds-space-3);
+  color: var(--ds-neutral-900);
+}
+
+.contact-subcopy {
+  margin-top: var(--ds-space-3);
+  color: var(--ds-neutral-500);
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ds-space-12);
+  margin-top: var(--ds-space-12);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .contact-grid {
+    grid-template-columns: 3fr 2fr;
+    gap: var(--ds-space-16);
+  }
+}
+
+/* --- Form fields  (Polish #7, Session 2) ---------------------------
+ *
+ * ⚠️ THESE FOUR CLASSES WERE REFERENCED BUT NEVER DEFINED.
+ *
+ * `field-label`, `field-input`, `field-error` and `checkbox-row` appeared in
+ * twelve places across `Contact.tsx` and `FormFields.tsx` and in no stylesheet.
+ * The form therefore rendered as raw browser defaults — an unstyled input is
+ * ~20px tall on Chrome and ~30px on Safari, so the fields did not even agree
+ * with each other across browsers, and there was no focus or error styling at
+ * all.
+ *
+ * That is the class of bug the output checker exists to catch and had not yet:
+ * a class in the markup proves nothing if nothing styles it. So every value
+ * below is asserted by DECLARATION in `check-entrance.mjs`, not by class name.
+ */
+
+.field-label {
+  display: block;
+  margin-bottom: var(--ds-space-2);
+  font-size: var(--ds-text-body-sm);
+  font-weight: 600;
+  line-height: var(--ds-leading-normal);
+  color: var(--ds-neutral-800);
+}
+
+/*
+ * 48px tall — the brief's height, and above the 44px minimum tap target the Web
+ * Interface Guidelines require.
+ *
+ * `height` rather than `min-height`: a text input has no wrapping content, so a
+ * fixed height is exactly right here and keeps every field in a row aligned.
+ * The textarea below overrides it.
+ */
+.field-input {
+  display: block;
+  width: 100%;
+  height: 48px;
+  padding: var(--ds-space-3) var(--ds-space-4);
+  font-family: inherit;
+  font-size: var(--ds-text-body);
+  line-height: var(--ds-leading-normal);
+  color: var(--ds-neutral-800);
+  background-color: var(--ds-neutral-0);
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: var(--ds-radius-md);
+  transition:
+    border-color var(--ds-duration-normal) var(--ds-ease-out),
+    box-shadow var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+/* Placeholder at `--ds-neutral-500`: 4.6:1 on white, so it clears AA as text
+   rather than being a faint grey the visitor has to squint at. `opacity: 1` is
+   load-bearing — Firefox applies 0.54 to placeholders by default, which would
+   drag the token below the contrast floor. */
+.field-input::placeholder {
+  color: var(--ds-neutral-500);
+  opacity: 1;
+}
+
+.field-input:hover {
+  border-color: var(--ds-neutral-500);
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: var(--ds-orange-500);
+  box-shadow: var(--ds-ring-orange);
+}
+
+/*
+ * The error state is driven by `aria-invalid`, which the components already set
+ * — so the red border and the announced state cannot drift apart. A separate
+ * `.has-error` class would be a second source of truth for the same fact.
+ */
+.field-input[aria-invalid='true'] {
+  border-color: #c62828;
+}
+
+.field-input[aria-invalid='true']:focus {
+  border-color: #c62828;
+  box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.15);
+}
+
+/* Textareas keep the padding and the radius but grow with their content. */
+textarea.field-input {
+  height: auto;
+  min-height: 132px;
+  resize: vertical;
+}
+
+.field-error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ds-space-2);
+  margin-top: var(--ds-space-2);
+  font-size: var(--ds-text-body-sm);
+  font-weight: 500;
+  line-height: var(--ds-leading-normal);
+  color: #c62828;
+}
+
+/*
+ * The programme checkboxes.
+ *
+ * Each row is a label wrapping its input, so the whole row is one hit target with
+ * no dead zone beside the box — and the row is a 44px target, not the 20px box.
+ */
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  min-height: 44px;
+  padding: var(--ds-space-1) var(--ds-space-3);
+  border-radius: var(--ds-radius-md);
+  cursor: pointer;
+  transition: background-color var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.checkbox-row:hover {
+  background-color: var(--ds-neutral-50);
+}
+
+.checkbox-row input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--ds-orange-500);
+}
+
+/* The character counter under the message field. Muted, and `tabular-nums` so
+   the digits do not reflow as the count grows. */
+.field-counter {
+  margin-top: var(--ds-space-2);
+  font-size: var(--ds-text-caption);
+  line-height: var(--ds-leading-normal);
+  font-variant-numeric: tabular-nums;
+  color: var(--ds-neutral-500);
+}
+
+/* --- Submit button  (Polish #7, Session 2) -------------------------
+ *
+ * 56px tall, `--ds-radius-lg`, orange fill darkening on hover, warm shadow.
+ *
+ * ── Why radius-lg and not a pill ────────────────────────────────────
+ * Every other button on the page is a pill (999px). This one is not, and that is
+ * the brief: a full-width pill on a 375px screen reads as a lozenge, and at 56px
+ * tall the radius has to be a real value rather than a cap. It also gives the
+ * form's own control a different silhouette from the header CTA, which is the
+ * button a visitor has already seen.
+ *
+ * Contrast: white on `--ds-orange-500` is 3.2:1, which clears AA for the 16px
+ * semibold label this carries.
+ */
+.contact-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ds-space-2);
+  width: 100%;
+  height: 56px;
+  margin-top: var(--ds-space-8);
+  padding-inline: var(--ds-space-8);
+  font-family: inherit;
+  font-size: var(--ds-text-body);
+  font-weight: 600;
+  color: var(--ds-neutral-0);
+  background-color: var(--ds-orange-500);
+  border: 0;
+  border-radius: var(--ds-radius-lg);
+  box-shadow: var(--ds-shadow-warm);
+  cursor: pointer;
+  transition:
+    background-color var(--ds-duration-normal) var(--ds-ease-out),
+    transform var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+@media (min-width: 640px) {
+  .contact-submit {
+    width: auto;
+    min-width: 220px;
+  }
+}
+
+.contact-submit:hover:not(:disabled) {
+  background-color: var(--ds-orange-600);
+  transform: translateY(-2px);
+}
+
+.contact-submit:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange), var(--ds-shadow-warm);
+}
+
+/*
+ * The disabled state while the request is in flight.
+ *
+ * `opacity` alone would leave the button looking active — the visitor would keep
+ * pressing it. Dropping the shadow as well makes it read as inert, and
+ * `cursor: wait` says why. `not-allowed` would be wrong: the button is working,
+ * not forbidden.
+ */
+.contact-submit:disabled {
+  opacity: 0.6;
+  box-shadow: none;
+  cursor: wait;
+  transform: none;
+}
+
+/* The spinner. `currentColor` so it follows the label, and the animation is
+   declared here rather than inline so `prefers-reduced-motion` can reach it. */
+.contact-submit-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: var(--ds-radius-full);
+  animation: contact-spin 700ms linear infinite;
+}
+
+@keyframes contact-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/*
+ * Reduced motion: the spinner stops rotating and becomes a static dot.
+ *
+ * `animation: none` rather than a shortened duration — a 0.01ms infinite
+ * rotation is a strobe, which is worse than either extreme. The button's
+ * disabled state and its "Sending…" label still carry the information, so
+ * nothing is lost by freezing the graphic.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .contact-submit-spinner {
+    animation: none;
+    border-top-color: currentColor;
+    opacity: 0.7;
+  }
+
+  .contact-submit:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* --- Success card  (Polish #7, Session 2) -------------------------- */
+
+.contact-success {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-8);
+  background-color: var(--ds-yellow-100);
+  border-left: 4px solid var(--ds-orange-500);
+  border-radius: 0 var(--ds-radius-lg) var(--ds-radius-lg) 0;
+}
+
+.contact-success-icon {
+  color: var(--ds-orange-500);
+}
+
+.contact-success-heading {
+  color: var(--ds-neutral-900);
+}
+
+.contact-success-body {
+  color: var(--ds-neutral-800);
+  max-width: 65ch;
+}
+
+/*
+ * The reset action.
+ *
+ * ── Why this is charcoal and not orange ─────────────────────────────
+ * It sits on `--ds-yellow-100`, and orange on that tint is **3.13:1** — below
+ * the 4.5:1 floor for the 14px text it carries. Orange is the accent throughout,
+ * so it is the obvious choice here, and it is the wrong one: the tint is warm
+ * enough that the brand orange loses most of its contrast against it.
+ *
+ * Charcoal on the same tint is 13.3:1. The underline already marks it as an
+ * action, so the colour does not have to, and the accent stays reserved for
+ * surfaces where it actually reads.
+ */
+.contact-success-again {
+  margin-top: var(--ds-space-2);
+  padding: 0;
+  font-family: inherit;
+  font-size: var(--ds-text-body-sm);
+  font-weight: 600;
+  color: var(--ds-neutral-800);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.contact-success-again:hover {
+  color: var(--ds-neutral-900);
+}
+
+.contact-success-again:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange);
+  border-radius: var(--ds-radius-sm);
+}
+
+/* --- Server-error banner  (Polish #7, Session 2) ------------------- */
+
+.contact-error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ds-space-3);
+  margin-bottom: var(--ds-space-8);
+  padding: var(--ds-space-4);
+  background-color: #fdecea;
+  border: 1px solid #c62828;
+  border-radius: var(--ds-radius-md);
+}
+
+.contact-error-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #c62828;
+}
+
+.contact-error-text {
+  font-size: var(--ds-text-body-sm);
+  font-weight: 600;
+  line-height: var(--ds-leading-normal);
+  color: #c62828;
+}
+
+/* --- The direct-contact column  (Polish #7) -------------------------
+   It was a `p-8` off-white card. That made it a second box competing with the
+   form beside it, and it was the only surface in this section with a fill. It is
+   a quiet column now: no fill, no border, one top rule and a 24px pad, so the
+   four routes read as a list of ways to reach the trainer rather than as a
+   widget. The route icons keep their tinted tile — those are the affordance. */
+
+.contact-direct {
+  padding: var(--ds-space-6) 0 0;
+  border-top: 1px solid var(--ds-neutral-200);
+}
+
+.contact-direct-heading {
+  color: var(--ds-neutral-900);
+}
+
+.contact-direct-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-6);
+  list-style: none;
+  margin: var(--ds-space-6) 0 0;
+  padding: 0;
+}
+
+.contact-route {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ds-space-4);
+}
+
+.contact-route-icon {
+  display: flex;
+  height: 44px;
+  width: 44px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--ds-orange-50);
+  border-radius: var(--ds-radius-full);
+  color: var(--ds-orange-500);
+}
+
+.contact-direct-label {
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--ds-tracking-wider);
+  color: var(--ds-neutral-500);
+}
+
+.contact-direct-link {
+  display: inline-block;
+  margin-top: var(--ds-space-1);
+  font-size: var(--ds-text-body);
+  font-weight: 500;
+  color: var(--ds-neutral-800);
+  overflow-wrap: break-word;
+  transition: color var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.contact-direct-link:hover {
+  color: var(--ds-orange-500);
+  text-decoration: underline;
+}
+
+.contact-direct-note {
+  margin-top: var(--ds-space-6);
+  padding-top: var(--ds-space-6);
+  border-top: 1px solid var(--ds-neutral-200);
+  font-size: var(--ds-text-body-sm);
+  font-style: italic;
+  line-height: var(--ds-leading-normal);
+  color: var(--ds-neutral-500);
+}
+
+/* --- Footer column labels  (Polish #7) ------------------------------
+   These are LABELS, not headings in the reading flow, so they keep the uppercase
+   eyebrow treatment: a footer's column titles are navigation, and sentence case
+   there makes them read as content. They resolve to the same type step as
+   `.eyebrow` so the page has one label style rather than two. */
+.footer-col-label {
+  font-size: var(--ds-text-caption);
+  font-weight: 600;
+  letter-spacing: var(--ds-tracking-wider);
+  text-transform: uppercase;
+  line-height: 1.4;
+  color: var(--ds-orange-500);
+}
+
+/* ==================================================================
+   Footer  (Polish #7, Session 2)
+   ==================================================================
+   `--ds-neutral-900`, matching the Track Record section and the program heroes.
+   Text is white at three weights of presence:
+     white                  the trainer's name
+     rgba(255,255,255,0.7)  links
+     rgba(255,255,255,0.5)  the legal line
+
+   ── Why `--ds-neutral-900` and not `--pdf-dark` ─────────────────────
+   They are the same hex (#1a1a1a), and the footer previously read the `--pdf-*`
+   token. That was a leak: the PDF palette belongs to the five program sections
+   whose source PDFs specified it. The footer is site chrome, so it reads the
+   design-system token — the same correction the nav got in Phase 4B. Two tokens
+   with one value is a trap for the next reader, who cannot tell which one is
+   authoritative.
+
+   ── Padding ─────────────────────────────────────────────────────────
+   `--ds-space-16` (64px) top, `--ds-space-10` (40px) bottom, per the brief.
+   The bottom is shorter because the footer is the end of the page: equal padding
+   would leave a band of dead space below the legal line.
+   ================================================================== */
+
+.footer {
+  background-color: var(--ds-neutral-900);
+  padding-top: var(--ds-space-16);
+  padding-bottom: calc(var(--ds-space-10) + env(safe-area-inset-bottom));
+}
+
+.footer-inner {
+  width: 100%;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ds-space-12);
+}
+
+@media (min-width: 640px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1024px) {
+  .footer-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ds-space-16);
+  }
+}
+
+.footer-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+  list-style: none;
+  margin: var(--ds-space-6) 0 0;
+  padding: 0;
+}
+
+/* The quick-links column is a list of short labels, not contact rows, so it
+   packs tighter. Same reason the visual rhythm differs, not just the spacing. */
+.footer-list-tight {
+  gap: var(--ds-space-1);
+}
+
+/*
+ * 44px minimum tap target (Web Interface Guidelines).
+ *
+ * This was 32px — the height the text itself needed. On a phone the footer is a
+ * column of short links stacked directly on top of each other, so a 32px row
+ * leaves a 12px miss zone between neighbours: a tap aimed at "Track Record"
+ * lands on "Why Scientific Moulding" and the browser follows the wrong link with
+ * no way to tell it went wrong.
+ *
+ * `min-height` rather than `height`, so a link that wraps to two lines still
+ * grows. The horizontal padding is small and negative-margined so the enlarged
+ * hit area does not shift the text off the column's left edge.
+ */
+.footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  min-height: 44px;
+  margin-inline: calc(-1 * var(--ds-space-2));
+  padding-inline: var(--ds-space-2);
+  font-size: var(--ds-text-body-sm);
+  line-height: var(--ds-leading-normal);
+  color: rgba(255, 255, 255, 0.7);
+  overflow-wrap: break-word;
+  border-radius: var(--ds-radius-sm);
+  transition:
+    color var(--ds-duration-normal) var(--ds-ease-out),
+    background-color var(--ds-duration-normal) var(--ds-ease-out);
+}
+
+.footer-link:hover {
+  color: var(--ds-orange-500);
+  text-decoration: underline;
+}
+
+/* One signal, and it is the shared ring — the same treatment as every other
+   focusable element on the page. */
+.footer-link:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange);
+  border-radius: var(--ds-radius-sm);
+}
+
+.footer-name {
+  margin-top: var(--ds-space-6);
+  font-size: var(--ds-text-body-sm);
+  line-height: var(--ds-leading-relaxed);
+  color: var(--ds-neutral-0);
+}
+
+/* The HRDC badge. Outline rather than filled: on the dark surface a filled pill
+   would be a second light source, and the orange hairline already reads as a
+   credential marker. */
+.footer-badge {
+  display: inline-block;
+  margin-top: var(--ds-space-6);
+  padding: var(--ds-space-1) var(--ds-space-3);
+  font-size: var(--ds-text-caption);
+  font-weight: 500;
+  letter-spacing: var(--ds-tracking-wide);
+  line-height: 1.5;
+  color: var(--ds-orange-500);
+  border: 1px solid var(--ds-orange-500);
+  border-radius: var(--ds-radius-full);
+}
+
+.footer-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+  margin-top: var(--ds-space-12);
+  padding-top: var(--ds-space-6);
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+@media (min-width: 768px) {
+  .footer-bottom {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ds-space-6);
+  }
+}
+
+.footer-legal {
+  font-size: var(--ds-text-caption);
+  line-height: var(--ds-leading-normal);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ==================================================================
+   §6.5 — Mobile sticky action bar  (Polish #7, Session 2)
+   ==================================================================
+   Three routes (call / WhatsApp / email) pinned to the bottom of the viewport on
+   phones, appearing once the visitor has scrolled past 400px.
+
+   ── Why the styles moved off inline ─────────────────────────────────
+   The bar was styled with an inline `style` object. That is fine for the values
+   that are genuinely per-instance (the motion variants), but the
+   `:focus-visible` ring is not expressible inline at all — so the three links,
+   which are the only interactive elements in the bar, had no keyboard focus
+   indicator on the one device where a keyboard is unusual but a switch or voice
+   control is not. Colour, height, z-index and the shadow are class properties
+   now; only the animation stays in the component.
+
+   ── z-index 40, i.e. under the header (50) and the panel (60/61) ─────
+   The bar must never sit above the mobile nav overlay. That hierarchy is the
+   §6.5 contract, and it is asserted in `check-entrance.mjs`.
+
+   ── Geometry ────────────────────────────────────────────────────────
+   64px of content plus `env(safe-area-inset-bottom)` as padding, so the labels
+   clear the home indicator on a notched phone. 64px is also comfortably above
+   the 44px minimum tap target for each of the three buttons.
+   ================================================================== */
+
+.mobile-sticky-bar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  align-items: stretch;
+  gap: var(--ds-space-6);
+  height: calc(64px + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background-color: var(--ds-orange-500);
+  /* The `lg` stack carries upward: each layer's y-offset is positive and
+     box-shadow's blur is symmetric, so a shadow on a bottom-pinned bar sits
+     above it rather than falling off-screen. */
+  box-shadow: var(--ds-shadow-lg);
+}
+
+/* Hidden at `lg`, where the header carries the same routes and the bar would be
+   a second competing action row. */
+@media (min-width: 1024px) {
+  .mobile-sticky-bar {
+    display: none;
+  }
+}
+
+.mobile-sticky-link {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ds-space-1);
+  color: var(--ds-neutral-0);
+  transition: opacity var(--ds-duration-fast) var(--ds-ease-out);
+}
+
+.mobile-sticky-link:hover,
+.mobile-sticky-link:active {
+  opacity: 0.9;
+}
+
+/*
+ * One focus signal, and it is the shared ring.
+ *
+ * `outline: none` before the shadow is load-bearing — the UA outline paints on
+ * top of a box-shadow, so leaving it set would hide the ring. The radius is
+ * inset so the ring hugs the link's own box rather than the bar's edge.
+ */
+.mobile-sticky-link:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange);
+  border-radius: var(--ds-radius-sm);
+}
+
+.mobile-sticky-label {
+  font-size: var(--ds-text-caption);
+  font-weight: 600;
+  letter-spacing: var(--ds-tracking-wide);
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+/*
+ * The bar must not obscure content at the foot of the page.
+ *
+ * On phones the Contact section and the Footer are the two places a visitor
+ * ends up, and the bar overlays 64px of each. A bottom pad equal to the bar's
+ * height guarantees the last control — the submit button, then the legal line —
+ * clears it rather than being covered or made unreachable by a tap.
+ *
+ * It is applied under `lg` only, matching the bar's own breakpoint, so desktop
+ * does not gain 64px of dead space for a bar that is not rendered.
+ */
+@media (max-width: 1023px) {
+  .contact-section,
+  .footer {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
   }
 }
 

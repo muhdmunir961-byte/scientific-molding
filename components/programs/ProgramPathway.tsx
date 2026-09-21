@@ -15,9 +15,9 @@
  */
 
 import ScrollReveal from '../about/ScrollReveal';
-import TrainerCredibility from '../shared/TrainerCredibility';
 import ProgramHero from './ProgramHero';
 import LevelBadge from './LevelBadge';
+import { ctaLabelFor } from './program-cta-content';
 import {
   PROGRAM_E_CTA,
   PROGRAM_E_HERO,
@@ -29,8 +29,7 @@ import {
 } from './program-e-content';
 
 /** Shared heading style for this program's body sections. */
-const HEADING_CLASS =
-  'mt-16 text-2xl font-extrabold leading-tight tracking-[-0.01em] text-[var(--pdf-charcoal)] sm:text-3xl';
+const HEADING_CLASS = 'mt-12 text-h3 font-semibold text-[var(--ds-neutral-800)]';
 
 export default function ProgramPathway() {
   const id = PROGRAM_E_HERO.id;
@@ -45,31 +44,20 @@ export default function ProgramPathway() {
         subcopy={PROGRAM_E_HERO.subcopy}
       />
 
-      <div
-        className="relative isolate w-full"
-        style={{ backgroundColor: 'var(--prd-offwhite)' }}
-      >
-        <div className="mx-auto w-full max-w-[1400px] px-8 py-16 sm:px-12 lg:px-16 lg:py-24">
+      <div className="program-section relative isolate w-full program-section-offwhite">
+        <div className="container program-section-inner">
           <StatStrip />
-
           <ScrollReveal>
             <h2 id={`${id}-modules`} className={HEADING_CLASS}>
               {PROGRAM_E_SECTION.heading}
             </h2>
-            <p
-              className="mt-4 text-lg font-semibold leading-snug"
-              style={{ color: 'var(--pdf-warm-grey)' }}
-            >
-              {PROGRAM_E_SECTION.subline}
-            </p>
+            <p className="program-e-subline">{PROGRAM_E_SECTION.subline}</p>
           </ScrollReveal>
 
           <ModuleCards />
           <PathwayBlock />
           <OrganisationBlock />
           <ClosingCta />
-
-          <TrainerCredibility />
         </div>
       </div>
     </section>
@@ -80,27 +68,15 @@ export default function ProgramPathway() {
 function StatStrip() {
   return (
     <ScrollReveal>
-      <dl className="grid grid-cols-2 gap-8 lg:grid-cols-4">
+      <dl className="program-e-stats">
         {PROGRAM_E_STATS.map((stat) => (
           <div key={stat.label} className="flex min-w-0 flex-col">
             <dt className="sr-only">{stat.label}</dt>
             <dd className="m-0 flex flex-col">
-              <span
-                aria-hidden="true"
-                className="text-4xl font-extrabold leading-none sm:text-5xl"
-                style={{
-                  color: 'var(--pdf-orange)',
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
+              <span aria-hidden="true" className="program-e-stat-value">
                 {stat.value}
               </span>
-              <span
-                className="mt-2 text-sm font-bold uppercase tracking-[0.08em]"
-                style={{ color: 'var(--pdf-warm-grey)' }}
-              >
-                {stat.label}
-              </span>
+              <span className="program-e-stat-label">{stat.label}</span>
             </dd>
           </div>
         ))}
@@ -122,76 +98,38 @@ function StatStrip() {
  */
 function ModuleCards() {
   return (
-    <ol className="mt-8 grid list-none grid-cols-1 gap-8 p-0 md:grid-cols-2 lg:grid-cols-3">
-      {PROGRAM_E_MODULES.map((module) => {
+    <ol className="program-modules-list program-e-modules">
+      {PROGRAM_E_MODULES.map((module, i) => {
         return (
-          <li
-            key={module.code}
-            className="flex flex-col p-8"
-            style={{
-              backgroundColor: 'var(--pdf-white)',
-              borderRadius: 'var(--prd-radius)',
-              border: '1px solid var(--prd-border)',
-            }}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <span
-                aria-hidden="true"
-                className="flex h-12 w-12 shrink-0 items-center justify-center text-base font-extrabold leading-none"
-                style={{
-                  backgroundColor: 'var(--pdf-orange)',
-                  color: 'var(--pdf-white)',
-                  borderRadius: 'var(--prd-radius-sm)',
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {module.number}
-              </span>
+          <li key={module.code}>
+            <span
+              aria-hidden="true"
+              className={`program-module-tile-${i % 2 === 0 ? 'orange' : 'yellow'}`}
+            >
+              {module.number}
+            </span>
 
-              <LevelBadge label={module.badge} />
+            <div className="min-w-0 flex-1">
+              <div className="program-e-module-head">
+                <LevelBadge label={module.badge} />
+                <span className="program-e-module-meta">
+                  {module.code} &middot; {module.duration}
+                </span>
+              </div>
+
+              <h3 className="program-module-title mt-2">{module.title}</h3>
+              <p className="program-module-problem">{module.description}</p>
+
+              <ul className="program-e-tags">
+                {module.tags.map((tag) => (
+                  <li key={tag}>
+                    <span className="program-e-tag">{tag}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <p className="program-module-outcome">{module.outcome}</p>
             </div>
-
-            <p
-              className="mt-4 text-xs font-bold uppercase tracking-[0.12em]"
-              style={{ color: 'var(--pdf-warm-grey)' }}
-            >
-              {module.code} &middot; {module.duration}
-            </p>
-
-            <h3 className="mt-2 text-lg font-bold leading-snug text-[var(--pdf-charcoal)]">
-              {module.title}
-            </h3>
-
-            <p
-              className="mt-2 text-[0.9375rem] leading-relaxed"
-              style={{ color: 'var(--pdf-warm-grey)', textWrap: 'pretty' }}
-            >
-              {module.description}
-            </p>
-
-            <ul className="mt-4 flex list-none flex-wrap gap-2 p-0">
-              {module.tags.map((tag) => (
-                <li key={tag}>
-                  <span
-                    className="inline-flex items-center px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-[0.06em]"
-                    style={{
-                      backgroundColor: 'var(--prd-neutral)',
-                      color: 'var(--pdf-charcoal)',
-                      borderRadius: 'var(--prd-radius-pill)',
-                    }}
-                  >
-                    {tag}
-                  </span>
-                </li>
-              ))}
-            </ul>
-
-            <p
-              className="mt-4 border-t pt-4 text-[0.9375rem] font-semibold leading-relaxed text-[var(--pdf-charcoal)]"
-              style={{ borderColor: 'var(--prd-border)' }}
-            >
-              {module.outcome}
-            </p>
           </li>
         );
       })}
@@ -206,33 +144,13 @@ function PathwayBlock() {
       <h2 id="pathway-pathway" className={HEADING_CLASS}>
         {PROGRAM_E_PATHWAY.heading}
       </h2>
-      <p
-        className="mt-4 text-base leading-relaxed"
-        style={{ color: 'var(--pdf-warm-grey)' }}
-      >
-        {PROGRAM_E_PATHWAY.note}
-      </p>
+      <p className="program-e-note">{PROGRAM_E_PATHWAY.note}</p>
 
-      <ol className="mt-8 flex list-none flex-wrap gap-4 p-0">
+      <ol className="program-e-steps">
         {PROGRAM_E_PATHWAY.steps.map((step) => (
-          <li
-            key={step.code}
-            className="flex items-center gap-2 px-4 py-2"
-            style={{
-              backgroundColor: 'var(--pdf-white)',
-              border: '1px solid var(--pdf-orange)',
-              borderRadius: 'var(--prd-radius-pill)',
-            }}
-          >
-            <span className="text-sm font-extrabold text-[var(--pdf-orange)]">
-              {step.code}
-            </span>
-            <span
-              className="text-xs font-semibold uppercase tracking-[0.08em]"
-              style={{ color: 'var(--pdf-charcoal)' }}
-            >
-              {step.label}
-            </span>
+          <li key={step.code} className="program-e-step">
+            <span className="program-e-step-code">{step.code}</span>
+            <span className="program-e-step-label">{step.label}</span>
           </li>
         ))}
       </ol>
@@ -240,7 +158,7 @@ function PathwayBlock() {
   );
 }
 
-/** "What the Organisation Can Build" — three summary columns. */
+/** "What the Organisation Can Build" — three compact columns. */
 function OrganisationBlock() {
   return (
     <ScrollReveal>
@@ -248,38 +166,20 @@ function OrganisationBlock() {
         {PROGRAM_E_ORGANISATION_BUILD.heading}
       </h2>
 
-      <ul className="mt-8 grid list-none grid-cols-1 gap-8 p-0 md:grid-cols-3">
-        {PROGRAM_E_ORGANISATION_BUILD.items.map((item) => (
-          <li
-            key={item.title}
-            className="flex flex-col p-8"
-            style={{
-              backgroundColor: 'var(--pdf-white)',
-              borderRadius: 'var(--prd-radius)',
-              border: '1px solid var(--prd-border)',
-            }}
-          >
+      <ul className="program-modules-list program-e-build">
+        {PROGRAM_E_ORGANISATION_BUILD.items.map((item, i) => (
+          <li key={item.title}>
             <span
               aria-hidden="true"
-              className="mb-4 flex h-12 w-12 items-center justify-center text-base font-extrabold leading-none"
-              style={{
-                backgroundColor: 'var(--prd-yellow)',
-                color: 'var(--pdf-charcoal)',
-                borderRadius: 'var(--prd-radius-sm)',
-                fontVariantNumeric: 'tabular-nums',
-              }}
+              className={`program-module-tile-${i % 2 === 0 ? 'yellow' : 'orange'}`}
             >
               {item.number}
             </span>
-            <h3 className="text-base font-extrabold uppercase leading-snug text-[var(--pdf-charcoal)]">
-              {item.title}
-            </h3>
-            <p
-              className="mt-2 text-[0.9375rem] leading-relaxed"
-              style={{ color: 'var(--pdf-warm-grey)', textWrap: 'pretty' }}
-            >
-              {item.description}
-            </p>
+
+            <div className="min-w-0 flex-1">
+              <h3 className="program-module-title">{item.title}</h3>
+              <p className="program-module-problem">{item.description}</p>
+            </div>
           </li>
         ))}
       </ul>
@@ -288,55 +188,36 @@ function OrganisationBlock() {
 }
 
 /** Program E's closing CTA. */
+/**
+ * Program E's closing CTA — the compact treatment.
+ *
+ * This program does not use `ProgramSection` (it is a portfolio overview with
+ * no problems table, no Before/After and no numbered grid), so its closing block
+ * is written out here. For a while it kept the old dark `p-12` panel with three
+ * buttons and a sign-off, which meant Program E was the one program still
+ * carrying the pattern Polish #7 removed from the other four — and its
+ * "Request a Proposal" button was the only one on the page NOT using
+ * `.program-request-button`, so it was silently absent from that count.
+ *
+ * The panel copy still renders, once, in §5.6 via `ProgramCtaFooter`. What is
+ * left here is the same local affordance the other four programs have: one
+ * button, and the link to the canonical comparison.
+ */
 function ClosingCta() {
   return (
     <ScrollReveal>
-      <div
-        className="mt-16 p-8 sm:p-12"
-        style={{
-          backgroundColor: 'var(--pdf-dark)',
-          borderRadius: 'var(--prd-radius)',
-        }}
-      >
-        <h2 className="text-xl font-extrabold uppercase leading-tight text-[var(--pdf-white)] sm:text-2xl">
-          {PROGRAM_E_CTA.headline}
-        </h2>
-        <p
-          className="mt-4 text-base leading-relaxed"
-          style={{ color: 'var(--pdf-dark-muted)' }}
+      <div className="program-cta-row">
+        <a
+          href={`#contact?program=${PROGRAM_E_CTA.programSlug}`}
+          className="program-request-button"
         >
-          {PROGRAM_E_CTA.body}
-        </p>
+          Request for {ctaLabelFor(PROGRAM_E_HERO.id)?.replace('Request the ', '')}
+        </a>
 
-        <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
-          <a
-            href={`#contact?program=${PROGRAM_E_CTA.programSlug}`}
-            className="inline-flex min-h-[56px] items-center justify-center px-8 text-base font-bold transition-[background-color,transform] duration-200 hover:-translate-y-0.5"
-            style={{
-              backgroundColor: 'var(--pdf-orange)',
-              color: 'var(--pdf-white)',
-              borderRadius: 'var(--prd-radius-pill)',
-            }}
-          >
-            Request a Proposal
-          </a>
-
-          <a
-            href={PROGRAM_E_CTA.phoneHref}
-            className="inline-flex min-h-[56px] items-center justify-center px-8 text-base font-bold"
-            style={{
-              border: '1px solid var(--pdf-orange)',
-              color: 'var(--pdf-white)',
-              borderRadius: 'var(--prd-radius-pill)',
-            }}
-          >
-            {PROGRAM_E_CTA.phone}
-          </a>
-        </div>
-
-        <p className="mt-8 text-sm" style={{ color: 'var(--pdf-dark-subtle)' }}>
-          {PROGRAM_E_CTA.signoff}
-        </p>
+        <a href="#why" className="program-why-link">
+          See the capability shift
+          <span aria-hidden="true"> →</span>
+        </a>
       </div>
     </ScrollReveal>
   );

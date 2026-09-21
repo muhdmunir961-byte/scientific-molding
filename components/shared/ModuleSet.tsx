@@ -29,7 +29,7 @@ export interface ModuleSetProps {
 export default function ModuleSet({ heading, note, items }: ModuleSetProps) {
   return (
     <ScrollReveal>
-      <h2 className="mt-16 program-modules-heading">
+      <h2 className="mt-12 program-modules-heading">
         {heading}
         {note && (
           <span className="ml-2 program-modules-note">
@@ -38,29 +38,20 @@ export default function ModuleSet({ heading, note, items }: ModuleSetProps) {
         )}
       </h2>
 
-      <ol className="mt-8 program-modules-list list-none p-0">
+      <ol className="program-modules-list">
         {items.map((item, i) => (
-          <li
-            key={item.title}
-            className={`flex flex-col gap-4 p-8 sm:flex-row sm:items-start sm:gap-8 program-module-card-${i % 2 === 0 ? 'orange' : 'yellow'}`}
-          >
+          <li key={item.title}>
             <span
               aria-hidden="true"
-              className={`program-module-tile-${i % 2 === 0 ? 'orange' : 'yellow'} flex h-10 w-10 shrink-0 items-center justify-center text-sm font-extrabold leading-none program-module-numeral`}
+              className={`program-module-tile-${i % 2 === 0 ? 'orange' : 'yellow'}`}
             >
               {String(i + 1).padStart(2, '0')}
             </span>
 
             <div className="min-w-0 flex-1">
-              <h3 className="text-base font-extrabold uppercase leading-snug program-module-title">
-                {item.title}
-              </h3>
-              <p className="mt-2 text-[0.9375rem] leading-relaxed program-module-problem">
-                {item.problem}
-              </p>
-              <p className="mt-2 text-[0.9375rem] font-semibold leading-relaxed program-module-outcome">
-                {item.outcome}
-              </p>
+              <h3 className="program-module-title">{item.title}</h3>
+              <p className="program-module-problem">{item.problem}</p>
+              <p className="program-module-outcome">{item.outcome}</p>
             </div>
           </li>
         ))}

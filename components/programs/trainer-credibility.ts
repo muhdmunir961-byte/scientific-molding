@@ -42,9 +42,27 @@ export const TRAINER_CREDIBILITY_STATS = [
   { value: '60+', label: 'Companies' },
 ] as const;
 
-/** Convenience bundle for a reusable <TrainerCredibility /> block. */
+/**
+ * The one-line trainer credit used inside each program hero.
+ *
+ * ── Why this is derived rather than written out ─────────────────────
+ * The line is assembled from the strings above, so the name and the figure
+ * cannot drift from the full strip. A hand-typed "17+ years" here would be a
+ * second source of truth for a number that appears in About, Track Record and
+ * the checker.
+ *
+ * ── Why "17+" and not the "500+" and "60+" ──────────────────────────
+ * The hero line answers "who is teaching this, and are they credible". Years of
+ * practice is the strongest single signal for that, and it is the one figure
+ * that is about the trainer rather than about volume of delivery. The other two
+ * figures are on the About and Track Record sections, one scroll away.
+ */
+export const TRAINER_CREDIBILITY_ONE_LINE = `By ${TRAINER_CREDIBILITY_NAME} — ${TRAINER_CREDIBILITY_STATS[0].value} years, HRD Corp Accredited` as const;
+
+/** Convenience bundle for the one-line credit each program hero renders. */
 export const TRAINER_CREDIBILITY = {
   name: TRAINER_CREDIBILITY_NAME,
   credentials: TRAINER_CREDIBILITY_CREDENTIALS,
   stats: TRAINER_CREDIBILITY_STATS,
+  oneLine: TRAINER_CREDIBILITY_ONE_LINE,
 } as const;

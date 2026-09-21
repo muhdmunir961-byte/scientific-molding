@@ -13,7 +13,7 @@
  * read as one undifferentiated block.
  */
 
-import { Mail, Phone } from 'lucide-react';
+import { ExternalLink, Mail, Phone } from 'lucide-react';
 
 import {
   CONTACT_DIRECT,
@@ -30,69 +30,57 @@ const QUICK_LINKS = [
 
 export default function Footer() {
   return (
-    <footer
-      className="w-full"
-      style={{
-        backgroundColor: 'var(--pdf-dark)',
-        paddingBottom: 'max(2rem, env(safe-area-inset-bottom))',
-      }}
-    >
-      <div className="mx-auto w-full max-w-[1400px] px-8 py-16 sm:px-12 lg:px-16">
-        <div className="grid grid-cols-1 gap-16 sm:grid-cols-2 lg:grid-cols-3">
+    <footer className="footer">
+      <div className="container footer-inner">
+        <div className="footer-grid">
           {/* Column 1 — contact */}
           <div>
-            <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--pdf-orange)]">
-              Contact
-            </h2>
+            <h2 className="footer-col-label">Contact</h2>
 
-            <ul className="mt-8 flex list-none flex-col gap-4 p-0">
+            <ul className="footer-list">
               <li>
-                <a
-                  href={CONTACT_DIRECT.phoneHref}
-                  className="flex items-center gap-2 text-[0.9375rem] hover:underline"
-                  style={{ color: 'var(--pdf-dark-muted)' }}
-                >
+                <a href={CONTACT_DIRECT.phoneHref} className="footer-link">
                   <Phone size={16} aria-hidden="true" className="shrink-0" />
                   {CONTACT_DIRECT.phoneDisplay}
                 </a>
               </li>
               <li>
-                <a
-                  href={CONTACT_DIRECT.emailHref}
-                  className="flex items-center gap-2 break-all text-[0.9375rem] hover:underline"
-                  style={{ color: 'var(--pdf-dark-muted)' }}
-                >
+                <a href={CONTACT_DIRECT.emailHref} className="footer-link">
                   <Mail size={16} aria-hidden="true" className="shrink-0" />
                   {CONTACT_DIRECT.email}
                 </a>
               </li>
+              <li>
+                <a
+                  href={CONTACT_DIRECT.linkedinHref}
+                  className="footer-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {/*
+                   * `ExternalLink`, not a LinkedIn brand mark. Lucide v1 ships
+                   * no brand logos, and a generic outbound icon is arguably
+                   * clearer — it also signals that the link leaves the site.
+                   */}
+                  <ExternalLink size={16} aria-hidden="true" className="shrink-0" />
+                  LinkedIn
+                </a>
+              </li>
             </ul>
 
-            <p
-              className="mt-8 text-sm leading-relaxed"
-              style={{ color: 'var(--pdf-dark-subtle)' }}
-            >
-              Ts. Mohd Hafiedzzul Bin Malek Riduan
-            </p>
+            <p className="footer-name">Ts. Mohd Hafiedzzul Bin Malek Riduan</p>
           </div>
 
           {/* Column 2 — quick links */}
           <nav aria-labelledby="footer-links">
-            <h2
-              id="footer-links"
-              className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--pdf-orange)]"
-            >
+            <h2 id="footer-links" className="footer-col-label">
               Quick Links
             </h2>
 
-            <ul className="mt-8 flex list-none flex-col gap-2 p-0">
+            <ul className="footer-list footer-list-tight">
               {QUICK_LINKS.map((item) => (
                 <li key={item.href}>
-                  <a
-                    href={item.href}
-                    className="inline-flex py-2 text-[0.9375rem] hover:underline"
-                    style={{ color: 'var(--pdf-dark-muted)' }}
-                  >
+                  <a href={item.href} className="footer-link">
                     {item.label}
                   </a>
                 </li>
@@ -102,39 +90,34 @@ export default function Footer() {
 
           {/* Column 3 — legal */}
           <div>
-            <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--pdf-orange)]">
-              Legal
-            </h2>
+            <h2 className="footer-col-label">Legal</h2>
 
-            <ul className="mt-8 flex list-none flex-col gap-2 p-0">
+            <ul className="footer-list footer-list-tight">
               <li>
-                <a
-                  href="/privacy"
-                  className="inline-flex py-2 text-[0.9375rem] hover:underline"
-                  style={{ color: 'var(--pdf-dark-muted)' }}
-                >
+                <a href="/privacy" className="footer-link">
                   Privacy Policy
                 </a>
               </li>
             </ul>
 
-            <p
-              className="mt-8 text-sm leading-relaxed"
-              style={{ color: 'var(--pdf-dark-subtle)' }}
-            >
-              HRDC Claimable training
-            </p>
+            {/*
+             * The HRDC badge.
+             *
+             * A pill rather than a paragraph: HRDC claimability is a purchasing
+             * decision for a Malaysian employer, and it is the one credential on
+             * the page that changes what the training costs them. The orange
+             * hairline carries that without a fill, which on a dark surface would
+             * be a second light source competing with the footer's own.
+             */}
+            <p className="footer-badge">HRD Corp Accredited Trainer</p>
           </div>
         </div>
 
-        <div
-          className="mt-16 border-t pt-8"
-          style={{ borderColor: 'var(--pdf-dark-border)' }}
-        >
-          <p className="text-sm" style={{ color: 'var(--pdf-dark-subtle)' }}>
+        <div className="footer-bottom">
+          <p className="footer-legal">
             &copy; 2026 Scientific Molding Training Series. All rights reserved.
           </p>
-          <p className="mt-2 text-xs" style={{ color: 'var(--pdf-dark-subtle)' }}>
+          <p className="footer-legal">
             HRD Corp Accredited Trainer &middot; NOSS Panel member
           </p>
         </div>

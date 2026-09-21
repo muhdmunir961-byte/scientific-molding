@@ -13,10 +13,9 @@
 import ProgramHero from './ProgramHero';
 import ProgramSection from '../shared/ProgramSection';
 import ModuleSet from '../shared/ModuleSet';
+import { ctaLabelFor } from './program-cta-content';
 import {
   PROGRAM_B_AUDIENCE,
-  PROGRAM_B_BEFORE_AFTER,
-  PROGRAM_B_BEFORE_AFTER_LABELS,
   PROGRAM_B_BENEFITS,
   PROGRAM_B_CAPABILITIES,
   PROGRAM_B_CORE_MODULES,
@@ -50,13 +49,6 @@ export default function ProgramMaterials() {
         tone="white"
         problems={PROGRAM_B_PROBLEMS}
         benefits={{ heading: 'Five Benefits', items: PROGRAM_B_BENEFITS }}
-        beforeAfter={{
-          heading: 'Before & After',
-          caption:
-            'Before and after comparison for Processability of Thermoplastics',
-          labels: PROGRAM_B_BEFORE_AFTER_LABELS,
-          rows: PROGRAM_B_BEFORE_AFTER,
-        }}
         statement={{
           heading: PROGRAM_B_MANAGEMENT_TAKEAWAY.heading,
           text: PROGRAM_B_MANAGEMENT_TAKEAWAY.statement,
@@ -84,8 +76,12 @@ export default function ProgramMaterials() {
           items: PROGRAM_B_PLASTIC_CONDITIONS.items,
         }}
         outcomes={{ heading: 'Take Back', items: PROGRAM_B_TAKE_BACK }}
-        chips={[PROGRAM_B_LEARNING_APPROACH, PROGRAM_B_AUDIENCE]}
-        cta={PROGRAM_B_CTA}
+        format={{
+          heading: PROGRAM_B_LEARNING_APPROACH.heading,
+          items: PROGRAM_B_LEARNING_APPROACH.items,
+        }}
+        audience={PROGRAM_B_AUDIENCE}
+        cta={{ ...PROGRAM_B_CTA, label: ctaLabelFor(PROGRAM_B_HERO.id) }}
       >
         {/*
          * Program B's second module set. It uses the same problem → outcome

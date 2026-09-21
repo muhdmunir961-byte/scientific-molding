@@ -21,6 +21,17 @@
  * and toggle classes, which would leave three focusable links in the tab order
  * behind an invisible bar on desktop.
  *
+ * A 16px rise plus a fade, at 250ms. It was a full-height slide (`y: '100%'`),
+ * which is 64px of travel for a bar that occupies 64px — the whole bar moved its
+ * own height, which reads as the page shifting rather than as a control
+ * arriving. Reduced motion skips it entirely rather than shortening it.
+ *
+ * ── Colours, geometry and focus live in globals.css ─────────────────
+ * Polish #7, Session 2 moved everything except the animation off the inline
+ * `style` object. `:focus-visible` is not expressible inline, so the three links
+ * — the bar's only interactive elements — had no keyboard focus indicator at
+ * all. See `.mobile-sticky-bar` for the full reasoning.
+ *
  * ── z-index: 40, i.e. under the header (50) and the panel (60/61) ────
  * The bar must never sit above the mobile nav overlay. §6.5's hierarchy is
  * authoritative and is asserted in `check-entrance.mjs`.
@@ -61,38 +72,22 @@ export default function MobileStickyBar() {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          className="fixed inset-x-0 bottom-0 flex items-stretch lg:hidden"
-          style={{
-            zIndex: 40,
-            backgroundColor: 'var(--ds-orange-500)',
-            /* Top shadow, not bottom: the bar is pinned to the viewport's
-               bottom edge, so a downward shadow would fall off-screen. The
-               `lg` stack carries upward because each layer's y-offset is
-               positive and box-shadow's blur is symmetric. */
-            boxShadow: 'var(--ds-shadow-lg)',
-            height: `calc(64px + env(safe-area-inset-bottom))`,
-            /* Clear the home indicator on a notched phone; without this the
-               labels sit under the gesture bar. */
-            paddingBottom: 'env(safe-area-inset-bottom)',
-          }}
-          initial={{ y: '100%' }}
-          animate={{ y: 0 }}
-          exit={{ y: '100%' }}
+          className="mobile-sticky-bar"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 16 }}
           transition={{
-            duration: shouldReduceMotion ? 0 : 0.4,
+            /* Reduced motion: instant show/hide. Not a shortened duration — a
+               0.01s slide is a flash, which is the movement the preference is
+               asking us to remove. */
+            duration: shouldReduceMotion ? 0 : 0.25,
             ease: [0.16, 1, 0.3, 1],
           }}
         >
           {QUICK_ACTIONS.map((action) => (
-            <a
-              key={action.kind}
-              href={actionHref(action.kind)}
-              className="flex flex-1 flex-col items-center justify-center gap-1 text-white transition-opacity duration-150 hover:opacity-90 active:opacity-90"
-            >
+            <a key={action.kind} href={actionHref(action.kind)} className="mobile-sticky-link">
               <QuickIcon kind={action.kind} size={20} />
-              <span className="text-[0.6875rem] font-bold uppercase tracking-[0.05em]">
-                {action.label}
-              </span>
+              <span className="mobile-sticky-label">{action.label}</span>
             </a>
           ))}
         </motion.div>

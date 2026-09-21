@@ -24,6 +24,7 @@ import { AlertCircle, CheckCircle } from 'lucide-react';
 
 import ScrollReveal from '../about/ScrollReveal';
 import ContactDirect from './ContactDirect';
+import ProgramCtaFooter from './ProgramCtaFooter';
 import { ConsentField, Field, ProgramCheckboxes } from './FormFields';
 import {
   CONTACT_HERO,
@@ -240,36 +241,29 @@ export default function Contact() {
     <section
       id={CONTACT_ID}
       aria-labelledby={`${CONTACT_ID}-heading`}
-      className="relative isolate w-full overflow-hidden"
-      style={{ backgroundColor: 'var(--pdf-white)' }}
+      className="contact-section relative isolate w-full overflow-hidden"
     >
       <div
         aria-hidden="true"
         className="hero-grid hero-grid-mask pointer-events-none absolute inset-0 -z-10"
       />
 
-      <div className="mx-auto w-full max-w-[1400px] px-8 py-16 sm:px-12 lg:px-16 lg:py-24">
+      <div className="container contact-inner">
         <ScrollReveal>
-          <header className="max-w-[64ch]">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--pdf-orange)]">
-              {CONTACT_HERO.eyebrow}
-            </p>
-            <h2
-              id={`${CONTACT_ID}-heading`}
-              className="mt-4 text-[1.75rem] font-extrabold leading-[1.1] tracking-[-0.02em] text-[var(--pdf-charcoal)] sm:text-[2.25rem] lg:text-[2.5rem]"
-            >
+          <header className="contact-hero">
+            <p className="eyebrow">{CONTACT_HERO.eyebrow}</p>
+            <h2 id={`${CONTACT_ID}-heading`} className="text-h2 contact-title">
               {CONTACT_HERO.title}
             </h2>
-            <p
-              className="mt-4 text-base leading-relaxed"
-              style={{ color: 'var(--pdf-warm-grey)', textWrap: 'pretty' }}
-            >
-              {CONTACT_HERO.subcopy}
-            </p>
+            <p className="text-body contact-subcopy">{CONTACT_HERO.subcopy}</p>
           </header>
         </ScrollReveal>
 
-        <div className="mt-16 grid grid-cols-1 gap-16 lg:grid-cols-[3fr_2fr]">
+        <ScrollReveal>
+          <ProgramCtaFooter />
+        </ScrollReveal>
+
+        <div className="contact-grid">
           <ScrollReveal>
             {status === 'sent' ? (
               <SuccessCard onReset={() => setStatus('idle')} />
@@ -310,28 +304,25 @@ export default function Contact() {
  * ------------------------------------------------------------------ */
 
 /** The red alert shown above the form when the server rejects a submission. */
+/**
+ * The server-error banner.
+ *
+ * `role="alert"` so it is announced the moment it appears — a submit that fails
+ * with no visible change is the worst outcome for a form, and an alert region is
+ * what stops it being silent for a screen-reader user.
+ *
+ * The red tint is the one non-palette colour in the form, and deliberately so:
+ * an error state that uses a brand colour reads as a feature rather than as a
+ * problem. `--ds-*` has no semantic red, and inventing a token for one use would
+ * imply it is reusable. See `.contact-error` in `globals.css`.
+ */
 function ServerErrorBanner({ show, message }: { show: boolean; message: string }) {
   if (!show || !message) return null;
 
   return (
-    <div
-      role="alert"
-      className="mb-8 flex items-start gap-4 p-4"
-      style={{
-        backgroundColor: '#FDECEA',
-        border: '1px solid #F44336',
-        borderRadius: 'var(--prd-radius)',
-      }}
-    >
-      <AlertCircle
-        size={20}
-        color="#C62828"
-        aria-hidden="true"
-        className="mt-0.5 shrink-0"
-      />
-      <p className="text-sm font-semibold" style={{ color: '#C62828' }}>
-        {message}
-      </p>
+    <div role="alert" className="contact-error">
+      <AlertCircle size={20} aria-hidden="true" className="contact-error-icon" />
+      <p className="contact-error-text">{message}</p>
     </div>
   );
 }
@@ -506,27 +497,33 @@ function MessageField({
  */
 function validateMessage(value: string): string {
   return value.length <= 500 ? '' : MESSAGES.message;
+}
 
-/** The submit button, with a spinner while in flight. */
+/**
+ * The submit button.
+ *
+ * Full-width on mobile, auto on desktop: at 375px a button hugging a long label
+ * is an awkward target, and the form column is the whole width anyway.
+ *
+ * The spinner is `aria-hidden` and the in-flight state is announced from the
+ * `role="status"` paragraph below it, so a screen reader hears "Sending your
+ * enquiry" once rather than an unlabelled graphic.
+ *
+ * ── Polish #7, Session 2 ────────────────────────────────────────────
+ * This block was previously defined TWICE in this file, and the first copy was
+ * unterminated — `validateMessage` above closed without its brace and the
+ * duplicate `SubmitButton`/`SuccessCard` pair followed it. The duplication is
+ * gone and the brace is closed; the styles moved to `.contact-submit` in
+ * `globals.css`, so all four states (rest, hover, focus-visible and the disabled
+ * state while sending) are declared together at one specificity.
+ */
 function SubmitButton({ sending }: { sending: boolean }) {
   return (
     <>
-      <button
-        type="submit"
-        disabled={sending}
-        className="mt-8 inline-flex min-h-[56px] w-full items-center justify-center gap-4 px-8 text-base font-bold transition-[background-color,transform] duration-200 disabled:opacity-60 sm:w-auto"
-        style={{
-          backgroundColor: 'var(--pdf-orange)',
-          color: 'var(--pdf-white)',
-          borderRadius: 'var(--prd-radius-pill)',
-        }}
-      >
+      <button type="submit" disabled={sending} className="contact-submit">
         {sending ? (
           <>
-            <span
-              aria-hidden="true"
-              className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
-            />
+            <span aria-hidden="true" className="contact-submit-spinner" />
             Sending…
           </>
         ) : (
@@ -551,47 +548,31 @@ function SubmitButton({ sending }: { sending: boolean }) {
  * The form is replaced rather than annotated, so the same enquiry cannot be
  * submitted twice by hitting the button again.
  *
- * Colours are hardcoded rather than tokenised: the green success tint is a
- * state colour that does not appear in the PRD palette, and adding a token for
- * a one-off would imply it is reusable.
+ * ── Polish #7, Session 2 ────────────────────────────────────────────
+ * The card was a green success tint with a green icon. Green is not in the
+ * palette — it appeared nowhere else on the page — so the one moment the visitor
+ * most needs to trust read as a different site. It takes the brand's own yellow
+ * (`--ds-yellow-100`) with an orange left rule instead: the same
+ * tint-plus-accent pairing the Why columns and the credential rows use.
+ *
+ * `role="status"` plus `aria-live="polite"` is what announces the swap. A form
+ * that disappears silently is the failure a sighted user never sees and a
+ * screen-reader user always hits.
  */
 function SuccessCard({ onReset }: { onReset: () => void }) {
   return (
-    <div
-      role="status"
-      className="flex flex-col items-start gap-4 p-8"
-      style={{
-        backgroundColor: '#E8F5E9',
-        border: '1px solid #4CAF50',
-        borderRadius: 'var(--prd-radius)',
-      }}
-    >
-      <span
-        className="flex h-16 w-16 items-center justify-center"
-        style={{ backgroundColor: '#4CAF50', borderRadius: 'var(--prd-radius-pill)' }}
-      >
-        <CheckCircle size={32} color="#FFFFFF" aria-hidden="true" />
-      </span>
+    <div role="status" aria-live="polite" className="contact-success">
+      <CheckCircle size={32} aria-hidden="true" className="contact-success-icon" />
 
-      <h3 className="text-xl font-extrabold text-[var(--pdf-charcoal)]">
-        {CONTACT_SUCCESS.heading}
-      </h3>
-      <p className="text-base leading-relaxed" style={{ color: '#1B5E20' }}>
-        {CONTACT_SUCCESS.body}
-      </p>
+      <h3 className="text-h4 contact-success-heading">{CONTACT_SUCCESS.heading}</h3>
 
-      <button
-        type="button"
-        onClick={onReset}
-        className="mt-4 text-sm font-bold underline"
-        style={{ color: 'var(--pdf-orange)' }}
-      >
+      <p className="text-body-sm contact-success-body">{CONTACT_SUCCESS.body}</p>
+
+      <button type="button" onClick={onReset} className="contact-success-again">
         {CONTACT_SUCCESS.again}
       </button>
     </div>
   );
-}
-
 }
 
 /**
@@ -602,7 +583,8 @@ function SuccessCard({ onReset }: { onReset: () => void }) {
  * will populate it, and the API route then drops the enquiry silently.
  *
  * Not `display: none`: some bots skip hidden fields, and the point is to be
- * filled.
+ * filled. `sr-only` clips it to a 1px box, which a scraper still finds in the
+ * DOM and a screen reader never announces.
  */
 function Honeypot({ formId }: { formId: string }) {
   return (
@@ -617,89 +599,3 @@ function Honeypot({ formId }: { formId: string }) {
     </div>
   );
 }
-
-/** The submit button, with a spinner while in flight. */
-function SubmitButton({ sending }: { sending: boolean }) {
-  return (
-    <>
-      <button
-        type="submit"
-        disabled={sending}
-        className="mt-8 inline-flex min-h-[56px] w-full items-center justify-center gap-4 px-8 text-base font-bold transition-[background-color,transform] duration-200 disabled:opacity-60 sm:w-auto"
-        style={{
-          backgroundColor: 'var(--pdf-orange)',
-          color: 'var(--pdf-white)',
-          borderRadius: 'var(--prd-radius-pill)',
-        }}
-      >
-        {sending ? (
-          <>
-            <span
-              aria-hidden="true"
-              className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
-            />
-            Sending…
-          </>
-        ) : (
-          'Send Enquiry'
-        )}
-      </button>
-
-      {/*
-       * The spinner is `aria-hidden`, so this is the only signal a screen
-       * reader gets that the request is in flight.
-       */}
-      <p className="sr-only" role="status">
-        {sending ? 'Sending your enquiry' : ''}
-      </p>
-    </>
-  );
-}
-
-/**
- * Success state, shown in place of the form.
- *
- * The form is replaced rather than annotated, so the same enquiry cannot be
- * submitted twice by hitting the button again.
- *
- * Colours are hardcoded rather than tokenised: the green success tint is a
- * state colour that does not appear in the PRD palette, and adding a token for
- * a one-off would imply it is reusable.
- */
-function SuccessCard({ onReset }: { onReset: () => void }) {
-  return (
-    <div
-      role="status"
-      className="flex flex-col items-start gap-4 p-8"
-      style={{
-        backgroundColor: '#E8F5E9',
-        border: '1px solid #4CAF50',
-        borderRadius: 'var(--prd-radius)',
-      }}
-    >
-      <span
-        className="flex h-16 w-16 items-center justify-center"
-        style={{ backgroundColor: '#4CAF50', borderRadius: 'var(--prd-radius-pill)' }}
-      >
-        <CheckCircle size={32} color="#FFFFFF" aria-hidden="true" />
-      </span>
-
-      <h3 className="text-xl font-extrabold text-[var(--pdf-charcoal)]">
-        {CONTACT_SUCCESS.heading}
-      </h3>
-      <p className="text-base leading-relaxed" style={{ color: '#1B5E20' }}>
-        {CONTACT_SUCCESS.body}
-      </p>
-
-      <button
-        type="button"
-        onClick={onReset}
-        className="mt-4 text-sm font-bold underline"
-        style={{ color: 'var(--pdf-orange)' }}
-      >
-        {CONTACT_SUCCESS.again}
-      </button>
-    </div>
-  );
-}
-

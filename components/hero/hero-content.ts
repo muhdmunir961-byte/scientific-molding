@@ -59,6 +59,44 @@ export const HERO_COPY = {
 } as const;
 
 /**
+ * The headline, split for the two-tone treatment.
+ *
+ * ── Why a split rather than a second headline string ────────────────
+ * The brief asks for "Scientific Molding" in orange and "Training Series" in
+ * charcoal. The obvious implementation is two strings and a `<span>` each —
+ * which makes the headline two sources of truth, and the day someone edits one
+ * of them the h1 on the page no longer matches the h1 in the PRD.
+ *
+ * So the split is DERIVED here from `HERO_COPY.headline` by splitting on the
+ * final space. The rendered h1 is therefore always exactly the PRD string, in
+ * one `<h1>`, and the two fragments are a presentation detail rather than copy.
+ *
+ * The keyword check is explicit: if the string ever stops containing the
+ * keyword, `accent` is empty and the whole headline falls to `rest` in one
+ * colour. That is a legible headline, not a broken one — the failure mode of a
+ * positional split would be an orange fragment nobody asked for.
+ */
+export const HERO_HEADLINE_KEYWORD = 'Scientific Molding' as const;
+
+export const HERO_HEADLINE_PARTS = (() => {
+  const full = HERO_COPY.headline;
+  const at = full.indexOf(HERO_HEADLINE_KEYWORD);
+
+  if (at === -1) return { accent: '', rest: full } as const;
+
+  const end = at + HERO_HEADLINE_KEYWORD.length;
+
+  return {
+    accent: full.slice(at, end),
+    /* The space between the fragments is preserved here rather than baked into
+       a span, so the two runs read as one sentence to a screen reader and to
+       text selection. */
+    rest: full.slice(end),
+  } as const;
+})();
+
+
+/**
  * Small pre-headline label.
  *
  * "HRDC Claimable Training" is a factual accreditation statement — HRD Corp
@@ -104,21 +142,26 @@ export const HERO_CONTACT = {
  * The hero visual.
  *
  * PRD Section 5.2 warns: "replace with licensed/owned photography, do not reuse
- * third-party stock without rights" — so no stock image is bundled here. Until
- * an owned asset exists, HeroMedia renders a labelled frame rather than a
- * fabricated path or a broken request.
+ * third-party stock without rights" — so no stock image is bundled here.
  *
- * To go live: set `src` to the real asset, place the file in `public/`, and keep
- * `width`/`height` accurate so the browser can reserve space with no layout
- * shift (Web Interface Guidelines: images need explicit dimensions).
+ * ── Polish #7 ───────────────────────────────────────────────────────
+ * `src` now names the path the asset WILL live at rather than `null`. The frame
+ * renders through `<ImageSlot>`, which requests this file and, if it is not
+ * there yet, falls back to a brand gradient. Dropping
+ * `public/images/hero-training.jpg` in place is therefore the ONLY step needed
+ * to go live — no code change.
+ *
+ * `width`/`height` are 800×1000, the 4:5 portrait ratio. They are the asset's
+ * intrinsic dimensions and they set the frame's aspect ratio, so the browser
+ * reserves the space before the file arrives and the grid never shifts.
  */
 export const HERO_MEDIA = {
-  /** Intrinsic dimensions of the eventual asset — the 4:5 frame ratio. */
-  width: 1200,
-  height: 1500,
-  /** Alt text describing the intended subject, not the placeholder. */
+  width: 800,
+  height: 1000,
+  /** Alt text describing the intended subject, not the empty state. */
   alt: 'Technician reviewing process parameters on an injection moulding machine',
-  /** Set once an owned image exists. */
-  src: null as string | null,
+  /** The asset path. Replace the file to go live. */
+  src: '/images/hero-training.jpg',
 } as const;
+
 

@@ -37,27 +37,18 @@ function Route({
   external?: boolean;
 }) {
   return (
-    <li className="flex items-start gap-4">
-      <span
-        className="flex h-12 w-12 shrink-0 items-center justify-center"
-        style={{
-          backgroundColor: 'rgba(232, 99, 28, 0.12)',
-          borderRadius: 'var(--prd-radius-pill)',
-        }}
-      >
-        <Icon size={20} strokeWidth={2.25} color="var(--pdf-orange)" aria-hidden="true" />
+    <li className="contact-route">
+      <span className="contact-route-icon">
+        <Icon size={24} strokeWidth={2} aria-hidden="true" />
       </span>
 
       <div className="min-w-0 pt-1">
-        <p
-          className="text-xs font-bold uppercase tracking-[0.12em]"
-          style={{ color: 'var(--pdf-warm-grey)' }}
-        >
+        <p className="text-caption contact-direct-label">
           {label}
         </p>
         <a
           href={href}
-          className="break-words text-[0.9375rem] font-semibold text-[var(--pdf-charcoal)] hover:underline"
+          className="contact-direct-link"
           {...(external
             ? { target: '_blank', rel: 'noopener noreferrer' }
             : {})}
@@ -71,19 +62,12 @@ function Route({
 
 export default function ContactDirect() {
   return (
-    <div
-      className="p-8"
-      style={{
-        backgroundColor: 'var(--prd-offwhite)',
-        borderRadius: 'var(--prd-radius)',
-        border: '1px solid var(--prd-border)',
-      }}
-    >
-      <h3 className="text-xl font-extrabold leading-tight text-[var(--pdf-charcoal)]">
+    <div className="contact-direct">
+      <h3 className="text-h3 contact-direct-heading">
         {CONTACT_DIRECT.heading}
       </h3>
 
-      <ul className="mt-8 flex list-none flex-col gap-8 p-0">
+      <ul className="contact-direct-list">
         <Route
           icon={Phone}
           label="Phone"
@@ -120,12 +104,7 @@ export default function ContactDirect() {
         />
       </ul>
 
-      <p
-        className="mt-8 border-t pt-8 text-sm"
-        style={{ borderColor: 'var(--prd-border)', color: 'var(--pdf-warm-grey)' }}
-      >
-        {CONTACT_DIRECT.responseNote}
-      </p>
+      <p className="contact-direct-note">{CONTACT_DIRECT.responseNote}</p>
     </div>
   );
 }

@@ -96,18 +96,61 @@ export const TRAINER_STATS: readonly TrainerStat[] = [
  * session photos from source PDFs — **replace with licensed/owned photography,
  * do not reuse third-party stock without rights**)."
  *
- * So no image is bundled. Until an owned photograph exists, `TrainerPhoto`
- * renders a labelled frame rather than a stock image or a fabricated path.
+ * So no image is bundled. `src` names the path the asset WILL live at, and
+ * `<ImageSlot>` requests it — falling back to a brand gradient until the file
+ * exists. Dropping `public/images/trainer-portrait.jpg` in place is the only
+ * step needed to go live.
  *
- * To go live: set `src`, place the file in `public/`, and keep `width`/`height`
- * accurate so the browser reserves space with no layout shift.
+ * `width`/`height` are 600×800 — the 3:4 portrait ratio the brief specifies.
  */
 export const TRAINER_PHOTO = {
-  /** Intrinsic dimensions of the eventual asset — the 4:5 portrait frame. */
-  width: 1000,
-  height: 1250,
-  /** Describes the intended subject, not the placeholder. */
+  width: 600,
+  height: 800,
+  /** Describes the intended subject, not the empty state. */
   alt: 'Ts. Mohd Hafiedzzul conducting a Scientific Moulding training session',
-  /** Set once an owned photograph exists. */
-  src: null as string | null,
+  /** The asset path. Replace the file to go live. */
+  src: '/images/trainer-portrait.jpg',
 } as const;
+
+/**
+ * Training-session photographs, PRD Section 5.2's "photo gallery".
+ *
+ * Four slots at 4:3 landscape, laid out 2×2 on desktop. The PRD asks for
+ * "training session photos from source PDFs"; none were supplied with rights
+ * that survived extraction, so the paths are reserved and the frames render the
+ * empty state until owned photography replaces them.
+ *
+ * ── Why `alt` describes the SUBJECT rather than the file ────────────
+ * The alt text is what a screen reader announces in place of the photograph.
+ * "Session photo 1" would announce the slot, not the content. These name what
+ * the photograph is intended to show, so the group reads as a description of
+ * the training environment even before the assets land — and the text is still
+ * correct once they do.
+ */
+export const TRAINER_SESSIONS = [
+  {
+    src: '/images/session-1.jpg',
+    width: 800,
+    height: 600,
+    alt: 'Engineers reviewing process parameters together on the moulding floor',
+  },
+  {
+    src: '/images/session-2.jpg',
+    width: 800,
+    height: 600,
+    alt: 'In-house training session with the team gathered around a machine control panel',
+  },
+  {
+    src: '/images/session-3.jpg',
+    width: 800,
+    height: 600,
+    alt: 'Trainer explaining a moulding defect against a sample part',
+  },
+  {
+    src: '/images/session-4.jpg',
+    width: 800,
+    height: 600,
+    alt: 'Process engineers documenting an approved machine setup during a workshop',
+  },
+] as const;
+

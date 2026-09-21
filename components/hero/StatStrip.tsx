@@ -30,6 +30,7 @@
  * the per-instance `animation-delay`, which is a runtime value.
  */
 
+import CountUp from '../shared/CountUp';
 import { HERO_STATS } from './hero-content';
 
 const STAGGER_STATS_MS = 240;
@@ -60,22 +61,14 @@ export default function StatStrip() {
                 tiles". The first tile is solid orange with white text and
                 the rest are yellow with charcoal, which is how the PRD
                 describes the two treatments and gives the strip a lead
-                figure. `aria-hidden` because the <dt> already carries the
-                label — leaving both audible would announce "07, specialist
-                modules, 07". */}
-            <span
-              aria-hidden="true"
-              className="text-h2 flex h-16 w-16 items-center justify-center tabular-nums leading-none sm:h-20 sm:w-20"
-              style={{
-                backgroundColor:
-                  stat.tone === 'orange' ? 'var(--ds-orange-500)' : 'var(--ds-yellow-500)',
-                color:
-                  stat.tone === 'orange' ? 'var(--ds-neutral-0)' : 'var(--ds-neutral-900)',
-                borderRadius: 'var(--ds-radius-md)',
-              }}
-            >
-              {stat.value}
-            </span>
+                figure. The accessible label is the <dt> above — the numeral
+                is aria-hidden inside `<CountUp>`, because a value that
+                animates from 0 must never be an accessible name. */}
+            <CountUp
+              value={stat.value}
+              tone={stat.tone}
+              className="text-h2 flex h-16 w-16 items-center justify-center leading-none sm:h-20 sm:w-20"
+            />
             <span className="mt-3 text-[0.8125rem] font-medium leading-snug text-[var(--ds-neutral-500)]">
               {stat.label}
             </span>

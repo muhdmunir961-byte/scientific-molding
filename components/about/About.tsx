@@ -44,8 +44,9 @@ export default function About() {
         className="hero-grid hero-grid-mask pointer-events-none absolute inset-0 -z-10"
       />
 
-      {/* Section rhythm on the 8px grid: 64px mobile, 96px desktop. */}
-      <div className="mx-auto grid w-full max-w-[1400px] grid-cols-1 items-start gap-16 px-8 py-16 sm:px-12 lg:grid-cols-2 lg:px-16 lg:py-24">
+      {/* Section rhythm on the compacted grid: 48px mobile, 64px desktop.
+          (The 8px grid: 6 and 8 units.) */}
+      <div className="container about-grid">
         <BioColumn />
         <ScrollReveal delayMs={160}>
           <TrainerPhoto />

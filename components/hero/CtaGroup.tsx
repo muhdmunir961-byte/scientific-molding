@@ -2,14 +2,19 @@
  * CtaGroup — primary proposal CTA plus the two direct contact routes.
  *
  * ── Colour and contrast ─────────────────────────────────────────────
- * The brief specifies orange `#F07C23` with a hover to yellow `#FFC93C`.
- * White text on that yellow is roughly 1.9:1 — far below the 4.5:1 floor, so a
- * yellow hover with white text would fail WCAG AA on the most important
- * control on the page.
+ * Polish #7 replaced the PRD's optional Orange → Yellow gradient with a single
+ * solid brand fill that DARKENS on hover (`--ds-orange-500` → `-600`).
  *
- * The hover therefore flips the label to the dark ink token on yellow
- * (~10.5:1). The colour change the brief asks for is preserved exactly; only
- * the text colour moves, and only for the duration of the hover.
+ * That change removes a real complication along with the gradient. The old
+ * yellow hover was ~1.9:1 against white, so the label had to flip to charcoal
+ * for the duration of the hover — two coordinated values for one control. A
+ * hover that darkens keeps white legible throughout (`-600` is ~4.0:1), so the
+ * label colour is declared once and the button cannot be caught in a state
+ * where the fill and its label disagree.
+ *
+ * The gradient is still available as `--prd-gradient`; it simply no longer has
+ * a consumer on the most important control on the page, where one flat brand
+ * colour reads as more confident than two.
  *
  * ── The secondary CTAs ──────────────────────────────────────────────
  * Phase 4B restyled these to the brief's outline treatment: a 2px orange
@@ -76,7 +81,7 @@ function PrimaryCta() {
   return (
     <a
       href={HERO_CTA_TARGET}
-      className="cta-primary group inline-flex min-h-[56px] w-full items-center justify-center gap-2 px-8 text-base font-bold transition-[background-color,color,box-shadow,transform] duration-200 active:translate-y-0 sm:w-auto"
+      className="cta-primary group inline-flex min-h-[56px] w-full items-center justify-center gap-2 px-8 text-base font-bold sm:w-auto"
     >
       {HERO_CTA.primary}
       <ArrowIcon />
@@ -121,12 +126,8 @@ function ContactCta({
       </span>
 
       <span className="flex min-w-0 flex-col">
-        <span className="text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-[var(--ds-neutral-500)]">
-          {label}
-        </span>
-        <span className="truncate text-sm font-semibold text-[var(--ds-neutral-900)]">
-          {value}
-        </span>
+        <span className="cta-secondary-label">{label}</span>
+        <span className="cta-secondary-value">{value}</span>
       </span>
     </a>
   );
@@ -148,7 +149,7 @@ function ArrowIcon() {
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
-      className="shrink-0 transition-transform duration-200 group-hover:translate-x-1"
+      className="cta-primary-arrow shrink-0"
     >
       <path d="M5 12h14M13 6l6 6-6 6" />
     </svg>

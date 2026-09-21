@@ -36,7 +36,11 @@
 import CtaGroup from './CtaGroup';
 import HeroMedia from './HeroMedia';
 import StatStrip from './StatStrip';
-import { HERO_COPY, HERO_EYEBROW } from './hero-content';
+import {
+  HERO_COPY,
+  HERO_EYEBROW,
+  HERO_HEADLINE_PARTS,
+} from './hero-content';
 
 /* ------------------------------------------------------------------ *
  * Reveal stagger
@@ -86,9 +90,38 @@ export default function Hero() {
         className="hero-grid hero-grid-mask pointer-events-none absolute inset-0 -z-10"
       />
 
-      {/* Section rhythm on the PRD 8px grid: 64px mobile, 96px desktop
-          (8 × 8 and 8 × 12). */}
-      <div className="mx-auto grid w-full max-w-[1400px] grid-cols-1 items-center gap-16 px-8 py-16 sm:px-12 lg:grid-cols-2 lg:gap-16 lg:px-16 lg:py-24">
+      {/*
+       * The top-left radial wash.
+       *
+       * Polish #7 moved this from `.hero-section`'s `background` shorthand into
+       * its own layer. The reason is the blueprint grid: as a `background` layer
+       * on the section it sat UNDER the grid div (which is `-z-10` inside the
+       * isolated section), so the wash and the grid were compositing in an order
+       * that depended on two different stacking mechanisms. As a sibling layer
+       * here it is explicit: wash, then grid, then content.
+       *
+       * It is also the layer the brief asks for at 0.4–0.6 opacity — a gradient
+       * that reads as light falling on the corner rather than as a colour fill.
+       * `pointer-events: none` so it cannot intercept a click.
+       */}
+      <div
+        aria-hidden="true"
+        className="hero-wash pointer-events-none absolute inset-0 -z-20"
+      />
+
+      {/*
+       * Section rhythm on the compacted grid: 40px mobile, 64px desktop.
+       *
+       * The split is `1.05fr / 0.95fr` rather than the previous `1fr / 1fr`.
+       * The copy column carries the headline, the tagline, the sub-copy, four
+       * figures and three CTAs; the image column carries one frame. Equal
+       * columns gave the frame the same width as the densest block on the page
+       * and left the headline tracking at its 60ch cap before it had used the
+       * space. The 5% shift to the left column is small enough that the section
+       * still reads as the symmetric split it was designed as, and large enough
+       * that the headline sets in two lines instead of three on a laptop.
+       */}
+      <div className="mx-auto grid w-full max-w-[1400px] grid-cols-1 items-center gap-10 px-8 py-10 sm:px-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:px-16 lg:py-16">
         <HeroContent />
         <div className="content-reveal" style={stagger(STAGGER.media)}>
           <HeroMedia />
@@ -171,10 +204,32 @@ function HeroContent() {
           measure. */}
       <h1
         id="hero-headline"
-        className="content-reveal text-hero mt-4 max-w-[60ch] text-[var(--ds-neutral-900)]"
+        className="content-reveal text-hero mt-4 max-w-[60ch]"
         style={stagger(STAGGER.headline)}
       >
-        {HERO_COPY.headline}
+        {/*
+         * Two-tone headline. ONE <h1> holding two spans, so a screen reader
+         * announces "Scientific Molding Training Series" once rather than as
+         * two headings — and so the text is selectable and copyable as one
+         * sentence.
+         *
+         * The fragments come from `HERO_HEADLINE_PARTS`, which DERIVES them from
+         * `HERO_COPY.headline`. The visible string is therefore still exactly the
+         * PRD's, with no second source of truth to drift from it.
+         *
+         * The keyword takes `--ds-orange-500` (the brand accent, 3.4:1 — fine at
+         * display size) and the remainder `--ds-neutral-800` charcoal. The
+         * previous single charcoal run made the headline one flat mass at 800
+         * weight; the accent run is what gives the eye an entry point.
+         */}
+        {HERO_HEADLINE_PARTS.accent && (
+          <span className="hero-headline-keyword text-[var(--ds-orange-500)]">
+            {HERO_HEADLINE_PARTS.accent}
+          </span>
+        )}
+        <span className="hero-headline-rest text-[var(--ds-neutral-800)]">
+          {HERO_HEADLINE_PARTS.rest}
+        </span>
       </h1>
 
       {/* `text-h4` at 18–20px, where the old rule was a fixed `text-lg` /

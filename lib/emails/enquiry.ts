@@ -55,8 +55,22 @@ export function buildEnquiryEmail(data: EnquiryEmailData): {
   html: string;
 } {
   const programCount = data.programs.length;
+  /*
+   * Zero programmes is a legitimate submission — the checkbox group is optional
+   * and a manager who does not yet know which course their team needs is exactly
+   * the enquirer this section is for.
+   *
+   * So the label degrades rather than reading "(0 programmes)", which looks like
+   * a rendering fault in the trainer's inbox. "no programme selected" is a true
+   * statement about the enquiry, and it tells the trainer to open it rather than
+   * to assume the form broke.
+   */
   const programLabel =
-    programCount === 1 ? '1 programme' : `${programCount} programmes`;
+    programCount === 0
+      ? 'no programme selected'
+      : programCount === 1
+        ? '1 programme'
+        : `${programCount} programmes`;
 
   const subject = `New Training Enquiry — ${data.company} (${programLabel})`;
 
@@ -115,9 +129,14 @@ ${headerBar()}
 
       <tr><td style="padding:0 24px 24px">
         ${sectionHeading('Request')}
-        <div style="margin:0 0 16px">
-          ${data.programs.map((p) => pill(p)).join('')}
-        </div>
+        ${
+          programCount > 0
+            ? `<div style="margin:0 0 16px">${data.programs.map((p) => pill(p)).join('')}</div>`
+            : /* No programme selected: say so rather than rendering an empty
+                 div, which would leave a blank band above the table and read as
+                 a broken row. */
+              `<p style="margin:0 0 16px;font-family:${FONT};font-size:14px;font-style:italic;color:${EMAIL_BRAND.warmGrey}">No specific programme selected &mdash; the enquirer is open to a recommendation.</p>`
+        }
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
           ${requestRows}
         </table>
