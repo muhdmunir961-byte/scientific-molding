@@ -33,16 +33,19 @@ export default function HeroMedia() {
       {/* Warm halo behind the frame. Purely decorative, so it is aria-hidden
           and kept out of the layout flow.
 
-          This has to stay an inline style: it is a multi-stop gradient with
-          two brand colours at specific stops and no token or class expresses
-          it, and it is unique to this one element. */}
+          The gradient reads its two stops from the palette tokens rather than
+          hardcoded rgba: `--ds-yellow-500` is the same #FFC93C and
+          `--ds-orange-500` the same #E8631C the previous literals named, so the
+          halo cannot fork from the brand if either token moves. The softness
+          comes from the layer's own opacity and the `blur-2xl` utility rather
+          than from alpha baked into the stops.
+
+          The gradient itself lives in `.hero-media-halo` in `globals.css` — it
+          is a multi-stop radial with element-specific geometry, which no token
+          expresses, so it is declared as a class rather than inline. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -inset-4 -z-10 rounded-[var(--ds-radius-xl)] opacity-70 blur-2xl"
-        style={{
-          background:
-            'radial-gradient(60% 60% at 50% 40%, rgba(255,201,60,0.35) 0%, rgba(240,124,35,0.18) 45%, transparent 75%)',
-        }}
+        className="hero-media-halo pointer-events-none absolute -inset-4 -z-10 rounded-[var(--ds-radius-xl)] blur-2xl"
       />
 
       <ImageSlot

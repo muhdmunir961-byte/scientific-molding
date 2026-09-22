@@ -195,7 +195,7 @@ export default function Navbar({ onOpenMobileNav, mobileNavId }: NavbarProps) {
               {PROGRAMS_LABEL}
               <ChevronDown
                 size={14}
-                strokeWidth={2.5}
+                strokeWidth={2}
                 aria-hidden="true"
                 style={{
                   transform: isProgramsOpen ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -227,7 +227,7 @@ export default function Navbar({ onOpenMobileNav, mobileNavId }: NavbarProps) {
                     aria-current={activeId === item.id ? 'true' : undefined}
                     data-active={activeId === item.id}
                     onClick={() => setIsProgramsOpen(false)}
-                    className="nav-menu-item block px-4 py-2 text-[0.875rem]"
+                    className="nav-menu-item block px-4 py-2 text-body-sm"
                   >
                     {item.label}
                   </a>
@@ -250,7 +250,7 @@ export default function Navbar({ onOpenMobileNav, mobileNavId }: NavbarProps) {
         <div className="flex shrink-0 items-center gap-3">
           <a
             href={NAV_CTA.href}
-            className="nav-cta hidden items-center justify-center px-5 py-2.5 text-[0.8125rem] font-bold lg:inline-flex"
+            className="nav-cta hidden items-center justify-center px-5 py-2 text-caption font-bold lg:inline-flex"
           >
             {NAV_CTA.label}
           </a>

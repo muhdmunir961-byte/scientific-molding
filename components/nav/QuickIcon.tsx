@@ -26,7 +26,7 @@ export default function QuickIcon({
   size?: number;
   color?: string;
 }) {
-  const shared = { size, strokeWidth: 2.25, 'aria-hidden': true } as const;
+  const shared = { size, strokeWidth: 2, 'aria-hidden': true } as const;
 
   switch (kind) {
     case 'call':

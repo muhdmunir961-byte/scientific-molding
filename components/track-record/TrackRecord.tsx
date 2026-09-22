@@ -181,7 +181,7 @@ function HrdcCard() {
     <ScrollReveal delayMs={80}>
       <div className="track-hrdc">
         <span className="track-hrdc-icon">
-          <BadgeCheck size={30} strokeWidth={2.25} aria-hidden="true" />
+          <BadgeCheck size={30} strokeWidth={2} aria-hidden="true" />
         </span>
 
         <div className="min-w-0">
@@ -253,7 +253,7 @@ function ClientTypeStrip() {
 
           return (
             <li key={type.label} className="track-client-type">
-              <Icon size={16} strokeWidth={2.25} aria-hidden="true" className="shrink-0" />
+              <Icon size={16} strokeWidth={2} aria-hidden="true" className="shrink-0" />
               <span>{type.label}</span>
             </li>
           );

@@ -183,7 +183,7 @@ function Item({ number, icon, title, description }: ComparisonItem) {
         <div className="why-item-head">
           <Icon
             size={24}
-            strokeWidth={2.5}
+            strokeWidth={2}
             aria-hidden="true"
             className="why-item-icon"
           />

@@ -29,12 +29,10 @@ export interface ModuleSetProps {
 export default function ModuleSet({ heading, note, items }: ModuleSetProps) {
   return (
     <ScrollReveal>
-      <h2 className="mt-12 program-modules-heading">
+      <h2 className="mt-12 text-h3 font-semibold text-[var(--ds-neutral-800)]">
         {heading}
         {note && (
-          <span className="ml-2 program-modules-note">
-            ({note})
-          </span>
+          <span className="ml-2 text-body-sm font-normal">({note})</span>
         )}
       </h2>
 

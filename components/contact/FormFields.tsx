@@ -60,8 +60,13 @@ export function Field({
     <div>
       <label htmlFor={id} className="field-label">
         {label}
+        {/* The required marker is part of the label, so it inherits the label's
+            own size and weight; only its colour is set, from the brand orange
+            token (`--ds-orange-500`, the design-system name for the same value
+            the `--pdf-*` program palette carries) rather than a legacy
+            `--pdf-*` alias — this is a §5.6 form field, not a program section. */}
         {required && (
-          <span aria-hidden="true" style={{ color: 'var(--pdf-orange)' }}>
+          <span aria-hidden="true" style={{ color: 'var(--ds-orange-500)' }}>
             {' '}*
           </span>
         )}
@@ -128,7 +133,7 @@ export function ProgramCheckboxes({
               checked={selected.includes(program.slug)}
               onChange={() => onToggle(program.slug)}
             />
-            <span className="text-[0.9375rem] text-[var(--pdf-charcoal)]">
+            <span className="text-body-sm text-[var(--ds-neutral-800)]">
               {program.label}
             </span>
           </label>
@@ -168,19 +173,22 @@ export function ConsentField({
            */
           required
           className="mt-1 h-5 w-5 shrink-0 cursor-pointer"
-          style={{ accentColor: 'var(--pdf-orange)' }}
+          /* `accent-color` is the one property that has to reach the native
+             checkbox, which no class can target. Orange from the design-system
+             token, not the `--pdf-*` alias — see the marker above. */
+          style={{ accentColor: 'var(--ds-orange-500)' }}
           aria-invalid={error ? 'true' : 'false'}
           aria-describedby={error ? `${formId}-consent-error` : undefined}
         />
         <span
-          className="text-sm leading-relaxed"
-          style={{ color: 'var(--pdf-warm-grey)', textWrap: 'pretty' }}
+          className="text-body-sm leading-relaxed"
+          style={{ color: 'var(--ds-neutral-500)', textWrap: 'pretty' }}
         >
           {CONTACT_CONSENT}{' '}
           <a
             href="/privacy"
             className="underline"
-            style={{ color: 'var(--pdf-orange)' }}
+            style={{ color: 'var(--ds-orange-500)' }}
           >
             Privacy Policy
           </a>

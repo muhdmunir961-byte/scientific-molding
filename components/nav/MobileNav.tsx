@@ -179,7 +179,7 @@ export default function MobileNav({ id, isOpen, onClose }: MobileNavProps) {
             <div className="flex items-center justify-between px-5 py-4">
               <p
                 id={`${id}-title`}
-                className="nav-logo text-[1.0625rem]"
+                className="nav-logo text-h4"
                 style={{ letterSpacing: 'var(--ds-tracking-tight)' }}
               >
                 {LOGO.full}
@@ -206,7 +206,7 @@ export default function MobileNav({ id, isOpen, onClose }: MobileNavProps) {
                       /* 18px with 16px vertical padding: a comfortable tap
                          target on a phone, where 14px links are a mis-tap
                          waiting to happen. */
-                      className="nav-link block py-4 text-[1.125rem]"
+                      className="nav-link block py-4 text-h4"
                     >
                       {item.label}
                     </a>
@@ -215,7 +215,7 @@ export default function MobileNav({ id, isOpen, onClose }: MobileNavProps) {
 
                 {/* ---- Programs group ---- */}
                 <li>
-                  <p className="py-4 text-[1.125rem] font-semibold" style={{ color: 'var(--ds-neutral-800)' }}>
+                  <p className="py-4 text-h4 font-semibold" style={{ color: 'var(--ds-neutral-800)' }}>
                     {PROGRAMS_LABEL}
                   </p>
                   {/* Indented one step and a notch smaller, so the hierarchy
@@ -226,7 +226,7 @@ export default function MobileNav({ id, isOpen, onClose }: MobileNavProps) {
                         <a
                           href={`#${item.id}`}
                           onClick={onNavigate}
-                          className="nav-link block py-3 text-[1rem] font-normal"
+                          className="nav-link block py-3 text-body font-normal"
                           style={{ color: 'var(--ds-neutral-500)' }}
                         >
                           {item.label}
@@ -241,17 +241,14 @@ export default function MobileNav({ id, isOpen, onClose }: MobileNavProps) {
               <a
                 href={NAV_CTA.href}
                 onClick={onNavigate}
-                className="nav-cta mt-6 flex w-full items-center justify-center px-6 py-3.5 text-[0.9375rem] font-bold"
+                className="nav-cta mt-6 flex w-full items-center justify-center px-6 py-3 text-body-sm font-bold"
               >
                 {NAV_CTA.label}
               </a>
             </nav>
 
             {/* ---- Quick contact actions ---- */}
-            <div
-              className="px-5 py-5"
-              style={{ borderTop: '1px solid var(--ds-neutral-200)' }}
-            >
+            <div className="nav-quick-actions px-5 py-5">
               <ul className="flex flex-wrap items-center gap-x-5 gap-y-3">
                 {QUICK_ACTIONS.map((action) => (
                   <li key={action.kind}>
@@ -260,7 +257,7 @@ export default function MobileNav({ id, isOpen, onClose }: MobileNavProps) {
                       /* Phone numbers and email addresses are links, not
                          buttons: they are destinations, and a link gets
                          long-press, "copy address" and middle-click free. */
-                      className="flex items-center gap-2 text-[0.875rem] font-semibold"
+                      className="flex items-center gap-2 text-body-sm font-semibold"
                       style={{ color: 'var(--ds-neutral-800)' }}
                     >
                       <QuickIcon kind={action.kind} />

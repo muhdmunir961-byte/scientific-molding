@@ -218,44 +218,6 @@ function NumberedList({ items }: { items: readonly NumberedItem[] }) {
   );
 }
 
-/** A grid of large stat figures. */
-function StatStrip({
-  items,
-}: {
-  items: readonly { value: string; label: string }[];
-}) {
-  return (
-    <dl
-      className="mt-8 grid grid-cols-2 gap-8 border-y py-8 lg:grid-cols-4"
-      style={{ borderColor: 'var(--prd-border)' }}
-    >
-      {items.map((stat) => (
-        <div key={stat.label} className="flex min-w-0 flex-col">
-          <dt className="sr-only">{stat.label}</dt>
-          <dd className="m-0 flex flex-col">
-            <span
-              aria-hidden="true"
-              className="text-4xl font-extrabold leading-none sm:text-5xl"
-              style={{
-                color: 'var(--pdf-orange)',
-                fontVariantNumeric: 'tabular-nums',
-              }}
-            >
-              {stat.value}
-            </span>
-            <span
-              className="mt-2 text-sm font-bold uppercase tracking-[0.08em]"
-              style={{ color: 'var(--pdf-warm-grey)' }}
-            >
-              {stat.label}
-            </span>
-          </dd>
-        </div>
-      ))}
-    </dl>
-  );
-}
-
 /* ------------------------------------------------------------------ *
  * Exported child blocks
  * ------------------------------------------------------------------ */
@@ -359,10 +321,7 @@ export default function ProgramSection({
         {beforeAfter && (
           <ScrollReveal>
             <Heading id={`${id}-before-after`}>{beforeAfter.heading}</Heading>
-            <div
-              className="mt-8 overflow-hidden"
-              style={{ borderRadius: 'var(--prd-radius)' }}
-            >
+            <div className="beforeafter-frame">
               <BeforeAfterTable
                 caption={beforeAfter.caption}
                 beforeLabel={beforeAfter.labels?.before}
@@ -376,16 +335,7 @@ export default function ProgramSection({
         {statement && (
           <ScrollReveal>
             <Heading id={`${id}-statement`}>{statement.heading}</Heading>
-            <blockquote
-              className="mt-8 border-l-4 p-8 text-lg font-bold leading-snug sm:text-xl"
-              style={{
-                borderColor: 'var(--pdf-orange)',
-                backgroundColor: 'var(--pdf-white)',
-                color: 'var(--pdf-charcoal)',
-                borderRadius: '0 var(--prd-radius) var(--prd-radius) 0',
-                textWrap: 'pretty',
-              }}
-            >
+            <blockquote className="program-statement-block">
               {statement.text}
             </blockquote>
           </ScrollReveal>
@@ -471,7 +421,7 @@ export default function ProgramSection({
             <Heading id={`${id}-modules-secondary`}>
               {modulesSecondary.heading}
               {modulesSecondary.note && (
-                <span className="ml-2 program-modules-note">
+                <span className="ml-2 text-body-sm font-normal">
                   ({modulesSecondary.note})
                 </span>
               )}
@@ -553,19 +503,18 @@ export default function ProgramSection({
               id={`${id}-${group.heading.toLowerCase().replace(/\s+/g, '-')}`}
             >
               {group.heading}
-              {group.note && (
-                <span className="ml-2 program-chips-note">
-                  ({group.note})
-                </span>
-              )}
+              {group.note && <span className="ml-2 text-body-sm">({group.note})</span>}
             </Heading>
 
-            <ul className="mt-8 flex list-none flex-wrap gap-4 p-0 program-chips-list">
+            <ul className="mt-8 flex list-none flex-wrap gap-2 p-0">
               {group.items.map((item) => (
                 <li key={item}>
-                  <span className="program-tag-chip inline-flex items-center px-4 py-2 text-sm font-semibold">
-                    {item}
-                  </span>
+                  {/* `program-e-tag` is the surviving pill treatment on the page
+                      (the older tag-chip class was removed in Polish #7, and no
+                      program passes `chips`). Reusing the live class keeps this
+                      slot consistent with the module tags rather than pointing
+                      at a rule that no longer exists. */}
+                  <span className="program-e-tag">{item}</span>
                 </li>
               ))}
             </ul>

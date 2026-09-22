@@ -47,7 +47,7 @@ export default function TrainerStatCards() {
               aria-hidden="true"
               tabIndex={0}
               data-tone={stat.tone}
-              className="trainer-stat-numeral flex h-16 w-16 shrink-0 items-center justify-center text-xl font-extrabold leading-none sm:h-20 sm:w-20 sm:text-2xl"
+              className="trainer-stat-numeral text-h4 flex h-16 w-16 shrink-0 items-center justify-center leading-none sm:h-20 sm:w-20"
             >
               {stat.value}
             </span>

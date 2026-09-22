@@ -346,8 +346,8 @@
   opacity: 0;
   transform: translate3d(0, 24px, 0);
   transition:
-    opacity 600ms var(--prd-ease-out),
-    transform 600ms var(--prd-ease-out);
+    opacity 600ms var(--ds-ease-out),
+    transform 600ms var(--ds-ease-out);
   will-change: opacity, transform;
 }
 
@@ -404,11 +404,11 @@
   }
 
   .before-after-table td:first-child {
-    border-radius: var(--prd-radius-sm) var(--prd-radius-sm) 0 0;
+    border-radius: var(--ds-radius-sm) var(--ds-radius-sm) 0 0;
   }
 
   .before-after-table td:last-child {
-    border-radius: 0 0 var(--prd-radius-sm) var(--prd-radius-sm);
+    border-radius: 0 0 var(--ds-radius-sm) var(--ds-radius-sm);
     margin-bottom: 8px;
   }
 }
@@ -551,6 +551,31 @@
    sibling. The section is a flat white field; the wash is painted over it. */
 .hero-section {
   background-color: var(--ds-neutral-0);
+}
+
+/*
+ * The hero's content grid.
+ *
+ * The surface is a `.container` — the same 1280px measure and the same 24px /
+ * 48px gutter every other section uses — so the hero's columns line up with the
+ * sections below it. It carried `max-w-[1400px]` and its own `px-8 / sm:px-12 /
+ * lg:px-16` scale, which made the hero 120px wider than the page and gave its
+ * left edge a different gutter from every section beneath. The asymmetric
+ * `1.05fr / 0.95fr` split is unchanged: that is a deliberate composition choice
+ * (see `Hero.tsx`), not a container width.
+ *
+ * Padding is the section rhythm, declared on the `.section` scale rather than
+ * restated inline, so the hero and the sections under it share one vertical
+ * measure.
+ */
+.hero-inner {
+  padding-block: var(--ds-space-10);
+}
+
+@media (min-width: 1024px) {
+  .hero-inner {
+    padding-block: var(--ds-space-16);
+  }
 }
 
 /*
@@ -708,6 +733,25 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--ds-neutral-900);
+}
+
+/* --- The hero's warm halo ---------------------------------------------------
+   The light source behind the hero frame. It is a radial gradient, which no
+   `--ds-*` token expresses, so it is declared here as a class rather than inline
+   so the two brand stops come from the palette tokens instead of hardcoded rgba.
+
+   `--ds-yellow-500` and `--ds-orange-500` are the same values the previous
+   literals named; the falloff is produced by the layer's own opacity (0.28) and
+   the `blur-2xl` utility on the element rather than by alpha in the stops, which
+   keeps the gradient's colour source single. */
+.hero-media-halo {
+  opacity: 0.28;
+  background: radial-gradient(
+    60% 60% at 50% 40%,
+    var(--ds-yellow-500) 0%,
+    var(--ds-orange-500) 45%,
+    transparent 75%
+  );
 }
 
 /* --- Hero image frame. ---
@@ -1010,6 +1054,11 @@ figure:hover .trainer-halo {
   background-color: var(--ds-yellow-500);
   color: var(--ds-neutral-800);
   border-radius: var(--ds-radius-md);
+  /* Weight and figures live with the tile, per docs/design-system.md ("icon
+     tile") — the tile carries its own type, so the numeral cannot lose its
+     emphasis if the size utility beside it changes. The size step comes from
+     `text-h4` at the use site. */
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
   transition:
     box-shadow var(--ds-duration-normal) var(--ds-ease-out),
@@ -1547,7 +1596,7 @@ figure:hover .trainer-halo {
 .program-day-label {
   font-size: var(--ds-text-caption);
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--ds-tracking-wider);
   text-transform: uppercase;
   color: var(--ds-orange-500);
 }
@@ -1677,6 +1726,8 @@ figure:hover .trainer-halo {
 .program-why-link:hover {
   color: var(--ds-orange-600);
   text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
 .program-why-link:focus-visible {
@@ -1833,6 +1884,40 @@ figure:hover .trainer-halo {
 /* --- Foundations Table ---
    Removed in Polish #7: Program A's four foundations render as
    `.program-modules-list`. */
+
+/* --- Before/After wrapper -------------------------------------------------
+ * The rounded frame around the shared `<BeforeAfterTable>`. It takes
+ * `--ds-radius-lg` (16px) — the card radius — rather than the `--prd-radius`
+ * alias it carried inline, so the frame matches every other card on the page.
+ * `overflow: hidden` is what lets the table's own square corners be clipped to
+ * the frame. */
+.beforeafter-frame {
+  margin-top: var(--ds-space-8);
+  overflow: hidden;
+  border-radius: var(--ds-radius-lg);
+}
+
+/* --- Statement blockquote --------------------------------------------------
+ * The pull-quote treatment, as a CLASS rather than an inline style: the border,
+ * the fill, the radius and the text colour are four coordinated palette values,
+ * and declaring them together at one specificity is what stops the fill and its
+ * label drifting apart. See docs/design-system.md — a blockquote's left accent
+ * is 4px `--ds-orange-500`, the same rule `.track-statement` follows.
+ *
+ * The measure is capped so a long statement does not run the full 1280px. */
+.program-statement-block {
+  margin-top: var(--ds-space-8);
+  max-width: 65ch;
+  padding: var(--ds-space-8);
+  border-left: 4px solid var(--ds-orange-500);
+  border-radius: 0 var(--ds-radius-lg) var(--ds-radius-lg) 0;
+  background-color: var(--ds-neutral-0);
+  color: var(--ds-neutral-800);
+  font-size: var(--ds-text-body-lg);
+  font-weight: 600;
+  line-height: var(--ds-leading-snug);
+  text-wrap: pretty;
+}
 
 /* --- Days Breakdown (Day 1 / Day 2) ---
    Still live: `.program-day-list` and friends, below. */
@@ -2248,6 +2333,15 @@ h6 {
   backdrop-filter: blur(4px);
 }
 
+/* The mobile panel's quick-contact footer. The rule separating it from the
+   section links is 1px `--ds-neutral-200` — the same hairline every card and
+   divider on the page uses, per docs/design-system.md. It is a class rather
+   than an inline style: a border is a palette value, and inline styles are what
+   the nav polish exists to remove (see `NAV_FORBIDDEN_INLINE`). */
+.nav-quick-actions {
+  border-top: 1px solid var(--ds-neutral-200);
+}
+
 /* ==================================================================
    Reduced motion
    ==================================================================
@@ -2416,8 +2510,8 @@ section[id],
 }
 
 body {
-  background: var(--prd-offwhite);
-  color: var(--prd-ink);
+  background: var(--ds-neutral-50);
+  color: var(--ds-neutral-800);
   /* Inter for body copy (PRD Section 13.1). The fallback chain matters —
      during the swap, or if the font fails, the page must still be legible
      rather than falling back to a default serif. */
@@ -2641,11 +2735,11 @@ body {
 }
 
 .program-section-offwhite {
-  background-color: var(--prd-offwhite);
+  background-color: var(--ds-neutral-50);
 }
 
 .program-section-white {
-  background-color: var(--pdf-white);
+  background-color: var(--ds-neutral-0);
 }
 
 /* --- Problem card typography ---
@@ -3873,6 +3967,7 @@ textarea.field-input {
   background: none;
   border: 0;
   text-decoration: underline;
+  text-decoration-thickness: 1px;
   text-underline-offset: 3px;
   cursor: pointer;
   transition: color var(--ds-duration-normal) var(--ds-ease-out);
@@ -3903,7 +3998,7 @@ textarea.field-input {
 
 .contact-error-icon {
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: var(--ds-space-1);
   color: #c62828;
 }
 
@@ -3977,6 +4072,8 @@ textarea.field-input {
 .contact-direct-link:hover {
   color: var(--ds-orange-500);
   text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
 .contact-direct-note {

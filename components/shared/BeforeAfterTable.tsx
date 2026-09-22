@@ -77,12 +77,12 @@ export default function BeforeAfterTable({
           {rows.map((row, i) => (
             <tr key={row.before} className={`before-after-row ${i % 2 === 0 ? 'even' : 'odd'}`}>
               <td
-                className="px-6 py-6 align-top text-[0.9375rem] leading-relaxed beforeafter-cell"
+                className="px-6 py-6 align-top text-body-sm leading-relaxed beforeafter-cell"
               >
                 {row.before}
               </td>
               <td
-                className="px-6 py-6 align-top text-[0.9375rem] font-semibold leading-relaxed beforeafter-cell program-beforeafter-after"
+                className="px-6 py-6 align-top text-body-sm font-semibold leading-relaxed beforeafter-cell program-beforeafter-after"
               >
                 {row.after}
               </td>

@@ -69,7 +69,7 @@ export default function StatStrip() {
               tone={stat.tone}
               className="text-h2 flex h-16 w-16 items-center justify-center leading-none sm:h-20 sm:w-20"
             />
-            <span className="mt-3 text-[0.8125rem] font-medium leading-snug text-[var(--ds-neutral-500)]">
+            <span className="mt-3 text-body-sm text-[var(--ds-neutral-500)]">
               {stat.label}
             </span>
           </dd>

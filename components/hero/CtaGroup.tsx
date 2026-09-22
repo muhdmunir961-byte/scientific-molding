@@ -81,7 +81,7 @@ function PrimaryCta() {
   return (
     <a
       href={HERO_CTA_TARGET}
-      className="cta-primary group inline-flex min-h-[56px] w-full items-center justify-center gap-2 px-8 text-base font-bold sm:w-auto"
+      className="cta-primary group inline-flex min-h-[56px] w-full items-center justify-center gap-2 px-8 text-body font-bold sm:w-auto"
     >
       {HERO_CTA.primary}
       <ArrowIcon />
@@ -145,7 +145,7 @@ function ArrowIcon() {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.5"
+      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"

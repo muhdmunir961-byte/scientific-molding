@@ -473,9 +473,9 @@ function MessageField({
         </p>
       ) : (
         <p
-          className="mt-2 text-right text-xs"
+          className="mt-2 text-right text-caption"
           style={{
-            color: 'var(--pdf-warm-grey)',
+            color: 'var(--ds-neutral-500)',
             fontVariantNumeric: 'tabular-nums',
           }}
         >

@@ -121,7 +121,7 @@ export default function Hero() {
        * still reads as the symmetric split it was designed as, and large enough
        * that the headline sets in two lines instead of three on a laptop.
        */}
-      <div className="mx-auto grid w-full max-w-[1400px] grid-cols-1 items-center gap-10 px-8 py-10 sm:px-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:px-16 lg:py-16">
+      <div className="hero-inner container grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
         <HeroContent />
         <div className="content-reveal" style={stagger(STAGGER.media)}>
           <HeroMedia />

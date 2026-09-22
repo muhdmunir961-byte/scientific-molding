@@ -86,7 +86,7 @@ export default function CredentialList() {
                   `.credential-icon`, so the tile's hover can change the glyph
                   and its background together. Passing `color="var(--…)"`
                   directly would freeze the glyph against the tile it sits on. */}
-              <Icon size={16} strokeWidth={2.25} />
+              <Icon size={16} strokeWidth={2} />
             </span>
 
             <span className="min-w-0 pt-1 text-body text-[var(--ds-neutral-800)] [text-wrap:pretty]">
