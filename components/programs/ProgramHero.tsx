@@ -43,6 +43,7 @@
 
 import ScrollReveal from '../about/ScrollReveal';
 import { withOverrides } from '@/lib/admin/overrides';
+import { resolveModuleSlug } from '@/lib/modules';
 import { TRAINER_CREDIBILITY as TRAINER_CREDIBILITY_RAW } from './trainer-credibility';
 
 /** The credit line, with any admin override applied. */
@@ -121,12 +122,32 @@ export default function ProgramHero({
 }: ProgramHeroProps) {
   const headingId = `${id}-heading`;
 
+  /*
+   * The canonical module slug for this section, when it has one.
+   *
+   * `id` is the section's own id — `fundamentals`, `materials` — which is what
+   * the nav, the URLs and the output checker have used since the first build.
+   * The client's PDF renames the modules (`m1-fundamental`, `m2-processability`)
+   * and the nav now points at those, so the section has to answer to both or the
+   * menu links go nowhere.
+   *
+   * Rendering an extra empty anchor rather than changing `id` is deliberate: an
+   * existing bookmark, an external link and the checker all keep working, and
+   * the new menu works too. One of the two has to be a plain anchor, and this is
+   * the one that costs nothing.
+   */
+  const canonical = resolveModuleSlug(id);
+  const aliasId = canonical ? canonical.slug : '';
+
   return (
-    <header
-      id={id}
-      className="program-hero relative isolate w-full overflow-hidden"
-      style={{ minHeight: '50vh', maxHeight: '80vh' }}
-    >
+    <>
+      {aliasId && <span id={aliasId} className="anchor-alias" aria-hidden="true" />}
+
+      <header
+        id={id}
+        className="program-hero relative isolate w-full overflow-hidden"
+        style={{ minHeight: '50vh', maxHeight: '80vh' }}
+      >
       {/* Hairline grid on the dark surface. White at low alpha, decorative, so
           it is hidden from assistive tech and cannot take a click. */}
       <div
@@ -210,6 +231,7 @@ export default function ProgramHero({
           </ScrollReveal>
         </div>
       </div>
-    </header>
+      </header>
+    </>
   );
 }

@@ -253,21 +253,41 @@ export default function Navbar({ onOpenMobileNav, mobileNavId }: NavbarProps) {
              */}
             <ul
               id="nav-programs-menu"
-              className={`nav-menu absolute left-0 top-full min-w-[240px] py-2 ${
+              className={`nav-menu absolute left-0 top-full min-w-[280px] py-2 ${
                 isProgramsOpen ? 'block' : 'hidden'
               }`}
             >
               {PROGRAM_ITEMS.map((item) => (
                 <li key={item.id}>
-                  <a
-                    href={`#${item.id}`}
-                    aria-current={activeId === item.id ? 'true' : undefined}
-                    data-active={activeId === item.id}
-                    onClick={() => setIsProgramsOpen(false)}
-                    className="nav-menu-item block px-4 py-2 text-body-sm"
-                  >
-                    {item.label}
-                  </a>
+                  {/*
+                   * A module with no section renders as text, not a link.
+                   *
+                   * The client asked for all seven in the menu; two of them have
+                   * no page yet. An anchor pointing at a missing id looks and
+                   * feels broken — it does nothing when clicked — so the row
+                   * states "coming soon" instead of pretending to be a link.
+                   */}
+                  {item.published ? (
+                    <a
+                      href={`#${item.id}`}
+                      aria-current={activeId === item.id ? 'true' : undefined}
+                      data-active={activeId === item.id}
+                      onClick={() => setIsProgramsOpen(false)}
+                      className="nav-menu-item block px-4 py-2"
+                    >
+                      <span className="nav-menu-item-label">{item.label}</span>
+                      <span aria-hidden="true" className="nav-menu-item-detail">
+                        {item.days} days · {item.level}
+                      </span>
+                    </a>
+                  ) : (
+                    <span className="nav-menu-item nav-menu-item-soon block px-4 py-2">
+                      <span className="nav-menu-item-label">{item.label}</span>
+                      <span className="nav-menu-item-detail">
+                        {item.days} days · {item.level} · coming soon
+                      </span>
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>

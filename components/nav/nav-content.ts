@@ -32,19 +32,20 @@ export interface NavItem {
 }
 
 /**
- * The five programs, in build order A → E.
+ * The seven programmes, in manifest order.
  *
- * Program E's id is `pathway`, not `program-e`: the section is titled
- * "Full Pathway", so the anchor follows the heading rather than the letter.
- * These are also the dropdown's sub-links.
+ * Derived from `content/modules.json` via `program-nav.ts`. The five-entry
+ * hand-written array that used to live here is gone: it carried the pre-PDF
+ * slugs, which is how the menu came to offer five modules when the client's
+ * document defines seven.
+ *
+ * Imported and re-exported rather than re-exported directly, because
+ * `SECTION_IDS` below reads it and a bare `export { x } from` creates no local
+ * binding to read.
  */
-export const PROGRAM_ITEMS: readonly NavItem[] = [
-  { id: 'fundamentals', label: 'Fundamentals' },
-  { id: 'materials', label: 'Materials' },
-  { id: 'process-development', label: 'Process Development' },
-  { id: 'defect-troubleshooting', label: 'Defect Troubleshooting' },
-  { id: 'pathway', label: 'Full Pathway' },
-] as const;
+import { PROGRAM_ITEMS as PROGRAM_ITEMS_DERIVED } from './program-nav';
+
+export const PROGRAM_ITEMS = PROGRAM_ITEMS_DERIVED;
 
 /**
  * Desktop nav. `Programs` is the only item with children — it is rendered as a

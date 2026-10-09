@@ -232,14 +232,31 @@ export default function MobileNav({ id, isOpen, onClose }: MobileNavProps) {
                   <ul className="pl-6">
                     {PROGRAM_ITEMS.map((item) => (
                       <li key={item.id}>
-                        <a
-                          href={`#${item.id}`}
-                          onClick={onNavigate}
-                          className="nav-link block py-3 text-body font-normal"
-                          style={{ color: 'var(--ds-neutral-500)' }}
-                        >
-                          {item.label}
-                        </a>
+                        {item.published ? (
+                          <a
+                            href={`#${item.id}`}
+                            onClick={onNavigate}
+                            className="nav-link block py-3"
+                            style={{ color: 'var(--ds-neutral-500)' }}
+                          >
+                            <span className="nav-menu-item-label">{item.label}</span>
+                            {/* Same facts as the desktop dropdown, so the two
+                                menus cannot describe a module differently. */}
+                            <span aria-hidden="true" className="nav-menu-item-detail">
+                              {item.days} days · {item.level}
+                            </span>
+                          </a>
+                        ) : (
+                          <span
+                            className="nav-menu-item-soon block py-3"
+                            style={{ color: 'var(--ds-neutral-500)' }}
+                          >
+                            <span className="nav-menu-item-label">{item.label}</span>
+                            <span className="nav-menu-item-detail">
+                              {item.days} days · {item.level} · coming soon
+                            </span>
+                          </span>
+                        )}
                       </li>
                     ))}
                   </ul>

@@ -690,18 +690,63 @@ const NAV_CSS = [
  * that every link target exists AND that every section is reachable is what
  * catches that, in both directions.
  */
+/*
+ * §6 — the anchor set the nav must both link and resolve.
+ *
+ * ── Why these are the canonical module slugs, not the old section ids ────
+ * The programme sections answer to two ids: the one they have always had
+ * (`#fundamentals`) and the canonical slug from the client's PDF
+ * (`#m1-fundamental`). The nav links the canonical one, because the menu is
+ * derived from `content/modules.json` — so the LINK assertion has to expect the
+ * canonical slug.
+ *
+ * The RESOLVE assertion passes either way, because both anchors are rendered.
+ * Keeping the legacy ids in `LEGACY_ANCHORS` below means an old bookmark is
+ * still asserted to work rather than merely assumed to.
+ *
+ * ── Why m3 and m5 are absent ────────────────────────────────────────────
+ * The client's PDF defines seven modules; the site has bodies for five. The two
+ * without a section are listed in the menu as text, not as links, so there is
+ * nothing for them to resolve to. Asserting a link for them would be asserting
+ * a dead anchor — see `PENDING_MODULES`, which checks they are NOT linked.
+ */
 const NAV_ANCHORS = [
   'hero',
   'about',
+  'm1-fundamental',
+  'm2-processability',
+  'm4-process-development',
+  'm6-defects-troubleshooting',
+  'm7-process-portability',
+  'why',
+  'track-record',
+  'contact',
+];
+
+/**
+ * Section ids the nav used before the client's PDF renamed the modules.
+ *
+ * Asserted to RESOLVE only — they are deliberately no longer linked, but an
+ * existing bookmark or an external link must still land on the right section.
+ */
+const LEGACY_ANCHORS = [
   'fundamentals',
   'materials',
   'process-development',
   'defect-troubleshooting',
   'pathway',
-  'why',
-  'track-record',
-  'contact',
 ];
+
+/**
+ * Modules the PDF defines that the site has no section for.
+ *
+ * The menu lists them (the client asked for seven) but must NOT link them: an
+ * anchor pointing at a missing id does nothing when clicked, which reads as a
+ * broken site. Asserted so that adding a link for one of these — or, more
+ * importantly, adding a *section* without removing it from this list — is
+ * caught rather than shipped.
+ */
+const PENDING_MODULES = ['m3-fundamental-pd', 'm5-parameter-setting'];
 
 /** Strings that indicate a mistake or a stale build. */
 const FORBIDDEN = [
@@ -1227,6 +1272,40 @@ for (const anchor of NAV_ANCHORS) {
     htmlText.includes(`href="#${anchor}"`),
     `§6 anchor #${anchor} is linked`,
     'no nav link targets this section — it is unreachable from the nav',
+  );
+}
+
+/*
+ * The pre-PDF ids must still RESOLVE.
+ *
+ * They are no longer linked — the menu is derived from the client's manifest —
+ * but an existing bookmark, a search result or an external link that used the
+ * old id has to land on the right section. Asserted rather than assumed, because
+ * the compatibility anchor is one `<span>` that a later refactor could drop
+ * without anything else noticing.
+ */
+for (const anchor of LEGACY_ANCHORS) {
+  report(
+    htmlText.includes(`id="${anchor}"`),
+    `§6 legacy anchor #${anchor} still resolves`,
+    'an existing bookmark or external link would land nowhere',
+  );
+}
+
+/*
+ * A module with no section must not be linked.
+ *
+ * The menu lists all seven — the client asked for that — but two of them have no
+ * body yet. A link to `#m3-fundamental-pd` would do nothing on click, which a
+ * visitor reads as a broken site rather than as a module that is not published.
+ * They are rendered as text carrying "coming soon" instead, and this asserts the
+ * link is absent.
+ */
+for (const slug of PENDING_MODULES) {
+  report(
+    !htmlText.includes(`href="#${slug}"`),
+    `§6 unpublished module ${slug} is not linked`,
+    'the section does not exist, so the link would do nothing when clicked',
   );
 }
 

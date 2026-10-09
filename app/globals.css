@@ -1097,6 +1097,27 @@ figure:hover .trainer-halo {
    Reduces duplication: polish once, reuse across all programs.
    ================================================================== */
 
+/* ==================================================================
+   Anchor aliases
+   ==================================================================
+   A zero-size target that lets one section answer to two ids.
+
+   The programme sections carry the id they have always had (`#fundamentals`)
+   and the canonical module slug from the client's PDF (`#m1-fundamental`).
+   Changing the id outright would break every existing bookmark, external link
+   and the output checker; adding a second, empty anchor costs nothing visually
+   and keeps all of them working.
+
+   `scroll-margin-top` matches the real sections, so the landing position is
+   identical whichever id a visitor arrives by.
+   ================================================================== */
+
+.anchor-alias {
+  display: block;
+  height: 0;
+  scroll-margin-top: 88px;
+}
+
 /* --- Program Hero (black surface) --- */
 .program-hero {
   background-color: var(--ds-neutral-900);
@@ -2279,6 +2300,44 @@ h6 {
   transition:
     background-color var(--ds-duration-fast) var(--ds-ease-out),
     color var(--ds-duration-fast) var(--ds-ease-out);
+}
+
+/* Two lines per row: the module name, then its duration and level. The detail
+   is what turns a list of seven names into something a visitor can choose
+   between without already knowing which is which. */
+.nav-menu-item-label {
+  display: block;
+  font-size: var(--ds-text-body-sm);
+  font-weight: 600;
+  line-height: var(--ds-leading-snug);
+}
+
+.nav-menu-item-detail {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--ds-text-caption);
+  font-weight: 500;
+  letter-spacing: var(--ds-tracking-normal);
+  line-height: 1.3;
+  color: var(--ds-neutral-500);
+}
+
+/* The active row keeps its warm fill, and the detail line follows the label so
+   the two do not end up in different colours. */
+.nav-menu-item[data-active='true'] .nav-menu-item-detail {
+  color: var(--ds-orange-600);
+}
+
+/* A module the PDF defines but the site has no section for yet. Rendered as
+   text rather than as a link, muted and unclickable, so the row is honest about
+   what it is instead of doing nothing when clicked. */
+.nav-menu-item-soon {
+  cursor: default;
+  color: var(--ds-neutral-500);
+}
+
+.nav-menu-item-soon .nav-menu-item-detail {
+  font-style: italic;
 }
 
 .nav-menu-item:hover,
