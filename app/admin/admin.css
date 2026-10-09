@@ -421,7 +421,39 @@
   box-shadow: var(--ds-ring-orange);
 }
 
-/* --- Admin: editor value tree --- */
+/* --- Deploy control --- */
+
+.admin-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+}
+
+.admin-deploy {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+}
+
+/* The result sits inline beside the button rather than below it, so the
+   masthead height does not jump when a deploy is queued. */
+.admin-deploy-ok,
+.admin-deploy-error {
+  margin: 0;
+  max-width: 32ch;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.admin-deploy-ok {
+  color: var(--ds-neutral-500);
+}
+
+.admin-deploy-error {
+  color: #c62828;
+}
+
+/* --- Editor: value tree --- */
 
 .admin-object {
   min-width: 0;

@@ -37,6 +37,8 @@ export const ADMIN_ENV = {
   r2PublicUrl: 'R2_PUBLIC_URL',
   githubToken: 'GITHUB_TOKEN',
   githubRepo: 'GITHUB_REPO',
+  coolifyUrl: 'COOLIFY_WEBHOOK_URL',
+  coolifyToken: 'COOLIFY_API_TOKEN',
 } as const;
 
 /**
@@ -50,6 +52,28 @@ export const ADMIN_ENV = {
  */
 function read(name: string): string {
   return (process.env[name] ?? '').trim();
+}
+
+/**
+ * Whether the panel can trigger a Coolify deploy directly.
+ *
+ * The URL is the deploy webhook (the one Coolify shows under
+ * "Webhooks → Deploy Webhook"). The token is only needed when the webhook is
+ * protected, which Coolify does when the endpoint is not on a private network —
+ * so it is optional, and a URL alone is enough on an internal network.
+ * @returns {boolean}
+ */
+export function isCoolifyConfigured(): boolean {
+  return read(ADMIN_ENV.coolifyUrl) !== '';
+}
+
+/** Resolved Coolify settings. Only call when `isCoolifyConfigured()` is true. */
+export function coolifyConfig() {
+  return {
+    url: read(ADMIN_ENV.coolifyUrl),
+    /** Optional bearer token. Empty string when not set. */
+    token: read(ADMIN_ENV.coolifyToken),
+  };
 }
 
 /**
@@ -132,6 +156,12 @@ export function deploymentWarnings(): string[] {
   if (!isGitConfigured()) {
     warnings.push(
       'No GITHUB_TOKEN / GITHUB_REPO. Text edits are written to the local filesystem only and will not reach production. Set both to commit changes to the repository.',
+    );
+  }
+
+  if (!isCoolifyConfigured()) {
+    warnings.push(
+      'COOLIFY_WEBHOOK_URL is not set, so the panel cannot trigger a deploy. Saving still commits to the repository — if Coolify auto-deploy is wired, the site rebuilds on its own; otherwise deploy manually from the Coolify dashboard.',
     );
   }
 

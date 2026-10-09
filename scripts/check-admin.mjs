@@ -58,7 +58,11 @@ console.log('\n\u001b[1mAdmin panel\u001b[0m\n');
 
 const apiRoutes = walk('app/api/admin').filter((f) => f.endsWith('route.ts'));
 
-report(apiRoutes.length >= 3, 'the admin API routes exist', `found ${apiRoutes.length}`);
+report(
+  apiRoutes.length >= 3,
+  'the admin API routes exist',
+  `found ${apiRoutes.length}`,
+);
 
 const unguarded = apiRoutes.filter((file) => {
   // The auth route IS the login; it cannot require a session to sign in.
