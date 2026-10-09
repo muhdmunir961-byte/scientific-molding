@@ -7,6 +7,7 @@
 
 import ProgramHero from './ProgramHero';
 import ProgramSection from '../shared/ProgramSection';
+import ModuleGallery from './ModuleGallery';
 import { ctaLabelFor } from './program-cta-content';
 import { withOverrides } from '@/lib/admin/overrides';
 import {
@@ -84,7 +85,24 @@ export default function ProgramFundamentals() {
         days={{ heading: 'Two-Day Journey', items: PROGRAM_A_DAYS }}
         format={PROGRAM_A_LEARNING_FORMAT}
         cta={{ ...PROGRAM_A_CTA, label: ctaLabelFor(PROGRAM_A_HERO.id) }}
-      />
+      >
+        {/*
+          * The module's photo gallery.
+          *
+          * Passed as a child rather than added to `ProgramSection`, because the
+          * gallery is not a text block: it renders nothing at all until an
+          * operator uploads photographs, and threading an empty-by-default
+          * section through the shared template would add a slot four other
+          * programmes never use.
+          *
+          * `moduleSlug` is the canonical slug from `content/modules.json`, which
+          * is also what the admin panel writes under.
+          */}
+        <ModuleGallery
+          moduleSlug="m1-fundamental"
+          moduleTitle="Fundamental of Scientific Molding"
+        />
+      </ProgramSection>
     </section>
   );
 }

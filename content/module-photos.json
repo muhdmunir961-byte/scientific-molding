@@ -1,4 +1,5 @@
 {
+  "$comment": "Module photo galleries. Written by the admin panel and committed through the GitHub API. Read by lib/gallery.ts.",
   "modules": {
     "m1-fundamental": {
       "lecture": [],

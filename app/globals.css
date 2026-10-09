@@ -4432,3 +4432,57 @@ textarea.field-input {
   }
 }
 
+
+/* ==================================================================
+   Module gallery — photographs uploaded per module and category
+   ==================================================================
+   Renders nothing at all when a module has no photos, so these rules only
+   apply once an operator has uploaded something. The grid adapts to however
+   many images a category holds rather than reserving fixed cells.
+   ================================================================== */
+
+.module-gallery {
+  margin-top: var(--ds-space-12);
+}
+
+.module-gallery-category + .module-gallery-category {
+  margin-top: var(--ds-space-10);
+}
+
+.module-gallery-category-title {
+  margin: 0 0 var(--ds-space-4);
+  font-size: var(--ds-text-caption);
+  font-weight: 600;
+  letter-spacing: var(--ds-tracking-wider);
+  text-transform: uppercase;
+  color: var(--ds-orange-500);
+}
+
+.module-gallery-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--ds-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.module-gallery-figure {
+  margin: 0;
+}
+
+.module-gallery-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--ds-radius-md);
+  box-shadow: var(--ds-shadow-sm);
+}
+
+.module-gallery-caption {
+  margin-top: var(--ds-space-2);
+  font-size: var(--ds-text-caption);
+  line-height: var(--ds-leading-normal);
+  color: var(--ds-neutral-500);
+  text-wrap: pretty;
+}
