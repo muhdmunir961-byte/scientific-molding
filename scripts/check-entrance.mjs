@@ -2966,10 +2966,23 @@ report(
 
 /* --- Testimonials. --- */
 
+/*
+ * The section is CONDITIONAL now.
+ *
+ * It renders only when at least one testimonial is published, and returns null
+ * otherwise — the brief's requirement, because a heading with no cards under it
+ * reads as a broken page. So the assertion is "at most once": zero is the correct
+ * state while every entry is unpublished, and two would always be a bug.
+ *
+ * The stronger check — that its presence tracks the publish flag — lives in
+ * `check-admin.mjs`, which reads the data file and the served page together.
+ */
+const testimonialSectionCount = countOccurrences(htmlText, 'id="testimonials"');
+
 report(
-  countOccurrences(htmlText, 'id="testimonials"') === 1,
-  'the testimonials section renders exactly once',
-  `expected 1 — served: ${countOccurrences(htmlText, 'id="testimonials"')}`,
+  testimonialSectionCount <= 1,
+  'the testimonials section renders at most once',
+  `two or more copies would be a mounting bug — served: ${testimonialSectionCount}`,
 );
 
 /*

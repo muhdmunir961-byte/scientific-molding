@@ -50,7 +50,6 @@ import {
 } from '@/components/track-record/track-record-content';
 import {
   TESTIMONIALS_HERO,
-  TESTIMONIALS,
 } from '@/components/testimonials/testimonials-content';
 import {
   CONTACT_HERO,
@@ -162,7 +161,6 @@ const REGISTRY: Record<string, JsonValue> = {
   'track-record.CLIENT_TYPES': CLIENT_TYPES as unknown as JsonValue,
 
   'testimonials.TESTIMONIALS_HERO': TESTIMONIALS_HERO as unknown as JsonValue,
-  'testimonials.TESTIMONIALS': TESTIMONIALS as unknown as JsonValue,
 
   'contact.CONTACT_HERO': CONTACT_HERO as unknown as JsonValue,
   'contact.CONTACT_LABELS': CONTACT_LABELS as unknown as JsonValue,

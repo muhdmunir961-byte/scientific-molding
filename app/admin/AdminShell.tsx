@@ -26,6 +26,7 @@ import DeployButton from './DeployButton';
 const LINKS = [
   { href: '/admin', label: 'Overview' },
   { href: '/admin/images', label: 'Images' },
+  { href: '/admin/testimonials', label: 'Testimonials' },
   { href: '/admin/content', label: 'Content' },
 ] as const;
 

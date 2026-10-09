@@ -28,9 +28,10 @@
  * ════════════════════════════════════════════════════════════════════════
  */
 
+import { allTestimonials } from '@/lib/testimonials';
+
 import { HERO_MEDIA } from '@/components/hero/hero-content';
 import { TRAINER_PHOTO, TRAINER_SESSIONS } from '@/components/about/about-content';
-import { TESTIMONIALS } from '@/components/testimonials/testimonials-content';
 
 /**
  * The manifest: one entry per slot, keyed by the content key the components use.
@@ -65,9 +66,9 @@ export function imageDefaults(): Record<string, string> {
     session2: sessions[1] ?? '',
     session3: sessions[2] ?? '',
     session4: sessions[3] ?? '',
-    testimonial1: TESTIMONIALS[0]?.avatar ?? '',
-    testimonial2: TESTIMONIALS[1]?.avatar ?? '',
-    testimonial3: TESTIMONIALS[2]?.avatar ?? '',
+    testimonial1: allTestimonials()[0]?.photo ?? '',
+    testimonial2: allTestimonials()[1]?.photo ?? '',
+    testimonial3: allTestimonials()[2]?.photo ?? '',
     logo: '',
   };
 }

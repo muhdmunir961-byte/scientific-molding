@@ -156,7 +156,16 @@ export const MODULES: readonly ModuleSpec[] = [
     file: 'components/testimonials/testimonials-content.ts',
     exports: [
       { name: 'TESTIMONIALS_HERO', label: 'Section heading', description: 'Eyebrow, title and sub-copy.' },
-      { name: 'TESTIMONIALS', label: 'Quotes', description: 'The three testimonial entries.' },
+      /*
+       * The quotes are NOT editable here.
+       *
+       * They moved to `content/testimonials.json` and are managed on
+       * `/admin/testimonials`, which supports add, delete, reorder and a publish
+       * toggle. A free-text editor cannot express those, and the publish gate is
+       * the reason the list needed its own panel: a testimonial is a claim in a
+       * named person's mouth, so shipping it hidden by default is the whole
+       * point.
+       */
     ],
   },
   {

@@ -14,7 +14,7 @@
 
 import { HERO_MEDIA } from '../hero/hero-content';
 import { TRAINER_PHOTO, TRAINER_SESSIONS } from '../about/about-content';
-import { TESTIMONIALS } from '../testimonials/testimonials-content';
+import { allTestimonials } from '@/lib/testimonials';
 
 /**
  * Overrides written by the admin panel.
@@ -94,9 +94,9 @@ export const SESSION_IMAGES: readonly SessionImage[] = TRAINER_SESSIONS.map(
  * (each entry names its own `avatar` path), so the override only wins when the
  * admin has actually uploaded a replacement.
  */
-export const TESTIMONIAL_AVATARS = TESTIMONIALS.map((testimonial, index) => {
+export const TESTIMONIAL_AVATARS = allTestimonials().map((testimonial, index) => {
   const key = `testimonial${index + 1}` as keyof ImageOverrides;
-  return overrides[key] || testimonial.avatar;
+  return overrides[key] || testimonial.photo;
 });
 
 /**

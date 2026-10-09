@@ -50,54 +50,19 @@ export const TESTIMONIALS_HERO = {
     'Feedback from engineers and managers who have completed the programmes.',
 } as const;
 
-/** One testimonial. See the file docblock for what to supply. */
-export interface Testimonial {
-  readonly id: string;
-  readonly name: string;
-  readonly role: string;
-  readonly company: string;
-  readonly quote: string;
-  readonly avatar: string;
-  /** 1–5. Rendered as a row of stars; the count is also the accessible name. */
-  readonly rating: number;
-}
-
-/**
- * PLACEHOLDER DATA — replace all three entries.
+/*
+ * The testimonial entries themselves are NOT here.
  *
- * Three, not two and not five: a peer group of three is the smallest number
- * that reads as "several customers" rather than as a pair of examples, and at
- * three-across the row fills a desktop container without a ragged last cell.
+ * They live in `content/testimonials.json` and are read through
+ * `lib/testimonials.ts`, because the client adds, reorders and publishes them
+ * from the panel. A `readonly` array in a component module cannot be edited, and
+ * an entry needs a stable id for a reorder to survive — see that module's
+ * docblock.
+ *
+ * The types are re-exported here so existing imports of `Testimonial` keep
+ * working rather than every call site having to learn the new path.
  */
-export const TESTIMONIALS: readonly Testimonial[] = [
-  {
-    id: 'testimonial-1',
-    name: '[Name]',
-    role: '[Role]',
-    company: '[Company]',
-    quote: '[Testimonial text — 2-3 sentences]',
-    avatar: '/images/testimonial-1.jpg',
-    rating: 5,
-  },
-  {
-    id: 'testimonial-2',
-    name: '[Name]',
-    role: '[Role]',
-    company: '[Company]',
-    quote: '[Testimonial text — 2-3 sentences]',
-    avatar: '/images/testimonial-2.jpg',
-    rating: 5,
-  },
-  {
-    id: 'testimonial-3',
-    name: '[Name]',
-    role: '[Role]',
-    company: '[Company]',
-    quote: '[Testimonial text — 2-3 sentences]',
-    avatar: '/images/testimonial-3.jpg',
-    rating: 5,
-  },
-] as const;
+export type { Testimonial } from '@/lib/testimonials';
 
 /**
  * Assistive-tech caption naming the section's purpose.

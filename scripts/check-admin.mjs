@@ -496,14 +496,94 @@ report(
   'the filesystem check must stay out of anything the browser bundle reaches',
 );
 
-console.log('');
-if (failures === 0) {
-  console.log('  \u001b[32mADMIN CHECKS PASSED\u001b[0m\n');
-  process.exit(0);
+/* ------------------------------------------------------------------ *
+ * 14. Testimonials are gated and manageable
+ * ------------------------------------------------------------------ */
+
+/*
+ * A testimonial is a claim in a named person's mouth. Two things must hold:
+ * nothing is published by default, and the section disappears when nothing is
+ * published rather than rendering an empty shell.
+ */
+const testimonialsData = JSON.parse(read('content/testimonials.json'));
+const publishedCount = testimonialsData.testimonials.filter((t) => t.published).length;
+
+report(
+  Array.isArray(testimonialsData.testimonials),
+  'the testimonial list is readable',
+  'content/testimonials.json must expose a testimonials array',
+);
+report(
+  testimonialsData.testimonials.every((t) => 'published' in t && 'order' in t && 'id' in t),
+  'every testimonial carries id, order and a publish flag',
+  'without an id a reorder cannot survive; without a flag nothing is gated',
+);
+
+const testimonialsComponent = read('components/testimonials/Testimonials.tsx');
+report(
+  testimonialsComponent.includes('publishedTestimonials'),
+  'the public component renders only published entries',
+  'it must read through the publish filter, not the raw list',
+);
+report(
+  /if \(entries\.length === 0\) return null/.test(testimonialsComponent),
+  'the section hides entirely when nothing is published',
+  'an empty heading reads as a broken page',
+);
+
+const testimonialsRoute = read('app/api/admin/testimonials/route.ts');
+for (const verb of ['POST', 'PATCH', 'DELETE']) {
+  report(
+    new RegExp(`export async function ${verb}`).test(testimonialsRoute),
+    `the testimonials API implements ${verb}`,
+    'add, edit/reorder and delete are all required',
+  );
+}
+report(
+  testimonialsRoute.includes('requireSession'),
+  'the testimonials API is session-guarded',
+  'an unguarded route would let anyone publish a claim',
+);
+
+/*
+ * When nothing is published, the served page must not contain the section.
+ *
+ * The page is fetched here rather than reusing a variable from
+ * `check-entrance.mjs` — the two scripts run independently, so neither may
+ * depend on the other's scope. If the app is not running the fetch fails and the
+ * assertion is skipped rather than reported as a failure, because a stopped
+ * server is not a defect in the testimonials gate.
+ */
+const base = process.env.CHECK_BASE_URL ?? 'http://localhost:5555';
+let servedHtml = '';
+try {
+  const response = await fetch(`${base}/`, { signal: AbortSignal.timeout(10_000) });
+  if (response.ok) servedHtml = await response.text();
+} catch {
+  // Server not running — skip the served-output assertion.
 }
 
-console.log(`  \u001b[31m${failures} ADMIN CHECK(S) FAILED\u001b[0m\n`);
-process.exit(1);
+if (servedHtml) {
+  if (publishedCount === 0) {
+    report(
+      !servedHtml.includes('testimonials-section'),
+      'the section is absent from the page while nothing is published',
+      `found the section with ${publishedCount} published entries`,
+    );
+  } else {
+    report(
+      servedHtml.includes('testimonials-section'),
+      'the section renders once something is published',
+      'published entries exist but the section is missing',
+    );
+  }
+} else {
+  console.log('  \u001b[33m~\u001b[0m skipped the served-output check — no app at ' + base);
+}
+
+/* ------------------------------------------------------------------ *
+ * Summary
+ * ------------------------------------------------------------------ */
 
 console.log('');
 if (failures === 0) {

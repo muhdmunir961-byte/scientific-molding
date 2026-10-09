@@ -130,6 +130,17 @@ export default async function AdminPage() {
       </section>
 
       <section className="admin-card">
+        <h2 className="admin-card-title">Testimonials</h2>
+        <p className="admin-card-desc">
+          Add, reorder and publish participant quotes. They ship hidden, and the
+          section is hidden on the site until at least one is published.
+        </p>
+        <Link className="admin-button admin-button-secondary" href="/admin/testimonials">
+          Manage testimonials
+        </Link>
+      </section>
+
+      <section className="admin-card">
         <h2 className="admin-card-title">Site text</h2>
         <p className="admin-card-desc">{CONTENT_MODULES.length} sections.</p>
 

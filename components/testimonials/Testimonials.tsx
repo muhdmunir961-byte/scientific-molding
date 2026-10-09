@@ -4,9 +4,20 @@
  * Testimonials — §5.5b.
  *
  * ════════════════════════════════════════════════════════════════════
- *  ⚠️  CONTENT REQUIRED — see `testimonials-content.ts`. Every quote below
- *  is a bracketed placeholder. The section is complete; the copy is not.
+ *  ⚠️  CONTENT REQUIRED — see `content/testimonials.json`.
+ *
+ *  Every shipped entry has `published: false` and bracketed copy. The section
+ *  renders nothing at all until real, permissioned quotes are switched on from
+ *  `/admin/testimonials`.
  * ════════════════════════════════════════════════════════════════════
+ *
+ * ── Why unpublished entries are dropped, not hidden ─────────────────
+ * A testimonial is a quotation attributed to a named person at a named company.
+ * Publishing one that person never gave is a legal exposure under Malaysian
+ * consumer-protection and trade-description rules, and it is the one thing the
+ * source PDFs cannot supply — neither contains a quote. So the default is
+ * hidden, and the section disappears entirely when nothing is published: an
+ * empty section looks broken, and a fabricated claim is worse than both.
  *
  * ── Why it sits between Track Record and Contact ────────────────────
  * The Track Record section makes a claim about the trainer ("proven across
@@ -33,42 +44,56 @@
  */
 
 import Image from 'next/image';
-import { Star } from 'lucide-react';
+
 import { useState } from 'react';
 
 import ScrollReveal from '../about/ScrollReveal';
 import { withOverrides } from '@/lib/admin/overrides';
 import { TESTIMONIAL_AVATARS } from '../shared/image-content';
+import { publishedTestimonials, type Testimonial } from '@/lib/testimonials';
 import {
-  TESTIMONIALS as TESTIMONIALS_RAW,
   TESTIMONIALS_CAPTION,
   TESTIMONIALS_HERO as TESTIMONIALS_HERO_RAW,
   TESTIMONIALS_ID,
-  type Testimonial,
 } from './testimonials-content';
 
 /* Admin overrides, resolved once at module load. See Hero.tsx for the reasoning. */
 const TESTIMONIALS_HERO = withOverrides('testimonials.TESTIMONIALS_HERO', TESTIMONIALS_HERO_RAW);
-const TESTIMONIALS = withOverrides('testimonials.TESTIMONIALS', TESTIMONIALS_RAW);
 
 /**
- * The testimonials with their admin-uploaded avatar applied.
+ * The quotes the public site may render, in order, with their uploaded photos.
  *
- * The avatar override lives in the Images group (a file upload), while the rest
- * of the entry lives in the Testimonials group (text). Merging them here is what
- * lets the operator upload a headshot on one page and edit the quote on another
- * without either clobbering the other.
+ * The avatar override lives in the Images group (a file upload) while the entry
+ * itself lives in `content/testimonials.json`. Pairing them here is what lets the
+ * operator upload a headshot on one page and edit the quote on another without
+ * either clobbering the other.
+ *
+ * The pairing is by INDEX, which only holds while the upload slots stay named
+ * `testimonial1..3` and the entries stay in that order. A fourth testimonial has
+ * no slot and falls back to its own `photo` field, which is correct.
  */
-const TESTIMONIALS_WITH_AVATARS = TESTIMONIALS.map((testimonial, index) => ({
-  ...testimonial,
-  avatar: TESTIMONIAL_AVATARS[index] || testimonial.avatar,
-}));
+function publishedWithPhotos(): (Testimonial & { resolvedPhoto: string })[] {
+  return publishedTestimonials().map((testimonial, index) => ({
+    ...testimonial,
+    resolvedPhoto: TESTIMONIAL_AVATARS[index] || testimonial.photo,
+  }));
+}
 
 
-/** The five rating positions, so the loop cannot drift from the denominator. */
-const RATING_MAX = 5;
+
 
 export default function Testimonials() {
+  const entries = publishedWithPhotos();
+
+  /*
+   * Render nothing when there is nothing to show.
+   *
+   * Returning null rather than an empty section: a heading with no cards under
+   * it reads as a broken page, and the brief asks for the section to be hidden
+   * when no testimonial is published.
+   */
+  if (entries.length === 0) return null;
+
   return (
     <section
       id={TESTIMONIALS_ID}
@@ -96,7 +121,7 @@ export default function Testimonials() {
         </p>
 
         <ul className="testimonial-grid">
-          {TESTIMONIALS_WITH_AVATARS.map((testimonial, i) => (
+          {entries.map((testimonial, i) => (
             <li key={testimonial.id} className="testimonial-cell">
               <ScrollReveal delayMs={i * 80}>
                 <TestimonialCard testimonial={testimonial} />
@@ -117,13 +142,17 @@ export default function Testimonials() {
  * the row responds like every other card on the page — per
  * docs/design-system.md, that is one behaviour, not one per section.
  */
-function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
+function TestimonialCard({
+  testimonial,
+}: {
+  testimonial: Testimonial & { resolvedPhoto: string };
+}) {
   return (
     <figure className="testimonial-card">
       <blockquote className="testimonial-quote">{testimonial.quote}</blockquote>
 
       <figcaption className="testimonial-attribution">
-        <Avatar src={testimonial.avatar} name={testimonial.name} />
+        <Avatar src={testimonial.resolvedPhoto} name={testimonial.name} />
 
         <div className="min-w-0">
           <p className="testimonial-name">{testimonial.name}</p>
@@ -133,7 +162,15 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
         </div>
       </figcaption>
 
-      <Stars rating={testimonial.rating} />
+      {/*
+        * No stars.
+        *
+        * The published shape has no rating field — the brief's F asks for name,
+        * role, company, quote, photo, module tag and a publish toggle, and a star
+        * rating is not among them. Rendering a hardcoded five would attribute a
+        * score nobody gave, which for a testimonial is exactly the fabrication
+        * the publish gate exists to prevent.
+        */}
     </figure>
   );
 }
@@ -180,29 +217,3 @@ function Avatar({ src, name }: { src: string; name: string }) {
   );
 }
 
-/**
- * The rating.
- *
- * `role="img"` with an `aria-label` on the wrapper, and `aria-hidden` on every
- * glyph: the accessible name is "5 out of 5 stars" once. Five separately
- * announced graphics would be five interruptions for one value.
- */
-function Stars({ rating }: { rating: number }) {
-  return (
-    <span
-      role="img"
-      aria-label={`${rating} out of ${RATING_MAX} stars`}
-      className="testimonial-stars"
-    >
-      {Array.from({ length: RATING_MAX }, (_, i) => (
-        <Star
-          key={i}
-          size={16}
-          strokeWidth={2}
-          aria-hidden="true"
-          className={i < rating ? 'testimonial-star-filled' : 'testimonial-star-empty'}
-        />
-      ))}
-    </span>
-  );
-}

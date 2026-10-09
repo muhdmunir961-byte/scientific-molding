@@ -877,3 +877,14 @@
 .admin-nav-menu a[aria-current='page'] {
   background-color: var(--ds-orange-50);
 }
+
+/* --- Testimonials: unpublished rows muted so the state is scannable --- */
+
+.testimonial-unpublished {
+  border-left-color: var(--ds-neutral-200);
+  background-color: var(--ds-neutral-100);
+}
+
+.testimonial-unpublished .admin-label {
+  color: var(--ds-neutral-500);
+}
