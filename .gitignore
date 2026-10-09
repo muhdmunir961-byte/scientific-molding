@@ -29,12 +29,14 @@ yarn-error.log*
 
 # Admin panel — generated content overrides.
 #
-# These ARE committed when the panel saves through the GitHub API (that is how
-# a change reaches production). They are ignored here only so a LOCAL save made
-# without GITHUB_TOKEN does not accidentally land in a commit: the local
-# fallback is a development convenience, and a file it wrote must never be
-# mistaken for a published edit.
-components/generated/*.generated.ts
+# These live in `components/generated/` and ARE meant to be committed: the panel
+# commits them through the GitHub API, and the components import them.
+#
+# NOT ignored here on purpose. An earlier revision ignored them so a local save
+# without GITHUB_TOKEN would not land in a commit — but that also hid a
+# legitimately committed file from `git status`, which is exactly the kind of
+# invisibility that lets a real change go unnoticed. A local save without a
+# token is already warned about in the panel UI, which is the right place for it.
 
 # TypeScript
 *.tsbuildinfo

@@ -84,20 +84,19 @@ const STRUCTURE = [
   ['headline remainder run', 'hero-headline-rest'],
   ['blueprint grid', 'hero-grid'],
   /* Polish #7 — the hero visual is now `<ImageSlot>`, so the marker the
-     placeholder used to carry ("Image placeholder") is gone. The frame is still
-     asserted by class below; the asset path is asserted separately. */
-  ['hero image asset path', '/images/hero-training.jpg'],
+     placeholder used to carry ("Image placeholder") is gone.
+   *
+   * The asset PATH moved to a slot-level assertion below. It is no longer a
+   * fixed string: an operator can replace the hero image through
+   * `/admin/images`, which writes `components/generated/images-content.generated.ts`
+   * and legitimately changes the rendered path. Asserting the default here
+   * would fail on a correct build as soon as anyone uploaded a photograph. */
   ['hero image slot frame', 'image-slot'],
   // Section 5.2
   ['about section', 'id="about"'],
   ['about heading id', 'id="about-heading"'],
   ['credential list is a <ul>', 'list-none'],
-  /* Polish #7 — the labelled placeholder frame became an `<ImageSlot>` driven by
-     `TRAINER_PHOTO.src`. */
-  ['trainer photo asset path', '/images/trainer-portrait.jpg'],
   ['trainer session gallery', 'session-grid'],
-  ['session 1 asset path', '/images/session-1.jpg'],
-  ['session 4 asset path', '/images/session-4.jpg'],
   // Section 5.3 Program A
   ['program A section', 'id="fundamentals"'],
   ['program A heading id', 'id="fundamentals-heading"'],
@@ -2925,24 +2924,56 @@ report(
  * the literal string), not in the rendered `<img>`. Searching for both is what
  * proves the slot is wired END TO END — a component that held the right string
  * but rendered no image would pass a payload-only test.
+ *
+ * ── Why these are the DEFAULT paths, and what that means ────────────────
+ * An image path is now operator-editable through `/admin/images`. When a path
+ * has been saved, the panel writes `components/generated/images-content.generated.ts`
+ * and the rendered path legitimately differs from the default below.
+ *
+ * So this check reads the ACTUAL path out of the served HTML rather than
+ * asserting the default string: it extracts every `/images/...` or
+ * `https://.../images/...` path the page renders and requires at least one
+ * optimised `/_next/image` URL alongside it. Asserting the literal default
+ * would fail on a correct build the moment an operator uploaded anything —
+ * the same class of bug as testing the minifier instead of the design.
  */
 const IMAGE_ASSETS = [
-  ['hero image', '/images/hero-training.jpg'],
-  ['trainer portrait', '/images/trainer-portrait.jpg'],
-  ['session 1', '/images/session-1.jpg'],
-  ['session 2', '/images/session-2.jpg'],
-  ['session 3', '/images/session-3.jpg'],
-  ['session 4', '/images/session-4.jpg'],
+  ['hero image', 'hero'],
+  ['trainer portrait', 'trainer-portrait'],
+  ['session 1', 'session-1'],
+  ['session 2', 'session-2'],
+  ['session 3', 'session-3'],
+  ['session 4', 'session-4'],
 ];
 
-for (const [label, path] of IMAGE_ASSETS) {
-  const encoded = path.replace(/\//g, '%2F');
-  const servedOptimised = countOccurrences(htmlText, `/_next/image?url=${encoded}`);
+/** Any `/images/<name>` path, local or absolute, that the page rendered. */
+const renderedImagePaths = [
+  ...new Set(
+    [...htmlText.matchAll(/(?:https?:\/\/[^"'\s]+)?\/images\/[A-Za-z0-9._-]+\.(?:jpg|jpeg|png|webp|avif)/g)].map(
+      (m) => m[0],
+    ),
+  ),
+];
+
+for (const [label, stem] of IMAGE_ASSETS) {
+  /*
+   * Match on the SLOT stem rather than the full default path. The stem is what
+   * the panel preserves (`hero` → `hero.jpg`), so this holds whether the
+   * operator has uploaded a file or is still on the default — and it still
+   * fails if the slot stopped rendering a photograph altogether.
+   */
+  const candidates = renderedImagePaths.filter((p) =>
+    new RegExp(`/${stem}\\.[A-Za-z0-9]+$`).test(p),
+  );
+
+  const servedOptimised = candidates.some((p) =>
+    htmlText.includes(`/_next/image?url=${encodeURIComponent(p)}`),
+  );
 
   report(
-    countOccurrences(htmlText, path) >= 1 && servedOptimised >= 1,
-    `the ${label} slot renders through next/image at ${path}`,
-    `expected the path in the payload AND an optimised /_next/image URL — payload: ${countOccurrences(htmlText, path)}, optimised: ${servedOptimised}`,
+    candidates.length >= 1 && servedOptimised,
+    `the ${label} slot renders through next/image`,
+    `no optimised /_next/image URL for a ${stem}.* path — rendered paths: ${JSON.stringify(candidates)}`,
   );
 }
 

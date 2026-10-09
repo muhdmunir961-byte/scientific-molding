@@ -178,6 +178,74 @@ report(
 );
 
 /* ------------------------------------------------------------------ *
+ * 8. The image components read the override module
+ * ------------------------------------------------------------------ */
+
+/*
+ * The bug this check exists to prevent: the panel uploaded an image, saved the
+ * path, committed it — and nothing changed on the site, because the components
+ * still imported their defaults directly. Every step reported success. Catching
+ * it here means the wiring cannot be forgotten again.
+ */
+const imageConsumers = [
+  'components/hero/HeroMedia.tsx',
+  'components/about/TrainerPhoto.tsx',
+];
+
+const bypassing = imageConsumers.filter((file) => !read(file).includes('image-content'));
+
+report(
+  bypassing.length === 0,
+  'every image component reads the admin override module',
+  `these import their defaults directly, so a panel upload would not appear: ${bypassing.join(', ')}`,
+);
+
+report(
+  !/from '\.\/hero-content'/.test(read('components/hero/HeroMedia.tsx')) &&
+    !/TRAINER_PHOTO/.test(read('components/about/TrainerPhoto.tsx')),
+  'no image component imports the raw default constants',
+  'importing HERO_MEDIA / TRAINER_PHOTO directly bypasses the override',
+);
+
+/* ------------------------------------------------------------------ *
+ * 9. The generated override reaches the build
+ * ------------------------------------------------------------------ */
+
+const imageContentHasRequire = /require\(/.test(imageContent);
+report(
+  imageContentHasRequire,
+  'the override module loads the generated file',
+  'without this the override can never apply',
+);
+
+report(
+  !/components\/generated\/\*\.generated\.ts/.test(read('.gitignore')),
+  'the generated modules are not gitignored',
+  'a gitignored generated file would be invisible to git status while still being imported',
+);
+
+/* ------------------------------------------------------------------ *
+ * 10. Remote images are allowlisted for the optimiser
+ * ------------------------------------------------------------------ */
+
+/*
+ * Without `images.remotePatterns`, `next/image` rejects a remote R2 URL at
+ * REQUEST time with a 400 — the build stays green and the hero photograph
+ * renders broken in production. That is the failure this asserts against.
+ */
+const nextConfig = read('next.config.ts');
+report(
+  /remotePatterns/.test(nextConfig),
+  'next.config declares images.remotePatterns',
+  'without it the image optimiser returns 400 for every R2 URL, and the build gives no warning',
+);
+report(
+  /R2_PUBLIC_URL/.test(nextConfig),
+  'the remote pattern is derived from R2_PUBLIC_URL',
+  'a hardcoded hostname would drift from the storage config the panel reads',
+);
+
+/* ------------------------------------------------------------------ *
  * Summary
  * ------------------------------------------------------------------ */
 

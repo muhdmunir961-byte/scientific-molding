@@ -25,7 +25,7 @@
  */
 
 import ImageSlot from '../shared/ImageSlot';
-import { HERO_MEDIA } from './hero-content';
+import { HERO_IMAGE } from '../shared/image-content';
 
 export default function HeroMedia() {
   return (
@@ -49,10 +49,10 @@ export default function HeroMedia() {
       />
 
       <ImageSlot
-        src={HERO_MEDIA.src}
-        width={HERO_MEDIA.width}
-        height={HERO_MEDIA.height}
-        alt={HERO_MEDIA.alt}
+        src={HERO_IMAGE.src}
+        width={HERO_IMAGE.width}
+        height={HERO_IMAGE.height}
+        alt={HERO_IMAGE.alt}
         radius="xl"
         elevation="lg"
         /* Above the fold and critical to the composition. */

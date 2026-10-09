@@ -28,7 +28,7 @@
  */
 
 import ImageSlot from '../shared/ImageSlot';
-import { TRAINER_PHOTO, TRAINER_SESSIONS } from './about-content';
+import { SESSION_IMAGES, TRAINER_PORTRAIT_IMAGE } from '../shared/image-content';
 
 /**
  * The portrait and the gallery.
@@ -47,10 +47,10 @@ export default function TrainerPhoto() {
         <div aria-hidden="true" className="trainer-halo" />
 
         <ImageSlot
-          src={TRAINER_PHOTO.src}
-          width={TRAINER_PHOTO.width}
-          height={TRAINER_PHOTO.height}
-          alt={TRAINER_PHOTO.alt}
+          src={TRAINER_PORTRAIT_IMAGE.src}
+          width={TRAINER_PORTRAIT_IMAGE.width}
+          height={TRAINER_PORTRAIT_IMAGE.height}
+          alt={TRAINER_PORTRAIT_IMAGE.alt}
           radius="xl"
           elevation="warm"
           sizes="(max-width: 1024px) 100vw, 40vw"
@@ -74,7 +74,7 @@ export default function TrainerPhoto() {
 function SessionGallery() {
   return (
     <ul className="session-grid">
-      {TRAINER_SESSIONS.map((session) => (
+      {SESSION_IMAGES.map((session) => (
         <li key={session.src} className="session-grid-item">
           <ImageSlot
             src={session.src}
