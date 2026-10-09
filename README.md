@@ -54,6 +54,44 @@ dimensions — dropping the files into `public/images/` is the only step needed.
 - Mobile hamburger + slide-in panel
 - Mobile sticky action bar (Call / WhatsApp / Email)
 
+## Admin Panel
+
+Content and images are managed at **`/admin`**, protected by `ADMIN_PASSWORD`.
+
+| Page | What it does |
+|---|---|
+| `/admin` | Overview + capability status |
+| `/admin/images` | Upload the six image positions |
+| `/admin/content` | Edit hero copy, trainer name, testimonials |
+
+### How a change reaches production
+
+The site deploys to Coolify, which rebuilds the container from git on every
+push. Anything written inside the container at runtime is **lost at the next
+deploy** — so the panel does not store content on the container's filesystem
+and call it done.
+
+- **Text edits** are committed to the repository through the GitHub API, which
+  triggers a redeploy. Requires `GITHUB_TOKEN` + `GITHUB_REPO`.
+- **Images** are uploaded to Cloudflare R2 and referenced by URL. Requires the
+  five `R2_*` variables.
+
+Without those credentials the panel still works, but writes go to the local
+filesystem and the panel shows a warning on the overview page. That state is for
+development only.
+
+### Why the panel writes a separate generated module
+
+`lib/admin/generated.ts` explains it in full. In short: editing the heavily
+commented content files with a regex is unsafe — the same string appears in both
+comments and code, and one mis-anchored match silently corrupts the file. So the
+panel owns a small, machine-written module per group
+(`components/generated/*.generated.ts`), and the content module imports it as an
+override with a fallback.
+
+`ADMIN_PASSWORD` has no default. Unset means the panel refuses every login
+rather than falling open. Generate one with `openssl rand -base64 24`.
+
 ## Local Development
 
 ```bash

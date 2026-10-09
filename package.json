@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "check:entrance": "node scripts/check-entrance.mjs",
     "check:timeline": "node scripts/check-timeline.mjs",
-    "verify": "npm run typecheck && npm run check:timeline && npm run check:entrance"
+    "check:admin": "node scripts/check-admin.mjs",
+    "verify": "npm run typecheck && npm run check:timeline && npm run check:admin && npm run check:entrance"
   },
   "dependencies": {
     "framer-motion": "13.4.0",

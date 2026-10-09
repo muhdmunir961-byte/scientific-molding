@@ -27,6 +27,15 @@ yarn-error.log*
 .env*.local
 !.env.local.example
 
+# Admin panel — generated content overrides.
+#
+# These ARE committed when the panel saves through the GitHub API (that is how
+# a change reaches production). They are ignored here only so a LOCAL save made
+# without GITHUB_TOKEN does not accidentally land in a commit: the local
+# fallback is a development convenience, and a file it wrote must never be
+# mistaken for a published edit.
+components/generated/*.generated.ts
+
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
