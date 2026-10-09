@@ -3,33 +3,38 @@ import Link from 'next/link';
 import {
   deploymentWarnings,
   isAuthConfigured,
+  isCoolifyConfigured,
   isGitConfigured,
   isR2Configured,
 } from '@/lib/admin/config';
 import { requirePage } from '@/lib/admin/page-guard';
-import { MODULES, PDF_EDIT_WARNING, PROGRAM_MODULES } from '@/lib/admin/schema';
+import { MODULES as CONTENT_MODULES, PDF_EDIT_WARNING, PROGRAM_MODULES } from '@/lib/admin/schema';
+import { allGalleryCounts } from '@/lib/gallery';
+import { MODULES, PHOTO_CATEGORIES, TOTAL_DAYS } from '@/lib/modules';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * Admin overview.
  *
- * Reports what is editable and, importantly, which storage capabilities are
- * degraded. A save that persists locally but never reaches production is the one
- * failure a non-technical operator cannot diagnose, so it is stated here rather
- * than discovered later.
+ * The photo panel is the primary content here: seven module cards, each linking
+ * to that module's gallery and showing how many photos it has per category. The
+ * brief asks for completeness at a glance, which is why each card carries four
+ * chips rather than one total — "3 of 4 categories have photos" tells an operator
+ * what to do next; "five photos" does not.
  */
 export default async function AdminPage() {
   await requirePage();
 
   const warnings = deploymentWarnings();
+  const counts = allGalleryCounts();
 
   return (
     <>
       <h1 className="admin-title">Overview</h1>
       <p className="admin-lede">
-        Edit the text and images on the page. Saving commits to the repository and
-        the site redeploys automatically.
+        {MODULES.length} training modules, {TOTAL_DAYS} days in total. Open a module
+        to add its photos, or edit the page text below.
       </p>
 
       {warnings.length > 0 && (
@@ -42,6 +47,50 @@ export default async function AdminPage() {
           </ul>
         </div>
       )}
+
+      <section className="admin-card">
+        <h2 className="admin-card-title">Module photos</h2>
+        <p className="admin-card-desc">
+          Each module has four activity categories: Lecture, Practical, Discussion
+          and Presentation. A filled chip means that category has photos.
+        </p>
+
+        <div className="admin-module-grid">
+          {MODULES.map((module) => {
+            const moduleCounts = counts[module.slug];
+            const byCategory: Partial<Record<string, number>> = moduleCounts?.byCategory ?? {};
+            return (
+              <Link
+                key={module.slug}
+                href={`/admin/modules/${module.slug}`}
+                className="admin-module-card"
+              >
+                <span className="admin-module-name">{module.title}</span>
+                <span className="admin-module-meta">
+                  {module.days} days · {module.level}
+                </span>
+
+                <span className="admin-module-cats">
+                  {PHOTO_CATEGORIES.map((category) => {
+                    const count = byCategory[category.slug] ?? 0;
+                    return (
+                      <span
+                        key={category.slug}
+                        className={`admin-cat-chip ${
+                          count > 0 ? 'admin-cat-chip-has' : 'admin-cat-chip-empty'
+                        }`}
+                      >
+                        {category.label}
+                        {count > 0 ? ` ${count}` : ''}
+                      </span>
+                    );
+                  })}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
 
       <section className="admin-card">
         <h2 className="admin-card-title">Capabilities</h2>
@@ -62,18 +111,30 @@ export default async function AdminPage() {
             Content commits (GitHub):{' '}
             <strong>{isGitConfigured() ? 'enabled' : 'local fallback'}</strong>
           </li>
+          <li>
+            Deploy trigger (Coolify):{' '}
+            <strong>{isCoolifyConfigured() ? 'enabled' : 'not set'}</strong>
+          </li>
         </ul>
       </section>
 
       <section className="admin-card">
-        <h2 className="admin-card-title">Site content</h2>
+        <h2 className="admin-card-title">Other images</h2>
         <p className="admin-card-desc">
-          {MODULES.length} sections, including the announcement banner. Choose one
-          to edit its text.
+          The fixed positions that are not part of a module: the logo, the hero
+          image, the trainer portrait and the testimonial headshots.
         </p>
+        <Link className="admin-button admin-button-secondary" href="/admin/images">
+          Manage other images
+        </Link>
+      </section>
+
+      <section className="admin-card">
+        <h2 className="admin-card-title">Site text</h2>
+        <p className="admin-card-desc">{CONTENT_MODULES.length} sections.</p>
 
         <ul className="admin-link-list">
-          {MODULES.map((module) => (
+          {CONTENT_MODULES.map((module) => (
             <li key={module.id}>
               <Link href={`/admin/content?module=${module.id}`}>
                 <strong>{module.title}</strong>
@@ -82,16 +143,10 @@ export default async function AdminPage() {
             </li>
           ))}
         </ul>
-
-        <p className="admin-actions" style={{ marginTop: 'var(--ds-space-6)' }}>
-          <Link className="admin-button" href="/admin/images">
-            Manage images
-          </Link>
-        </p>
       </section>
 
       <section className="admin-card">
-        <h2 className="admin-card-title">Programme content</h2>
+        <h2 className="admin-card-title">Programme text</h2>
         <p className="admin-card-desc">{PDF_EDIT_WARNING}</p>
 
         <ul className="admin-link-list">
