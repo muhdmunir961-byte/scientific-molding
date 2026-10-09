@@ -35,18 +35,41 @@ export default function ImagesManager() {
   const [loading, setLoading] = useState(true);
   const refs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  // Load the current paths from the images content group.
+  // Load the current paths from the images manifest.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const response = await fetch('/api/admin/content?group=images');
+        /*
+         * `module=images`, not `group=images`.
+         *
+         * The parameter was renamed from `group` to `module` when the schema
+         * stopped describing fields and started describing modules, and this
+         * call site kept the old name. The API saw no `module`, returned the
+         * module LIST, and the page read `undefined` from it — which is what
+         * produced the "Unknown module \"\"" error on screen.
+         */
+        const response = await fetch('/api/admin/images?manifest=1');
         const body = (await response.json()) as {
           ok?: boolean;
+          error?: string;
           data?: { values?: Record<string, string> };
         };
-        if (!cancelled && body.ok && body.data?.values) {
-          setPaths(body.data.values);
+
+        if (cancelled) return;
+
+        if (!response.ok || !body.ok) {
+          setBanner({
+            tone: 'error',
+            text: body.error ?? 'Could not load the current images.',
+          });
+          return;
+        }
+
+        setPaths(body.data?.values ?? {});
+      } catch {
+        if (!cancelled) {
+          setBanner({ tone: 'error', text: 'Could not reach the server.' });
         }
       } finally {
         if (!cancelled) setLoading(false);

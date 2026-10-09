@@ -69,6 +69,7 @@ import {
   QUICK_ACTIONS,
 } from '@/components/nav/nav-content';
 import { BANNER } from '@/components/shared/banner-content';
+import { buildManifest } from './images-manifest';
 import {
   TRAINER_CREDIBILITY_NAME,
   TRAINER_CREDIBILITY_CREDENTIALS,
@@ -234,6 +235,31 @@ const REGISTRY: Record<string, JsonValue> = {
 };
 
 /**
+ * Saved image paths, loaded once per request by `loadImageManifest()`.
+ *
+ * Kept module-level because `readExport` must stay synchronous — the editor
+ * calls it in a loop for every export in a module, and making it async would
+ * thread a promise through the whole render for one field. The route loads the
+ * saved values before reading any export.
+ */
+let savedImagePaths: Record<string, string> = {};
+
+/**
+ * Load the saved image paths so `readExport('images', 'PAGE_IMAGES')` can
+ * return them.
+ *
+ * Called by the content route before it reads exports. Idempotent and cheap: it
+ * reads one small generated file.
+ * @param {() => Promise<Record<string,string>>} loader
+ * @returns {Promise<void>}
+ */
+export async function loadImageManifest(
+  loader: () => Promise<Record<string, string>>,
+): Promise<void> {
+  savedImagePaths = await loader();
+}
+
+/**
  * The current value of an export, with any saved override applied.
  * @param {string} moduleId
  * @param {string} exportName
@@ -241,6 +267,20 @@ const REGISTRY: Record<string, JsonValue> = {
  */
 export function readExport(moduleId: string, exportName: string): JsonValue | undefined {
   const key = `${moduleId}.${exportName}`;
+
+  /*
+   * `images.PAGE_IMAGES` is computed, not stored in the override map.
+   *
+   * It is the output of the upload pipeline rather than a value an operator
+   * types, so it has no registry entry — which is exactly why the admin Content
+   * page rendered `null` for it. Building it from the saved paths merged over
+   * the defaults means the field can never be null: every slot resolves to a
+   * path, or to the explicit empty state the admin renders as "not set".
+   */
+  if (key === 'images.PAGE_IMAGES') {
+    return buildManifest(savedImagePaths) as unknown as JsonValue;
+  }
+
   const fallback = REGISTRY[key];
   if (fallback === undefined) return undefined;
   return withOverrides(key, fallback);

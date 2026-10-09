@@ -20,11 +20,48 @@
 
 import { NextResponse } from 'next/server';
 
+import { readImagesManifest, renderImagesManifest } from '@/lib/admin/content-store';
 import { requireSession, fail } from '@/lib/admin/guard';
-import { IMAGE_SLOTS, type ImageSlotName } from '@/lib/admin/image-slots';
+import { IMAGE_SLOTS, slotsByGroup, type ImageSlotName } from '@/lib/admin/image-slots';
 import { storeImage, validateImage } from '@/lib/admin/store';
 
 export const runtime = 'nodejs';
+
+/**
+ * GET /api/admin/images — the current manifest, or a list of the slots.
+ *
+ *   ?manifest=1   → the saved paths, keyed by content key
+ *   (no param)    → the slot definitions, for a client that wants to render them
+ *
+ * ── Why the manifest is read from here and not from the content route ────
+ * `PAGE_IMAGES` is not a content module an operator edits as text — it is the
+ * output of the upload pipeline. Reading it through the text-content route was
+ * the second half of the "Unknown module" bug: the images manifest had no
+ * registry entry, so the route returned `null` and the page rendered nothing.
+ * Keeping the read and the write on the same route means they cannot disagree
+ * about where the manifest lives.
+ *
+ * @param {Request} request
+ * @returns {Promise<NextResponse>}
+ */
+export async function GET(request: Request): Promise<NextResponse> {
+  const denied = await requireSession();
+  if (denied) return denied;
+
+  const wantsManifest = new URL(request.url).searchParams.get('manifest');
+
+  if (wantsManifest === '1') {
+    return NextResponse.json({
+      ok: true,
+      data: { values: await readImagesManifest() },
+    });
+  }
+
+  return NextResponse.json({
+    ok: true,
+    data: { groups: slotsByGroup(), slots: IMAGE_SLOTS },
+  });
+}
 
 /**
  * @param {Request} request multipart/form-data with `slot` and `file`

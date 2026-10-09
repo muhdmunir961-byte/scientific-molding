@@ -60,6 +60,72 @@ export interface SaveResult {
   message: string;
 }
 
+/** Repo-relative path of the images manifest, for the GitHub API. */
+export const IMAGES_MANIFEST_PATH = 'components/generated/images-content.generated.ts';
+
+/**
+ * Read the saved image overrides, keyed by content key.
+ *
+ * Parsed out of the generated module rather than imported, because the file is
+ * written at runtime and an `import` resolves at build time — a save would not
+ * be visible to the next read until a rebuild.
+ *
+ * A missing file yields `{}`, which is the correct state for a fresh checkout:
+ * every slot then resolves to its built-in default.
+ * @returns {Promise<Record<string, string>>}
+ */
+export async function readImagesManifest(): Promise<Record<string, string>> {
+  try {
+    const source = await readFile(join(GENERATED_ROOT, 'images-content.generated.ts'), 'utf8');
+    const start = source.indexOf('PAGE_IMAGES');
+    if (start === -1) return {};
+    const open = source.indexOf('{', start);
+    const close = source.lastIndexOf('}');
+    if (open === -1 || close <= open) return {};
+
+    const body = source
+      .slice(open + 1, close)
+      .replace(/,\s*$/, '')
+      .replace(/,\s*(?=[}\]])/g, '');
+
+    return body.trim()
+      ? (JSON.parse(`{${body}}`) as Record<string, string>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Render the images manifest module from a key-to-path map.
+ *
+ * Keys are sorted so a diff reads as content changes rather than as reordering.
+ * @param {Record<string, string>} values
+ * @returns {string}
+ */
+export function renderImagesManifest(values: Record<string, string>): string {
+  const lines = Object.keys(values)
+    .sort()
+    .map((key) => `  ${JSON.stringify(key)}: ${JSON.stringify(values[key])},`)
+    .join('\n');
+
+  return [
+    '/* GENERATED FILE — do not edit by hand.',
+    ' *',
+    ' * Written by the admin panel from the Images page.',
+    ' *',
+    ' * A flat map of content key to public URL. `lib/admin/images-manifest.ts`',
+    ' * merges this over the built-in defaults, so an absent key means "use the',
+    ' * default in the content module".',
+    ' */',
+    '',
+    'export const PAGE_IMAGES: Record<string, string> = {',
+    lines,
+    '};',
+    '',
+  ].join('\n');
+}
+
 /**
  * Render the overrides file from a map.
  *

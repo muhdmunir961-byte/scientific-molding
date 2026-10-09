@@ -18,9 +18,9 @@
 
 import { NextResponse } from 'next/server';
 
-import { readOverrides, saveExport } from '@/lib/admin/content-store';
+import { readOverrides, saveExport, readImagesManifest } from '@/lib/admin/content-store';
 import { requireSession, fail } from '@/lib/admin/guard';
-import { readExport } from '@/lib/admin/registry';
+import { loadImageManifest, readExport } from '@/lib/admin/registry';
 import { MODULES, findAnyModule, overrideKey } from '@/lib/admin/schema';
 import type { JsonValue } from '@/lib/admin/overrides';
 
@@ -38,9 +38,13 @@ export async function GET(request: Request): Promise<NextResponse> {
   const denied = await requireSession();
   if (denied) return denied;
 
-  const id = new URL(request.url).searchParams.get('module') ?? '';
+  const requested = new URL(request.url).searchParams.get('module');
 
-  if (!id) {
+  /*
+   * No `module` parameter at all: this is the list request. Legitimate — the
+   * editor's dropdown asks for it on first paint.
+   */
+  if (requested === null) {
     return NextResponse.json({
       ok: true,
       data: {
@@ -58,10 +62,37 @@ export async function GET(request: Request): Promise<NextResponse> {
     });
   }
 
+  /*
+   * A `module` parameter that is present but empty is an ERROR, not a list
+   * request.
+   *
+   * The bug this replaces: the Images page asked for `?group=images` — the
+   * parameter was renamed from `group` to `module` and that call site was missed
+   * — so `module` was absent, the route returned the module LIST, the client
+   * found no `values`, and the operator saw `Unknown module ""`. Treating the
+   * empty string as "list" would reproduce the same silent confusion, which is
+   * why the two cases are now distinguished by `null` versus `''`.
+   */
+  const id = requested.trim();
+  if (!id) {
+    return fail('No section was specified. Pick one from the list.', 400);
+  }
+
   const found = findAnyModule(id);
-  if (!found) return fail(`Unknown module "${id}".`, 404);
+  if (!found) {
+    return fail(
+      `There is no section called "${id}". It may have been renamed — reload and pick one from the list.`,
+      404,
+    );
+  }
 
   const saved = await readOverrides();
+
+  /*
+   * Load the saved image paths before reading any export, so the Images module
+   * resolves to what the site actually renders rather than to the defaults.
+   */
+  await loadImageManifest(readImagesManifest);
 
   return NextResponse.json({
     ok: true,
