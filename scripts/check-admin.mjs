@@ -432,13 +432,14 @@ report(
 
 /*
  * The "Unknown module ''" bug was a caller sending an empty slug and the route
- * treating it as a valid lookup. Every entry point that accepts a slug must
- * reject an empty or unknown one rather than falling through.
+ * treating it as a valid lookup. Every entry point that ACCEPTS a module slug
+ * must reject an empty or unknown one rather than falling through.
+ *
+ * `app/api/admin/images/route.ts` is deliberately absent from this list: it
+ * takes a fixed slot name, not a module slug, so there is no slug to validate.
+ * Including it would be asserting a rule that does not apply to it.
  */
-const moduleConsumers = [
-  'app/api/admin/images/route.ts',
-  'app/api/admin/module-photos/route.ts',
-];
+const moduleConsumers = ['app/api/admin/module-photos/route.ts'];
 
 const unvalidated = moduleConsumers
   .filter((f) => existsSync(join(root, f)))
