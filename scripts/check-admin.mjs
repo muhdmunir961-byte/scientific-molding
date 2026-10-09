@@ -379,8 +379,89 @@ report(
 );
 
 /* ------------------------------------------------------------------ *
+ * 11. The module list is authoritative and intact
+ * ------------------------------------------------------------------ */
+
+/*
+ * `content/modules.json` is the one list of training modules. It is sourced from
+ * the client PDF and must not be inferred, renamed or reordered — so it is
+ * asserted against the expected values rather than merely checked for shape.
+ */
+const modulesFile = JSON.parse(read('content/modules.json'));
+
+const EXPECTED_MODULES = [
+  ['m1-fundamental', 'Fundamental of Scientific Molding', 2, 'Foundation'],
+  ['m2-processability', 'Processability of Thermoplastics in Injection Molding', 2, 'Foundation'],
+  ['m3-fundamental-pd', 'Fundamental of Scientific Molding - Process Development', 2, 'Bridge'],
+  ['m4-process-development', 'Scientific Molding - Process Development', 4, 'Advanced'],
+  ['m5-parameter-setting', 'Systematic Parameter Setting for Injection Molding', 2, 'Bridge'],
+  ['m6-defects-troubleshooting', 'Scientific Molding: Defects Troubleshooting', 2, 'Application'],
+  ['m7-process-portability', 'Scientific Molding: Process Portability', 2, 'Advanced'],
+];
+
+const wrongModule = EXPECTED_MODULES.find(([slug, title, days, level], i) => {
+  const actual = modulesFile.modules[i];
+  if (!actual) return true;
+  return (
+    actual.slug !== slug ||
+    actual.title !== title ||
+    actual.days !== days ||
+    actual.level !== level
+  );
+});
+
+report(
+  EXPECTED_MODULES.length === modulesFile.modules.length,
+  'the module list has exactly seven entries',
+  `expected 7, found ${modulesFile.modules.length} — the PDF defines seven and only seven`,
+);
+report(
+  !wrongModule,
+  'every module matches the source PDF on slug, title, days and level',
+  `first mismatch: expected ${JSON.stringify(wrongModule?.[0])}, found ${JSON.stringify(modulesFile.modules[EXPECTED_MODULES.indexOf(wrongModule)]?.slug)}`,
+);
+report(
+  modulesFile.totalDays === 16,
+  'the module days sum to 16',
+  `expected 16, found ${modulesFile.totalDays}`,
+);
+
+/* ------------------------------------------------------------------ *
+ * 12. Entry points validate the module slug
+ * ------------------------------------------------------------------ */
+
+/*
+ * The "Unknown module ''" bug was a caller sending an empty slug and the route
+ * treating it as a valid lookup. Every entry point that accepts a slug must
+ * reject an empty or unknown one rather than falling through.
+ */
+const moduleConsumers = [
+  'app/api/admin/images/route.ts',
+  'app/api/admin/module-photos/route.ts',
+];
+
+const unvalidated = moduleConsumers
+  .filter((f) => existsSync(join(root, f)))
+  .filter((f) => !read(f).includes('isValidModuleSlug'));
+
+report(
+  unvalidated.length === 0,
+  'every route that takes a module slug validates it',
+  `would accept an empty slug: ${unvalidated.join(', ')}`,
+);
+
+/* ------------------------------------------------------------------ *
  * Summary
  * ------------------------------------------------------------------ */
+
+console.log('');
+if (failures === 0) {
+  console.log('  \u001b[32mADMIN CHECKS PASSED\u001b[0m\n');
+  process.exit(0);
+}
+
+console.log(`  \u001b[31m${failures} ADMIN CHECK(S) FAILED\u001b[0m\n`);
+process.exit(1);
 
 console.log('');
 if (failures === 0) {

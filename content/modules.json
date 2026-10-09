@@ -1,0 +1,55 @@
+{
+  "$comment": "The 7 training modules. SOURCE OF TRUTH: 0_7_Module_SIM_Professional_Training.pdf. Do not rename, reorder or invent entries. Read by the admin Overview, the admin dropdown, the per-module image manager and the public Programs menu, so the list exists exactly once. `legacySlug` records the id the site used before this file existed, so already-uploaded images and existing anchors keep resolving.",
+  "totalDays": 16,
+  "modules": [
+    {
+      "slug": "m1-fundamental",
+      "title": "Fundamental of Scientific Molding",
+      "days": 2,
+      "level": "Foundation",
+      "legacySlug": "fundamentals"
+    },
+    {
+      "slug": "m2-processability",
+      "title": "Processability of Thermoplastics in Injection Molding",
+      "days": 2,
+      "level": "Foundation",
+      "legacySlug": "materials"
+    },
+    {
+      "slug": "m3-fundamental-pd",
+      "title": "Fundamental of Scientific Molding - Process Development",
+      "days": 2,
+      "level": "Bridge",
+      "legacySlug": null
+    },
+    {
+      "slug": "m4-process-development",
+      "title": "Scientific Molding - Process Development",
+      "days": 4,
+      "level": "Advanced",
+      "legacySlug": "process-development"
+    },
+    {
+      "slug": "m5-parameter-setting",
+      "title": "Systematic Parameter Setting for Injection Molding",
+      "days": 2,
+      "level": "Bridge",
+      "legacySlug": null
+    },
+    {
+      "slug": "m6-defects-troubleshooting",
+      "title": "Scientific Molding: Defects Troubleshooting",
+      "days": 2,
+      "level": "Application",
+      "legacySlug": "defect-troubleshooting"
+    },
+    {
+      "slug": "m7-process-portability",
+      "title": "Scientific Molding: Process Portability",
+      "days": 2,
+      "level": "Advanced",
+      "legacySlug": "pathway"
+    }
+  ]
+}
