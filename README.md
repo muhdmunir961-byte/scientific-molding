@@ -92,6 +92,10 @@ override with a fallback.
 `ADMIN_PASSWORD` has no default. Unset means the panel refuses every login
 rather than falling open. Generate one with `openssl rand -base64 24`.
 
+**Full setup guide:** [`docs/admin-setup.md`](docs/admin-setup.md) — R2 bucket
+naming, Cloudflare + GitHub token creation step by step, verification commands,
+troubleshooting table, and a security checklist.
+
 ## Local Development
 
 ```bash
