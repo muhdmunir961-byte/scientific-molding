@@ -49,8 +49,16 @@ export async function triggerDeploy(): Promise<DeployResult> {
   const { url, token } = coolifyConfig();
 
   try {
+    /*
+     * POST, not GET.
+     *
+     * The Coolify instance running this site answers a GET with
+     * 405 {"message":"This endpoint has changed to a POST request."} — the
+     * endpoint was changed from GET to POST in Coolify v4. So the method here is
+     * not a preference: a GET cannot work at all.
+     */
     const response = await fetch(url, {
-      method: 'GET',
+      method: 'POST',
       headers: {
         Accept: 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -63,21 +71,87 @@ export async function triggerDeploy(): Promise<DeployResult> {
     const text = await response.text().catch(() => '');
 
     if (!response.ok) {
-      return {
-        ok: false,
-        detail: `Coolify answered ${response.status}. ${text.slice(0, 300)}`,
-      };
+      return { ok: false, detail: describeFailure(response.status, text) };
     }
 
-    return {
-      ok: true,
-      detail: text.slice(0, 300) || 'Deploy queued.',
-    };
+    return { ok: true, detail: describeSuccess(text) };
   } catch (error) {
     const detail = error instanceof Error ? error.message : 'Unknown error';
     return {
       ok: false,
       detail: `Could not reach Coolify: ${detail}`,
     };
+  }
+}
+
+/**
+ * Turn a Coolify failure into a sentence an operator can act on.
+ *
+ * The raw body is a JSON object like `{"message":"Unauthenticated."}` — showing
+ * that verbatim tells the operator nothing about what to do. Each status the
+ * endpoint actually returns gets a plain explanation; anything else falls back
+ * to the message Coolify sent, stripped of punctuation noise.
+ *
+ * @param {number} status
+ * @param {string} body
+ * @returns {string}
+ */
+function describeFailure(status: number, body: string): string {
+  const message = extractMessage(body);
+
+  switch (status) {
+    case 401:
+    case 403:
+      return 'Coolify rejected the request. COOLIFY_API_TOKEN is missing, expired, or lacks the deploy permission.';
+    case 404:
+      return 'Coolify could not find this application. Check the uuid in COOLIFY_WEBHOOK_URL.';
+    case 405:
+      return 'Coolify no longer accepts this request. The endpoint expects POST — if you see this, the panel is sending the wrong method.';
+    case 429:
+      return 'Coolify is rate-limiting deploys. Wait a moment and try again.';
+    case 500:
+    case 502:
+    case 503:
+      return `Coolify reported a server error (${status}). The deploy may not have started — check the Coolify dashboard.`;
+    default:
+      return message
+        ? `Coolify answered ${status}: ${message}`
+        : `Coolify answered ${status}.`;
+  }
+}
+
+/**
+ * Turn a success body into something readable, without dumping JSON.
+ * @param {string} body
+ * @returns {string}
+ */
+function describeSuccess(body: string): string {
+  const message = extractMessage(body);
+  return message
+    ? `Deploy queued — ${message}`
+    : 'Deploy queued. The build takes one to three minutes.';
+}
+
+/**
+ * Pull a human string out of Coolify's JSON error envelope.
+ *
+ * Returns '' rather than the raw body when there is nothing readable, so a
+ * caller never ends up showing `{"message":"..."}` to an operator.
+ * @param {string} body
+ * @returns {string}
+ */
+function extractMessage(body: string): string {
+  const trimmed = body.trim();
+  if (!trimmed.startsWith('{')) return trimmed.slice(0, 200);
+
+  try {
+    const parsed = JSON.parse(trimmed) as Record<string, unknown>;
+    for (const key of ['message', 'error', 'deployment_uuid']) {
+      const value = parsed[key];
+      if (typeof value === 'string' && value.trim()) return value.trim();
+    }
+    return '';
+  } catch {
+    return trimmed.slice(0, 200);
   }
 }
