@@ -315,14 +315,14 @@ berubah kedua-duanya. Butang Deploy dalam panel menampungnya secara manual
 sebaik `COOLIFY_WEBHOOK_URL` + `COOLIFY_API_TOKEN` diset, tapi auto-deploy pada
 push ialah mekanisme utama yang betul.
 
-### Belum dibina
+### Semua item sudah siap
 
-| Item | Saiz | Nota |
+| Item | Commit | Status |
 |---|---|---|
-| **F** — Testimonials CRUD | sederhana | tambah / edit / delete / reorder, toggle publish; papar yang published sahaja di awam |
-| **G** — Migrasi slot sedia ada | sederhana | enam slot khas (logo, hero, trainer, 4 session) serta avatar testimonial, ke skema baharu, kekalkan URL lama sah |
-| **Bug 5** — Frame kosong di About | kecil | logic sahaja, tiada restyling |
-| Galeri module awam | kecil | papar foto module di site awam |
+| **F** — Testimonials CRUD | `1bee5c8` | ✅ add / edit / delete / reorder / publish |
+| **G** — Migrasi slot lama | `742fb8f` | ✅ `npm run migrate:images` |
+| **Bug 5** — Frame kosong di About | `880bd8b` | ✅ tiada frame kosong |
+| Galeri module awam | `f68b73a` | ✅ papar foto ikut 4 kategori |
 
 ### Batasan yang diketahui
 
@@ -333,14 +333,27 @@ push ialah mekanisme utama yang betul.
   ke R2. Guna `openssl rand -base64 24`.
 - **Port 8000 pada host Coolify boleh dicapai dari internet awam.** Itu
   mendedahkan dashboard Coolify kepada brute-force. Elok dihadkan di firewall.
-- **Satu kegagalan ujian yang dijangka.** `npm run verify` melaporkan
-  `607 pass, 1 fail` — gate placeholder testimonial. Itu memang disengajakan:
-  section itu ship dengan placeholder berkurung dan tak boleh live tanpa diganti.
+- **Galeri awam buat masa ini hanya pada Program A (m1).** Empat lagi ambil satu
+  baris setiap satu apabila klien ada gambar. Menambahnya sekarang bermakna empat
+  lagi child yang tak pernah render apa-apa.
 
-### Jumlah pengesahan pada `3c938d1`
+### Jumlah pengesahan pada `f68b73a`
 
 ```
 Build          0 error, 0 warning
-check:admin    26 lulus, 0 gagal
-check:entrance 607 lulus, 1 gagal (gate testimonial yang dijangka)
+check:admin    40 lulus, 0 gagal
+check:entrance 602 lulus, 0 gagal
 ```
+
+**Nota penting:** gate testimonial yang sebelum ini **sentiasa gagal** kini
+**lulus**. Ia bukan kerana testimonial palsu dimasukkan — ia kerana placeholder
+kini disembunyikan di sebalik `published: false`, jadi gate berubah daripada
+"adakah section ada di page" kepada "adakah apa-apa diterbitkan", iaitu sifat
+yang sebenarnya penting.
+
+---
+
+## Bahagian 5 — Kosong (semua kerja selesai)
+
+Tiada kerja tertunggak yang boleh saya buat tanpa input awak. Dua isu di Bahagian
+4 (pathway/m7 dan m3/m5) memerlukan keputusan content, bukan kerja kod.
