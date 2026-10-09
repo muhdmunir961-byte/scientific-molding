@@ -452,8 +452,49 @@ report(
 );
 
 /* ------------------------------------------------------------------ *
- * Summary
+ * 13. The public gallery renders no empty frames
  * ------------------------------------------------------------------ */
+
+/*
+ * Bug 5: the About session grid rendered all four slots unconditionally, so a
+ * missing file produced four empty brand-gradient tiles — which reads as a broken
+ * page rather than as photographs not yet taken.
+ *
+ * The fix moved the availability filter to the server: `About.tsx` calls
+ * `availableSessionImages()` and passes the result to `TrainerPhoto` as a prop.
+ * The filter has to run server-side because it calls `node:fs`, and
+ * `TrainerPhoto` is a client component — putting it there failed the build with
+ * `the chunking context does not support external modules (request: node:fs)`.
+ */
+const trainerPhoto = read('components/about/TrainerPhoto.tsx');
+const aboutSection = read('components/about/About.tsx');
+const availability = read('lib/gallery-availability.ts');
+
+report(
+  aboutSection.includes('availableSessionImages'),
+  'the server component filters the session list',
+  'without the filter the gallery renders an empty frame per missing file',
+);
+report(
+  !/SESSION_IMAGES\.map/.test(trainerPhoto),
+  'the gallery does not map the unfiltered list',
+  'SESSION_IMAGES.map renders a placeholder for every slot, including empty ones',
+);
+report(
+  trainerPhoto.includes('sessions:'),
+  'the gallery receives its photographs as a prop',
+  'a client component cannot call node:fs, so the filter must run on the server',
+);
+report(
+  !/^\s*import[^;]*from\s+'node:(fs|path)'/m.test(read('components/shared/image-content.ts')),
+  'no Node builtin is imported by a module the client uses',
+  'image-content.ts is imported by a client component; a node: import there fails the build',
+);
+report(
+  /node:fs/.test(availability) && /node:path/.test(availability),
+  'the availability check lives in its own server-only module',
+  'the filesystem check must stay out of anything the browser bundle reaches',
+);
 
 console.log('');
 if (failures === 0) {

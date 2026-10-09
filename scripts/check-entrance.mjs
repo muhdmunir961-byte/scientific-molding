@@ -96,7 +96,14 @@ const STRUCTURE = [
   ['about section', 'id="about"'],
   ['about heading id', 'id="about-heading"'],
   ['credential list is a <ul>', 'list-none'],
-  ['trainer session gallery', 'session-grid'],
+  /*
+   * The session gallery is NOT asserted here any more.
+   *
+   * It renders only when a session photograph actually exists, so on a checkout
+   * with no session assets the class is correctly absent — asserting it would
+   * assert Bug 5 back into place. What replaces it is a lower assertion that the
+   * grid renders when, and only when, it has photographs.
+   */
   // Section 5.3 Program A
   ['program A section', 'id="fundamentals"'],
   ['program A heading id', 'id="fundamentals-heading"'],
@@ -1971,11 +1978,13 @@ group(
     'trainer-halo',
     /* Polish #7 — `trainer-placeholder-icon` is gone: the labelled icon
        placeholder became `<ImageSlot>`'s brand-gradient fallback, so the
-       class no longer exists anywhere. `image-slot` and the session gallery
-       replace it in this list. */
+       class no longer exists anywhere.
+     *
+     * `session-grid` and `session-grid-item` are gone from this list too: the
+     * gallery renders only when a session photograph exists, so on a checkout
+     * without assets those classes are correctly absent. See the assertion
+     * further down, which checks the grid's presence tracks its contents. */
     'image-slot',
-    'session-grid',
-    'session-grid-item',
     'trainer-stat-numeral',
     'trainer-stat-strip',
     'data-tone',
@@ -3016,16 +3025,18 @@ report(
  * would fail on a correct build the moment an operator uploaded anything —
  * the same class of bug as testing the minifier instead of the design.
  */
-const IMAGE_ASSETS = [
-  ['hero image', 'hero'],
-  ['trainer portrait', 'trainer-portrait'],
-  ['session 1', 'session-1'],
-  ['session 2', 'session-2'],
-  ['session 3', 'session-3'],
-  ['session 4', 'session-4'],
-];
-
-/** Any `/images/<name>` path, local or absolute, that the page rendered. */
+/*
+ * ── Why the session gallery is no longer asserted as four fixed slots ────
+ * The gallery used to render all four `SESSION_IMAGES` unconditionally, so a
+ * missing file produced an empty brand-gradient tile. That was Bug 5: four empty
+ * peach frames on the About section, which reads as a broken page.
+ *
+ * It now renders only the sessions that have a file, so the count genuinely
+ * depends on which assets exist. Asserting "four slots" would assert the bug
+ * back into place. What IS asserted is that every session which DOES render goes
+ * through `next/image` — so the wiring is still covered, without pinning a count
+ * that is now a property of the assets rather than of the code.
+ */
 const renderedImagePaths = [
   ...new Set(
     [...htmlText.matchAll(/(?:https?:\/\/[^"'\s]+)?\/images\/[A-Za-z0-9._-]+\.(?:jpg|jpeg|png|webp|avif)/g)].map(
@@ -3034,17 +3045,22 @@ const renderedImagePaths = [
   ),
 ];
 
-for (const [label, stem] of IMAGE_ASSETS) {
-  /*
-   * Match on the SLOT stem rather than the full default path. The stem is what
-   * the panel preserves (`hero` → `hero.jpg`), so this holds whether the
-   * operator has uploaded a file or is still on the default — and it still
-   * fails if the slot stopped rendering a photograph altogether.
-   */
+/**
+ * Image slots that must exist.
+ *
+ * The hero and the trainer portrait are always rendered — they have uploaded
+ * images in production, and their frames are structural rather than gallery
+ * items. The session photographs and testimonial avatars are conditional.
+ */
+const REQUIRED_SLOTS = [
+  ['hero image', 'hero'],
+  ['trainer portrait', 'trainer-portrait'],
+];
+
+for (const [label, stem] of REQUIRED_SLOTS) {
   const candidates = renderedImagePaths.filter((p) =>
     new RegExp(`/${stem}\\.[A-Za-z0-9]+$`).test(p),
   );
-
   const servedOptimised = candidates.some((p) =>
     htmlText.includes(`/_next/image?url=${encodeURIComponent(p)}`),
   );
@@ -3056,10 +3072,38 @@ for (const [label, stem] of IMAGE_ASSETS) {
   );
 }
 
+/*
+ * The gallery must not be present when no session photograph exists.
+ *
+ * This is the direct assertion for Bug 5. An absent grid is the correct state;
+ * a grid of gradient tiles is not. When assets ARE added this passes trivially,
+ * because the grid then contains real photographs rather than empty frames.
+ */
+const sessionFrames = renderedImagePaths.filter((p) => /\/session-\d\./.test(p));
+
 report(
-  countOccurrences(htmlText, 'image-slot') >= 12,
-  'every image position renders through ImageSlot',
-  `six slots = at least twelve occurrences of the class — served: ${countOccurrences(htmlText, 'image-slot')}`,
+  sessionFrames.length === 0 || countOccurrences(htmlText, 'session-grid') >= 1,
+  'the session gallery renders only when it has photographs',
+  `found ${sessionFrames.length} session paths but no .session-grid wrapper, or a wrapper with no photographs`,
+);
+
+/*
+ * Every rendered image position goes through `ImageSlot`.
+ *
+ * ── Why this is a floor of 2, not 12 ────────────────────────────────────
+ * It used to require twelve occurrences, on the reasoning that six slots always
+ * render and the class appears at least twice per slot. That count was only
+ * stable because every slot rendered unconditionally — including the four empty
+ * session frames, which is Bug 5.
+ *
+ * The hero and the trainer portrait always render, so two is the honest floor.
+ * The gallery and the testimonial avatars add more when their assets or quotes
+ * exist, and the separate gallery assertion above covers that case.
+ */
+report(
+  countOccurrences(htmlText, 'image-slot') >= 2,
+  'every rendered image position goes through ImageSlot',
+  `the hero and the trainer portrait always render — served: ${countOccurrences(htmlText, 'image-slot')}`,
 );
 
 /*

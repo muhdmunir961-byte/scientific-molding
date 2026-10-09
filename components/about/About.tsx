@@ -29,6 +29,7 @@ import ScrollReveal from './ScrollReveal';
 import TrainerPhoto from './TrainerPhoto';
 import TrainerStatCards from './TrainerStatCards';
 import { withOverrides } from '@/lib/admin/overrides';
+import { availableSessionImages } from '@/lib/gallery-availability';
 import {
   TRAINER_EYEBROW as TRAINER_EYEBROW_RAW,
   TRAINER_NAME as TRAINER_NAME_RAW,
@@ -63,7 +64,14 @@ export default function About() {
       <div className="container about-grid">
         <BioColumn />
         <ScrollReveal delayMs={160}>
-          <TrainerPhoto />
+          {/*
+            * The session filter runs HERE, in the server component, and not in
+            * `TrainerPhoto`. That component is a client component, so it cannot
+            * call `node:fs` — attempting it put a Node builtin into the browser
+            * bundle and failed the build. `TrainerPhoto` now receives the
+            * photographs that have a file and lays them out.
+            */}
+          <TrainerPhoto sessions={availableSessionImages()} />
         </ScrollReveal>
       </div>
     </section>

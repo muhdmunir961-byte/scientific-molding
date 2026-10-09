@@ -60,6 +60,14 @@ export const TRAINER_PORTRAIT_IMAGE = {
   alt: TRAINER_PHOTO.alt,
 } as const;
 
+/** One session photograph, with any panel override applied. */
+export interface SessionImage {
+  readonly src: string;
+  readonly width: number;
+  readonly height: number;
+  readonly alt: string;
+}
+
 /**
  * The four session photographs, with any panel override applied per slot.
  *
@@ -67,15 +75,17 @@ export const TRAINER_PORTRAIT_IMAGE = {
  * the four override keys, and pairing by index keeps the dimensions attached to
  * the right slot without a lookup that could miss.
  */
-export const SESSION_IMAGES = TRAINER_SESSIONS.map((session, index) => {
-  const key = `session${index + 1}` as keyof ImageOverrides;
-  return {
-    src: overrides[key] || session.src,
-    width: session.width,
-    height: session.height,
-    alt: session.alt,
-  };
-});
+export const SESSION_IMAGES: readonly SessionImage[] = TRAINER_SESSIONS.map(
+  (session, index) => {
+    const key = `session${index + 1}` as keyof ImageOverrides;
+    return {
+      src: overrides[key] || session.src,
+      width: session.width,
+      height: session.height,
+      alt: session.alt,
+    };
+  },
+);
 
 /**
  * Testimonial avatars, with any panel override applied per slot.
@@ -97,3 +107,33 @@ export const TESTIMONIAL_AVATARS = TESTIMONIALS.map((testimonial, index) => {
  * checkout, because no logo asset ships with the repository.
  */
 export const LOGO_IMAGE = overrides.logo ?? '';
+
+/**
+ * Whether a slot's src is a remote URL rather than a local path.
+ *
+ * Safe to call from a client component: it reads nothing but the string.
+ * @param {string} src
+ * @returns {boolean}
+ */
+export function isRemote(src: string): boolean {
+  return /^https?:\/\//.test(src);
+}
+
+/**
+ * The session photographs whose src is a remote URL.
+ *
+ * ── Why this is NOT the availability filter ─────────────────────────────
+ * Deciding whether a local file exists needs `node:fs`, and this module is
+ * imported by `TrainerPhoto`, which is a client component — so a filesystem call
+ * here ends up in the browser bundle and Turbopack fails the build with
+ * `the chunking context does not support external modules (request: node:fs)`.
+ *
+ * The filesystem half of the check therefore lives in
+ * `lib/gallery-availability.ts`, which is imported only by the server component
+ * `About.tsx`. What stays here is the half that needs no Node API.
+ *
+ * @returns {typeof SESSION_IMAGES}
+ */
+export function remoteSessionImages(): typeof SESSION_IMAGES {
+  return SESSION_IMAGES.filter((session) => isRemote(session.src));
+}
