@@ -296,6 +296,68 @@ report(
 );
 
 /* ------------------------------------------------------------------ *
+ * 10. Every operator-facing field has a human label
+ * ------------------------------------------------------------------ */
+
+/*
+ * The panel's first revision labelled inputs by humanising their keys, so a
+ * trainer read "Subcopy" and "Eyebrow". The label map fixes that, but a map
+ * drifts: a field added to a content module gets no entry and quietly reverts to
+ * the raw key. This asserts coverage for the modules an operator is most likely
+ * to touch, and reports the rest as a count so the gap is visible rather than
+ * discovered in the UI.
+ */
+const labels = ['lib/admin/labels/part-1.ts', 'lib/admin/labels/part-2.ts', 'lib/admin/labels/part-3.ts']
+  .map((f) => read(f))
+  .join('\n');
+
+const labelledKeys = new Set(
+  [...labels.matchAll(/'([a-z-]+\.[A-Z0-9_]+[^']*)':/g)].map((m) => m[1]),
+);
+
+/**
+ * Whether a group has any label at all.
+ *
+ * Matches the export key alone AND any label registered beneath it, because
+ * most groups are labelled field by field (`hero.HERO_COPY.eyebrow`) rather than
+ * as a whole.
+ * @param {string} key
+ * @returns {boolean}
+ */
+function hasLabelFor(key) {
+  if (labelledKeys.has(key)) return true;
+  for (const candidate of labelledKeys) {
+    if (candidate.startsWith(`${key}.`)) return true;
+  }
+  return false;
+}
+
+/** Modules whose fields an operator edits directly, and must be labelled. */
+const MUST_BE_LABELLED = [
+  'hero.HERO_COPY',
+  'hero.HERO_CTA',
+  'hero.HERO_CONTACT',
+  'about.TRAINER_NAME',
+  'about.TRAINER_CREDENTIALS',
+  'testimonials.TESTIMONIALS',
+  'contact.CONTACT_DIRECT',
+  'banner.BANNER',
+];
+
+const unlabelled = MUST_BE_LABELLED.filter((key) => !hasLabelFor(key));
+
+report(
+  unlabelled.length === 0,
+  'every operator-facing group has a human label',
+  `these would render with a raw key as the heading: ${unlabelled.join(', ')}`,
+);
+report(
+  labelledKeys.size >= 60,
+  'the label map has meaningful coverage',
+  `found ${labelledKeys.size} labels across the three parts`,
+);
+
+/* ------------------------------------------------------------------ *
  * 10. Remote images are allowlisted for the optimiser
  * ------------------------------------------------------------------ */
 

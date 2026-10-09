@@ -44,6 +44,7 @@ import {
   SECTION_IDS,
 } from './nav-content';
 import { withOverrides } from '@/lib/admin/overrides';
+import { LOGO_IMAGE } from '../shared/image-content';
 
 /*
  * Admin overrides, resolved once at module load.
@@ -57,6 +58,9 @@ const NAV_ITEMS = withOverrides('nav.NAV_ITEMS', NAV_ITEMS_RAW);
 const PROGRAM_ITEMS = withOverrides('nav.PROGRAM_ITEMS', PROGRAM_ITEMS_RAW);
 const PROGRAMS_LABEL = withOverrides('nav.PROGRAMS_LABEL', PROGRAMS_LABEL_RAW);
 const NAV_CTA = withOverrides('nav.NAV_CTA', NAV_CTA_RAW);
+
+/** The uploaded logo path, or '' when the text wordmark should render. */
+const LOGO_IMAGE_SRC = LOGO_IMAGE;
 import { useScrollspy } from './useScrollspy';
 
 export interface NavbarProps {
@@ -162,14 +166,33 @@ export default function Navbar({ onOpenMobileNav, mobileNavId }: NavbarProps) {
           {/* Full name for assistive tech; the visual mark splits the wordmark
               so the accent dot can sit between the two words. */}
           <span className="sr-only">{LOGO.full} — back to top</span>
-          <span aria-hidden="true" className="flex items-center gap-[0.4em]">
-            {LOGO.first}
-            <span
-              className="inline-block h-[0.4em] w-[0.4em] rounded-full"
-              style={{ backgroundColor: 'var(--ds-yellow-500)' }}
+
+          {/*
+            * An uploaded logo replaces the text wordmark.
+            *
+            * The wordmark is one <span> per word with a dot between them, so it
+            * is not something an <img alt> can stand in for — the accessible
+            * name stays in the sr-only span above, and the image is aria-hidden
+            * so a screen reader does not hear the brand twice.
+            */}
+          {LOGO_IMAGE_SRC ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={LOGO_IMAGE_SRC}
+              alt=""
+              aria-hidden="true"
+              className="nav-logo-image"
             />
-            {LOGO.second}
-          </span>
+          ) : (
+            <span aria-hidden="true" className="flex items-center gap-[0.4em]">
+              {LOGO.first}
+              <span
+                className="inline-block h-[0.4em] w-[0.4em] rounded-full"
+                style={{ backgroundColor: 'var(--ds-yellow-500)' }}
+              />
+              {LOGO.second}
+            </span>
+          )}
         </a>
 
         {/* ------------- Desktop nav — hidden below 1025px ------------- */}

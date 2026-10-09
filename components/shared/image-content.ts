@@ -1,15 +1,10 @@
 /**
- * Page images — the six image positions, with admin-panel overrides.
+ * Page images — every image position, with admin-panel overrides.
  *
  * ── How the override works ──────────────────────────────────────────────
  * The admin panel writes `components/generated/images-content.generated.ts`
  * when image paths are saved. This module tries to import it and falls back to
  * the defaults below when it does not exist.
- *
- * A static `import` would fail the build if the file were absent, so the
- * generated module is read through `try/catch`-guarded `require`-style access —
- * which is only sound because the import is build-time resolved. The pattern
- * used here is a plain conditional import in a server-safe module.
  *
  * ── Why the dimensions live here, not in the generated file ─────────────
  * `ImageSlot` uses `width`/`height` to reserve the frame's aspect ratio. If an
@@ -19,13 +14,13 @@
 
 import { HERO_MEDIA } from '../hero/hero-content';
 import { TRAINER_PHOTO, TRAINER_SESSIONS } from '../about/about-content';
+import { TESTIMONIALS } from '../testimonials/testimonials-content';
 
 /**
  * Overrides written by the admin panel.
  *
  * Declared as an optional lookup rather than a required import so the site
- * builds and runs identically before the panel has ever been used. Assignment
- * happens below in a guarded block.
+ * builds and runs identically before the panel has ever been used.
  */
 interface ImageOverrides {
   readonly hero?: string;
@@ -34,6 +29,10 @@ interface ImageOverrides {
   readonly session2?: string;
   readonly session3?: string;
   readonly session4?: string;
+  readonly testimonial1?: string;
+  readonly testimonial2?: string;
+  readonly testimonial3?: string;
+  readonly logo?: string;
 }
 
 let overrides: ImageOverrides = {};
@@ -64,9 +63,9 @@ export const TRAINER_PORTRAIT_IMAGE = {
 /**
  * The four session photographs, with any panel override applied per slot.
  *
- * A zip rather than a map with a non-null assertion: `TRAINER_SESSIONS` may in
- * principle be shorter than the four override keys, and pairing by index keeps
- * the dimensions attached to the right slot without a lookup that could miss.
+ * A map rather than a zip: `TRAINER_SESSIONS` may in principle be shorter than
+ * the four override keys, and pairing by index keeps the dimensions attached to
+ * the right slot without a lookup that could miss.
  */
 export const SESSION_IMAGES = TRAINER_SESSIONS.map((session, index) => {
   const key = `session${index + 1}` as keyof ImageOverrides;
@@ -77,3 +76,24 @@ export const SESSION_IMAGES = TRAINER_SESSIONS.map((session, index) => {
     alt: session.alt,
   };
 });
+
+/**
+ * Testimonial avatars, with any panel override applied per slot.
+ *
+ * Unlike the other slots, the avatar default comes from the testimonial itself
+ * (each entry names its own `avatar` path), so the override only wins when the
+ * admin has actually uploaded a replacement.
+ */
+export const TESTIMONIAL_AVATARS = TESTIMONIALS.map((testimonial, index) => {
+  const key = `testimonial${index + 1}` as keyof ImageOverrides;
+  return overrides[key] || testimonial.avatar;
+});
+
+/**
+ * The logo image.
+ *
+ * Empty by default: the header renders the text wordmark, and an uploaded logo
+ * takes its place. A default logo path would show a broken frame on every fresh
+ * checkout, because no logo asset ships with the repository.
+ */
+export const LOGO_IMAGE = overrides.logo ?? '';

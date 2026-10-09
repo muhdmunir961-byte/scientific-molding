@@ -258,6 +258,21 @@
   gap: var(--ds-space-3);
 }
 
+/* --- Image groups --- */
+
+.admin-image-group {
+  margin-bottom: var(--ds-space-8);
+}
+
+.admin-image-group-title {
+  margin: 0 0 var(--ds-space-4);
+  padding-bottom: var(--ds-space-2);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--ds-neutral-900);
+  border-bottom: 1px solid var(--ds-neutral-200);
+}
+
 /* --- Image grid --- */
 
 .admin-image-grid {
@@ -472,6 +487,17 @@
   color: var(--ds-neutral-500);
   text-transform: uppercase;
   letter-spacing: var(--ds-tracking-wide);
+}
+
+/* "Appears on: Hero — the row of numbered tiles". Orients the operator before
+   they read forty inputs; without it every field looks equally abstract. */
+.admin-where {
+  margin: 0 0 var(--ds-space-2);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: var(--ds-tracking-wide);
+  text-transform: uppercase;
+  color: var(--ds-orange-600);
 }
 
 .admin-array {

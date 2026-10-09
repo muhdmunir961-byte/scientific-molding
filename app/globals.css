@@ -2228,6 +2228,17 @@ h6 {
   transition: color var(--ds-duration-fast) var(--ds-ease-out);
 }
 
+/* An uploaded logo replaces the wordmark. Height is capped rather than fixed so
+   a wide logo scales down without overflowing the header, and the intrinsic
+   ratio is preserved. */
+.nav-logo-image {
+  display: block;
+  height: 32px;
+  width: auto;
+  max-width: 220px;
+  object-fit: contain;
+}
+
 .nav-logo:hover {
   color: var(--ds-orange-600);
 }

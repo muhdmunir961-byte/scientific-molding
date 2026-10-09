@@ -17,20 +17,20 @@
  *    object   → nested fieldset
  *
  *  Adding a field to a content module therefore makes it editable with no change
- *  to this file. Hand-writing a form per module was the alternative and it is
- *  how a field ends up rendering but never saving.
+ *  to this file.
  *
- *  ── Why arrays are replaced, not merged, on save ────────────────────────
- *  The whole export is saved as one value. Element-wise merging would need a
- *  stable identity per element to pair a saved entry with its default, and these
- *  arrays carry titles rather than ids — pairing by index would silently
- *  re-pair content when an item is inserted.
+ *  ── Why every input is labelled with words, not its key ─────────────────
+ *  The first revision humanised keys: `subcopy` became "Subcopy". That is
+ *  accurate and useless to the person actually using the panel. `lib/admin/labels.ts`
+ *  maps each field to a plain name and a note about where it appears on the
+ *  page. A field with no entry still works, it just gets the plainer name.
  * ════════════════════════════════════════════════════════════════════════
  */
 
 import { useCallback, useEffect, useState } from 'react';
 
 import { allModules } from '@/lib/admin/schema';
+import { arrayFieldLabel, fieldLabel, type FieldLabel } from '@/lib/admin/labels';
 
 /*
  * The dropdown lists every module, in page order, with the programme bodies
@@ -184,6 +184,13 @@ function ExportEditor({
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
 
+  /*
+   * The export's own label entry, when one exists. It supplies the "where on
+   * the page" line for the whole group, which is the orientation an operator
+   * needs before reading forty inputs.
+   */
+  const exportLabel = fieldLabel(moduleId, item.name);
+
   async function save() {
     setSaving(true);
     try {
@@ -213,11 +220,15 @@ function ExportEditor({
   return (
     <section className="admin-card">
       <h2 className="admin-card-title">
-        {item.label}
+        {exportLabel?.label ?? humanise(item.name)}
         {item.hasOverride && <span className="admin-badge">edited</span>}
         {item.locked && <span className="admin-badge admin-badge-locked">read-only</span>}
       </h2>
-      <p className="admin-card-desc">{item.description}</p>
+
+      {exportLabel?.where && (
+        <p className="admin-where">Appears on: {exportLabel.where}</p>
+      )}
+      <p className="admin-card-desc">{exportLabel?.hint ?? item.description}</p>
 
       {item.locked ? (
         <pre className="admin-json-readonly">{JSON.stringify(item.value, null, 2)}</pre>
@@ -225,6 +236,9 @@ function ExportEditor({
         <>
           <ValueEditor
             value={draft}
+            moduleId={moduleId}
+            exportName={item.name}
+            path=""
             onChange={(next) => {
               setDraft(next);
               setDirty(true);
@@ -270,10 +284,17 @@ function ExportEditor({
  */
 function ValueEditor({
   value,
+  moduleId,
+  exportName,
+  path,
   onChange,
   depth = 0,
 }: {
   value: JsonValue;
+  moduleId: string;
+  exportName: string;
+  /** Dotted path from the export root, e.g. `0.name`. Used for the label. */
+  path: string;
   onChange: (next: JsonValue) => void;
   depth?: number;
 }) {
@@ -315,7 +336,7 @@ function ValueEditor({
           checked={value}
           onChange={(e) => onChange(e.target.checked)}
         />
-        <span className="admin-muted">{value ? 'Yes' : 'No'}</span>
+        <span className="admin-muted">{value ? 'On' : 'Off'}</span>
       </label>
     );
   }
@@ -328,7 +349,9 @@ function ValueEditor({
         {value.map((item, index) => (
           <div className="admin-array-item" key={index}>
             <div className="admin-array-head">
-              <span className="admin-array-index">#{index + 1}</span>
+              <span className="admin-array-index">
+                {arrayItemTitle(item, index)}
+              </span>
               <div className="admin-array-tools">
                 <button
                   type="button"
@@ -371,6 +394,9 @@ function ValueEditor({
 
             <ValueEditor
               value={item}
+              moduleId={moduleId}
+              exportName={exportName}
+              path={path ? `${path}.${index}` : String(index)}
               depth={depth + 1}
               onChange={(next) => onChange(value.map((v, i) => (i === index ? next : v)))}
             />
@@ -383,7 +409,7 @@ function ValueEditor({
             className="admin-button admin-button-secondary admin-button-small"
             onClick={() => onChange([...value, cloneShape(value[0])])}
           >
-            + Add item
+            + Add another
           </button>
         )}
       </div>
@@ -393,18 +419,63 @@ function ValueEditor({
   // A plain object: one labelled field per key.
   return (
     <fieldset className="admin-object">
-      {Object.entries(value).map(([key, child]) => (
-        <div className="admin-object-field" key={key}>
-          <label className="admin-label">{humanise(key)}</label>
-          <ValueEditor
-            value={child}
-            depth={depth + 1}
-            onChange={(next) => onChange({ ...value, [key]: next })}
-          />
-        </div>
-      ))}
+      {Object.entries(value).map(([key, child]) => {
+        const childPath = path ? `${path}.${key}` : key;
+        /*
+         * `arrayFieldLabel` tolerates the numeric segments in `childPath`, so a
+         * field inside `TESTIMONIALS[0]` still finds the label registered for
+         * `TESTIMONIALS[].name`.
+         */
+        const label: FieldLabel | undefined = arrayFieldLabel(
+          moduleId,
+          exportName,
+          childPath,
+        );
+
+        return (
+          <div className="admin-object-field" key={key}>
+            <label className="admin-label">{label?.label ?? humanise(key)}</label>
+            {label?.hint && <p className="admin-hint">{label.hint}</p>}
+            <ValueEditor
+              value={child}
+              moduleId={moduleId}
+              exportName={exportName}
+              path={childPath}
+              depth={depth + 1}
+              onChange={(next) => onChange({ ...value, [key]: next })}
+            />
+          </div>
+        );
+      })}
     </fieldset>
   );
+}
+
+/**
+ * A short heading for an array item, so a list of ten entries is navigable.
+ *
+ * Prefers something human from the item itself — a `name`, `title`, `label`,
+ * `heading` or `value` — and falls back to the position. The alternative is
+ * "#3" for every entry, which tells the operator nothing about which one they
+ * are editing.
+ * @param {JsonValue} item
+ * @param {number} index
+ * @returns {string}
+ */
+function arrayItemTitle(item: JsonValue, index: number): string {
+  if (typeof item === 'object' && item !== null && !Array.isArray(item)) {
+    const record = item as Record<string, JsonValue>;
+    for (const key of ['name', 'title', 'label', 'heading', 'value', 'number', 'code']) {
+      const candidate = record[key];
+      if (typeof candidate === 'string' && candidate.trim()) {
+        return candidate.length > 44 ? `${candidate.slice(0, 44)}…` : candidate;
+      }
+    }
+  }
+  if (typeof item === 'string' && item.trim()) {
+    return item.length > 44 ? `${item.slice(0, 44)}…` : item;
+  }
+  return `Item ${index + 1}`;
 }
 
 /**

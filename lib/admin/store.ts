@@ -34,6 +34,15 @@ export const ALLOWED_IMAGE_TYPES = [
   'image/png',
   'image/webp',
   'image/avif',
+  /*
+   * SVG is allowed for the logo only — see `validateImage`. An SVG can carry
+   * script, so accepting one from a general-purpose upload field would let a
+   * crafted file run in the context of the page that embeds it. The logo is the
+   * one position where vector is genuinely needed (a raster wordmark looks soft
+   * on a retina display), and it is the one position an operator uploads
+   * deliberately rather than in bulk.
+   */
+  'image/svg+xml',
 ] as const;
 
 /** Maximum upload size in bytes. 8 MB covers a full-resolution camera JPEG. */
@@ -54,6 +63,8 @@ function extensionFor(mime: string): string {
       return 'webp';
     case 'image/avif':
       return 'avif';
+    case 'image/svg+xml':
+      return 'svg';
     default:
       return 'bin';
   }
@@ -62,16 +73,31 @@ function extensionFor(mime: string): string {
 /**
  * Validate an upload before it is stored.
  * @param {{type: string, size: number}} file
+ * @param {string} [slot] the slot being uploaded to, when the caller knows it
  * @returns {string} an error message, or '' when acceptable
  */
-export function validateImage(file: { type: string; size: number }): string {
+export function validateImage(
+  file: { type: string; size: number },
+  slot = '',
+): string {
   if (file.size === 0) return 'The file is empty.';
   if (file.size > MAX_IMAGE_BYTES) {
     return `The file is ${(file.size / 1024 / 1024).toFixed(1)} MB. The limit is ${MAX_IMAGE_BYTES / 1024 / 1024} MB.`;
   }
+
+  /*
+   * SVG is accepted only for the logo. Everywhere else the upload field is used
+   * in bulk and an SVG can embed script, so allowing it generally would widen
+   * the surface for no benefit — a photograph should be raster regardless.
+   */
+  if (file.type === 'image/svg+xml' && slot !== 'logo') {
+    return 'SVG is only accepted for the logo. Use JPEG, PNG, WebP or AVIF for photographs.';
+  }
+
   if (!(ALLOWED_IMAGE_TYPES as readonly string[]).includes(file.type)) {
     return `Unsupported type "${file.type}". Use JPEG, PNG, WebP or AVIF.`;
   }
+
   return '';
 }
 

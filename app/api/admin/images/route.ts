@@ -51,7 +51,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     return fail('No file was attached.');
   }
 
-  const problem = validateImage({ type: file.type, size: file.size });
+  const problem = validateImage({ type: file.type, size: file.size }, slot);
   if (problem) return fail(problem);
 
   const buffer = Buffer.from(await file.arrayBuffer());

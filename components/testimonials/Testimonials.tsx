@@ -38,6 +38,7 @@ import { useState } from 'react';
 
 import ScrollReveal from '../about/ScrollReveal';
 import { withOverrides } from '@/lib/admin/overrides';
+import { TESTIMONIAL_AVATARS } from '../shared/image-content';
 import {
   TESTIMONIALS as TESTIMONIALS_RAW,
   TESTIMONIALS_CAPTION,
@@ -49,6 +50,19 @@ import {
 /* Admin overrides, resolved once at module load. See Hero.tsx for the reasoning. */
 const TESTIMONIALS_HERO = withOverrides('testimonials.TESTIMONIALS_HERO', TESTIMONIALS_HERO_RAW);
 const TESTIMONIALS = withOverrides('testimonials.TESTIMONIALS', TESTIMONIALS_RAW);
+
+/**
+ * The testimonials with their admin-uploaded avatar applied.
+ *
+ * The avatar override lives in the Images group (a file upload), while the rest
+ * of the entry lives in the Testimonials group (text). Merging them here is what
+ * lets the operator upload a headshot on one page and edit the quote on another
+ * without either clobbering the other.
+ */
+const TESTIMONIALS_WITH_AVATARS = TESTIMONIALS.map((testimonial, index) => ({
+  ...testimonial,
+  avatar: TESTIMONIAL_AVATARS[index] || testimonial.avatar,
+}));
 
 
 /** The five rating positions, so the loop cannot drift from the denominator. */
@@ -82,7 +96,7 @@ export default function Testimonials() {
         </p>
 
         <ul className="testimonial-grid">
-          {TESTIMONIALS.map((testimonial, i) => (
+          {TESTIMONIALS_WITH_AVATARS.map((testimonial, i) => (
             <li key={testimonial.id} className="testimonial-cell">
               <ScrollReveal delayMs={i * 80}>
                 <TestimonialCard testimonial={testimonial} />

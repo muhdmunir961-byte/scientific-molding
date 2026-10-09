@@ -17,12 +17,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import { IMAGE_SLOTS, type ImageSlotName } from '@/lib/admin/image-slots';
+import { IMAGE_SLOTS, slotsByGroup, type ImageSlotName } from '@/lib/admin/image-slots';
 
 type Status = 'idle' | 'uploading' | 'saved' | 'error';
 
-/** The keys the images group stores, in panel order. */
-const SLOTS = Object.keys(IMAGE_SLOTS) as ImageSlotName[];
+/** The slots, already grouped by where they appear on the page. */
+const SLOT_GROUPS = slotsByGroup();
 
 export default function ImagesManager() {
   const [paths, setPaths] = useState<Record<string, string>>({});
@@ -138,74 +138,27 @@ export default function ImagesManager() {
         <p className="admin-muted">Loading current images…</p>
       ) : (
         <>
-          <div className="admin-image-grid">
-            {SLOTS.map((slot) => {
-              const spec = IMAGE_SLOTS[slot];
-              const path = paths[spec.key] ?? '';
-              const state = status[slot] ?? 'idle';
-              const message = messages[slot] ?? '';
+          {SLOT_GROUPS.map(({ group, slots }) => (
+            <section className="admin-image-group" key={group}>
+              <h2 className="admin-image-group-title">{group}</h2>
 
-              return (
-                <section className="admin-card" key={slot}>
-                  <h2 className="admin-card-title">{spec.label}</h2>
-                  <p className="admin-card-desc">
-                    {spec.width}×{spec.height} recommended
-                  </p>
-
-                  <div className="admin-image-preview">
-                    {path ? (
-                      // A plain <img>: operator uploads at unknown dimensions on
-                      // an internal page, so the optimiser has nothing to work
-                      // from and would need a loader configured for the R2 host.
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={path} alt={`${spec.label} preview`} />
-                    ) : (
-                      <div className="admin-image-empty">No image yet</div>
-                    )}
-                  </div>
-
-                  <p className="admin-image-path">{path || 'not set'}</p>
-
-                  <div className="admin-actions">
-                    <input
-                      ref={(el) => {
-                        refs.current[slot] = el;
-                      }}
-                      className="admin-omit"
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/avif"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) void upload(slot, file);
-                        e.target.value = '';
-                      }}
-                    />
-                    <button
-                      type="button"
-                      className="admin-button admin-button-secondary"
-                      disabled={state === 'uploading'}
-                      onClick={() => refs.current[slot]?.click()}
-                    >
-                      {state === 'uploading'
-                        ? 'Uploading…'
-                        : path
-                          ? 'Replace image'
-                          : 'Upload image'}
-                    </button>
-                  </div>
-
-                  {message && (
-                    <p
-                      className={state === 'error' ? 'admin-error' : 'admin-muted'}
-                      role={state === 'error' ? 'alert' : undefined}
-                    >
-                      {message}
-                    </p>
-                  )}
-                </section>
-              );
-            })}
-          </div>
+              <div className="admin-image-grid">
+                {slots.map((slot) => (
+                  <SlotCard
+                    key={slot}
+                    slot={slot}
+                    path={paths[IMAGE_SLOTS[slot].key] ?? ''}
+                    state={status[slot] ?? 'idle'}
+                    message={messages[slot] ?? ''}
+                    registerRef={(el) => {
+                      refs.current[slot] = el;
+                    }}
+                    onPick={(file) => void upload(slot, file)}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
 
           <div className="admin-actions" style={{ marginTop: 'var(--ds-space-8)' }}>
             <button
@@ -220,5 +173,98 @@ export default function ImagesManager() {
         </>
       )}
     </>
+  );
+}
+
+/**
+ * One upload slot.
+ *
+ * Extracted so the page can group slots by where they appear without repeating
+ * this markup four times, and so the ordering and remove behaviour live in one
+ * place.
+ */
+function SlotCard({
+  slot,
+  path,
+  state,
+  message,
+  registerRef,
+  onPick,
+}: {
+  slot: ImageSlotName;
+  path: string;
+  state: Status;
+  message: string;
+  registerRef: (el: HTMLInputElement | null) => void;
+  onPick: (file: File) => void;
+}) {
+  const spec = IMAGE_SLOTS[slot];
+  /*
+   * A local ref as well as the shared registry: the button needs to open THIS
+   * input, and the parent needs every input addressable for its own bookkeeping.
+   * Pointing both at the same node is what keeps the two in step.
+   */
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  return (
+    <section className="admin-card">
+      <h3 className="admin-card-title">{spec.label}</h3>
+      <p className="admin-hint">{spec.hint}</p>
+      <p className="admin-muted">
+        Best size: {spec.width}×{spec.height}
+      </p>
+
+      <div className="admin-image-preview">
+        {path ? (
+          // A plain <img>: operator uploads at unknown dimensions on an internal
+          // page, so the optimiser has nothing to work from and would need a
+          // loader configured for the R2 host.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={path} alt={`${spec.label} preview`} />
+        ) : (
+          <div className="admin-image-empty">No image yet</div>
+        )}
+      </div>
+
+      <p className="admin-image-path">{path || 'not set'}</p>
+
+      <div className="admin-actions">
+        <input
+          ref={(el) => {
+            inputRef.current = el;
+            registerRef(el);
+          }}
+          className="admin-omit"
+          type="file"
+          accept={
+            slot === 'logo'
+              ? 'image/png,image/svg+xml,image/webp'
+              : 'image/jpeg,image/png,image/webp,image/avif'
+          }
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) onPick(file);
+            e.target.value = '';
+          }}
+        />
+        <button
+          type="button"
+          className="admin-button admin-button-secondary"
+          disabled={state === 'uploading'}
+          onClick={() => inputRef.current?.click()}
+        >
+          {state === 'uploading' ? 'Uploading…' : path ? 'Replace image' : 'Upload image'}
+        </button>
+      </div>
+
+      {message && (
+        <p
+          className={state === 'error' ? 'admin-error' : 'admin-muted'}
+          role={state === 'error' ? 'alert' : undefined}
+        >
+          {message}
+        </p>
+      )}
+    </section>
   );
 }
