@@ -51,3 +51,4 @@ next-env.d.ts
 
 # Private docs (PRD, internal notes)
 .private/
+nohup.out
