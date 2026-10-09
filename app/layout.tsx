@@ -53,6 +53,42 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${poppins.variable} ${inter.variable}`}>
+      <head>
+        {/*
+         * Hide an already-dismissed announcement banner before first paint.
+         *
+         * `Banner.tsx` renders the bar on the SERVER so a visitor without
+         * JavaScript still sees the notice. That means a returning visitor would
+         * otherwise get a flash of a bar they already closed, so this runs
+         * synchronously in `<head>` — before the browser paints anything — and
+         * removes it from the DOM when the dismissal flag is set.
+         *
+         * This is the standard technique for exactly this problem. The
+         * alternative (rendering hidden and revealing on mount) is what made the
+         * banner invisible to no-JS visitors in the first place.
+         *
+         * Wrapped in try/catch because `sessionStorage` throws in a private
+         * window with storage disabled. On failure the banner simply shows,
+         * which is the safe direction: a notice that reappears is an annoyance,
+         * a notice that never appears is a lost message.
+         */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(sessionStorage.getItem('smts-banner-dismissed')==='1'){document.documentElement.setAttribute('data-banner-dismissed','')}}catch(e){}",
+          }}
+        />
+        {/*
+         * The CSS half of that. Kept inline and before the stylesheet so the
+         * element is never painted: a stylesheet rule would arrive too late.
+         */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html:
+              'html[data-banner-dismissed] .announce-banner{display:none!important}',
+          }}
+        />
+      </head>
       <body className="antialiased">{children}</body>
     </html>
   );

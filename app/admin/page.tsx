@@ -7,7 +7,7 @@ import {
   isR2Configured,
 } from '@/lib/admin/config';
 import { requirePage } from '@/lib/admin/page-guard';
-import { LOCKED_MODULES, MODULES, PDF_LOCK_REASON } from '@/lib/admin/schema';
+import { MODULES, PDF_EDIT_WARNING, PROGRAM_MODULES } from '@/lib/admin/schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,9 +66,10 @@ export default async function AdminPage() {
       </section>
 
       <section className="admin-card">
-        <h2 className="admin-card-title">Editable content</h2>
+        <h2 className="admin-card-title">Site content</h2>
         <p className="admin-card-desc">
-          {MODULES.length} sections. Choose one to edit its text.
+          {MODULES.length} sections, including the announcement banner. Choose one
+          to edit its text.
         </p>
 
         <ul className="admin-link-list">
@@ -90,13 +91,16 @@ export default async function AdminPage() {
       </section>
 
       <section className="admin-card">
-        <h2 className="admin-card-title">Read-only content</h2>
-        <p className="admin-card-desc">{PDF_LOCK_REASON}</p>
+        <h2 className="admin-card-title">Programme content</h2>
+        <p className="admin-card-desc">{PDF_EDIT_WARNING}</p>
 
-        <ul className="admin-muted">
-          {LOCKED_MODULES.map((module) => (
+        <ul className="admin-link-list">
+          {PROGRAM_MODULES.map((module) => (
             <li key={module.id}>
-              <Link href={`/admin/content?module=${module.id}`}>{module.title}</Link>
+              <Link href={`/admin/content?module=${module.id}`}>
+                <strong>{module.title}</strong>
+              </Link>
+              <span className="admin-muted"> — {module.description}</span>
             </li>
           ))}
         </ul>

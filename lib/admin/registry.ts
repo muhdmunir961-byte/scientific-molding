@@ -68,6 +68,66 @@ import {
   NAV_CTA,
   QUICK_ACTIONS,
 } from '@/components/nav/nav-content';
+import { BANNER } from '@/components/shared/banner-content';
+import {
+  TRAINER_CREDIBILITY_NAME,
+  TRAINER_CREDIBILITY_CREDENTIALS,
+  TRAINER_CREDIBILITY_ONE_LINE,
+} from '@/components/programs/trainer-credibility';
+import {
+  PROGRAM_CTA_FOOTERS,
+} from '@/components/programs/program-cta-content';
+import {
+  PROGRAM_A_HERO,
+  PROGRAM_A_PROBLEMS,
+  PROGRAM_A_BENEFITS,
+  PROGRAM_A_OUTCOMES,
+  PROGRAM_A_PHILOSOPHY,
+  PROGRAM_A_FOUNDATIONS,
+  PROGRAM_A_DAYS,
+  PROGRAM_A_LEARNING_FORMAT,
+} from '@/components/programs/program-a-content';
+import {
+  PROGRAM_B_HERO,
+  PROGRAM_B_PROBLEMS,
+  PROGRAM_B_BENEFITS,
+  PROGRAM_B_CAPABILITIES,
+  PROGRAM_B_MODULES,
+  PROGRAM_B_CORE_MODULES,
+  PROGRAM_B_FRAMEWORK,
+  PROGRAM_B_TAKE_BACK,
+  PROGRAM_B_AUDIENCE,
+  PROGRAM_B_LEARNING_APPROACH,
+} from '@/components/programs/program-b-content';
+import {
+  PROGRAM_C_HERO,
+  PROGRAM_C_PROBLEMS,
+  PROGRAM_C_BENEFITS,
+  PROGRAM_C_OUTCOMES,
+  PROGRAM_C_PHILOSOPHY,
+  PROGRAM_C_PERSPECTIVES,
+  PROGRAM_C_DAYS,
+  PROGRAM_C_TAKE_BACK,
+  PROGRAM_C_AUDIENCE,
+} from '@/components/programs/program-c-content';
+import {
+  PROGRAM_D_HERO,
+  PROGRAM_D_WARNING_SIGNS,
+  PROGRAM_D_BUSINESS_OUTCOMES,
+  PROGRAM_D_DEFECTS_COVERED,
+  PROGRAM_D_CAPABILITIES,
+  PROGRAM_D_DAYS,
+  PROGRAM_D_AUDIENCE,
+  PROGRAM_D_LEARNING_FORMAT,
+} from '@/components/programs/program-d-content';
+import {
+  PROGRAM_E_HERO,
+  PROGRAM_E_STATS,
+  PROGRAM_E_SECTION,
+  PROGRAM_E_MODULES,
+  PROGRAM_E_PATHWAY,
+  PROGRAM_E_ORGANISATION_BUILD,
+} from '@/components/programs/program-e-content';
 
 /**
  * Every export the panel may edit, keyed `<moduleId>.<exportName>`.
@@ -116,6 +176,61 @@ const REGISTRY: Record<string, JsonValue> = {
   'nav.PROGRAM_ITEMS': PROGRAM_ITEMS as unknown as JsonValue,
   'nav.NAV_CTA': NAV_CTA as unknown as JsonValue,
   'nav.QUICK_ACTIONS': QUICK_ACTIONS as unknown as JsonValue,
+
+  'banner.BANNER': BANNER as unknown as JsonValue,
+
+  'trainer-credibility.TRAINER_CREDIBILITY_NAME': TRAINER_CREDIBILITY_NAME,
+  'trainer-credibility.TRAINER_CREDIBILITY_CREDENTIALS':
+    TRAINER_CREDIBILITY_CREDENTIALS as unknown as JsonValue,
+  'trainer-credibility.TRAINER_CREDIBILITY_ONE_LINE': TRAINER_CREDIBILITY_ONE_LINE,
+
+  'program-cta.PROGRAM_CTA_FOOTERS': PROGRAM_CTA_FOOTERS as unknown as JsonValue,
+
+  'program-a.PROGRAM_A_HERO': PROGRAM_A_HERO as unknown as JsonValue,
+  'program-a.PROGRAM_A_PROBLEMS': PROGRAM_A_PROBLEMS as unknown as JsonValue,
+  'program-a.PROGRAM_A_BENEFITS': PROGRAM_A_BENEFITS as unknown as JsonValue,
+  'program-a.PROGRAM_A_OUTCOMES': PROGRAM_A_OUTCOMES as unknown as JsonValue,
+  'program-a.PROGRAM_A_PHILOSOPHY': PROGRAM_A_PHILOSOPHY as unknown as JsonValue,
+  'program-a.PROGRAM_A_FOUNDATIONS': PROGRAM_A_FOUNDATIONS as unknown as JsonValue,
+  'program-a.PROGRAM_A_DAYS': PROGRAM_A_DAYS as unknown as JsonValue,
+  'program-a.PROGRAM_A_LEARNING_FORMAT': PROGRAM_A_LEARNING_FORMAT as unknown as JsonValue,
+
+  'program-b.PROGRAM_B_HERO': PROGRAM_B_HERO as unknown as JsonValue,
+  'program-b.PROGRAM_B_PROBLEMS': PROGRAM_B_PROBLEMS as unknown as JsonValue,
+  'program-b.PROGRAM_B_BENEFITS': PROGRAM_B_BENEFITS as unknown as JsonValue,
+  'program-b.PROGRAM_B_CAPABILITIES': PROGRAM_B_CAPABILITIES as unknown as JsonValue,
+  'program-b.PROGRAM_B_MODULES': PROGRAM_B_MODULES as unknown as JsonValue,
+  'program-b.PROGRAM_B_CORE_MODULES': PROGRAM_B_CORE_MODULES as unknown as JsonValue,
+  'program-b.PROGRAM_B_FRAMEWORK': PROGRAM_B_FRAMEWORK as unknown as JsonValue,
+  'program-b.PROGRAM_B_TAKE_BACK': PROGRAM_B_TAKE_BACK as unknown as JsonValue,
+  'program-b.PROGRAM_B_AUDIENCE': PROGRAM_B_AUDIENCE as unknown as JsonValue,
+  'program-b.PROGRAM_B_LEARNING_APPROACH': PROGRAM_B_LEARNING_APPROACH as unknown as JsonValue,
+
+  'program-c.PROGRAM_C_HERO': PROGRAM_C_HERO as unknown as JsonValue,
+  'program-c.PROGRAM_C_PROBLEMS': PROGRAM_C_PROBLEMS as unknown as JsonValue,
+  'program-c.PROGRAM_C_BENEFITS': PROGRAM_C_BENEFITS as unknown as JsonValue,
+  'program-c.PROGRAM_C_OUTCOMES': PROGRAM_C_OUTCOMES as unknown as JsonValue,
+  'program-c.PROGRAM_C_PHILOSOPHY': PROGRAM_C_PHILOSOPHY as unknown as JsonValue,
+  'program-c.PROGRAM_C_PERSPECTIVES': PROGRAM_C_PERSPECTIVES as unknown as JsonValue,
+  'program-c.PROGRAM_C_DAYS': PROGRAM_C_DAYS as unknown as JsonValue,
+  'program-c.PROGRAM_C_TAKE_BACK': PROGRAM_C_TAKE_BACK as unknown as JsonValue,
+  'program-c.PROGRAM_C_AUDIENCE': PROGRAM_C_AUDIENCE as unknown as JsonValue,
+
+  'program-d.PROGRAM_D_HERO': PROGRAM_D_HERO as unknown as JsonValue,
+  'program-d.PROGRAM_D_WARNING_SIGNS': PROGRAM_D_WARNING_SIGNS as unknown as JsonValue,
+  'program-d.PROGRAM_D_BUSINESS_OUTCOMES': PROGRAM_D_BUSINESS_OUTCOMES as unknown as JsonValue,
+  'program-d.PROGRAM_D_DEFECTS_COVERED': PROGRAM_D_DEFECTS_COVERED as unknown as JsonValue,
+  'program-d.PROGRAM_D_CAPABILITIES': PROGRAM_D_CAPABILITIES as unknown as JsonValue,
+  'program-d.PROGRAM_D_DAYS': PROGRAM_D_DAYS as unknown as JsonValue,
+  'program-d.PROGRAM_D_AUDIENCE': PROGRAM_D_AUDIENCE as unknown as JsonValue,
+  'program-d.PROGRAM_D_LEARNING_FORMAT': PROGRAM_D_LEARNING_FORMAT as unknown as JsonValue,
+
+  'program-e.PROGRAM_E_HERO': PROGRAM_E_HERO as unknown as JsonValue,
+  'program-e.PROGRAM_E_STATS': PROGRAM_E_STATS as unknown as JsonValue,
+  'program-e.PROGRAM_E_SECTION': PROGRAM_E_SECTION as unknown as JsonValue,
+  'program-e.PROGRAM_E_MODULES': PROGRAM_E_MODULES as unknown as JsonValue,
+  'program-e.PROGRAM_E_PATHWAY': PROGRAM_E_PATHWAY as unknown as JsonValue,
+  'program-e.PROGRAM_E_ORGANISATION_BUILD': PROGRAM_E_ORGANISATION_BUILD as unknown as JsonValue,
 };
 
 /**

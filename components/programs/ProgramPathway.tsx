@@ -18,15 +18,29 @@ import ScrollReveal from '../about/ScrollReveal';
 import ProgramHero from './ProgramHero';
 import LevelBadge from './LevelBadge';
 import { ctaLabelFor } from './program-cta-content';
+import { withOverrides } from '@/lib/admin/overrides';
 import {
-  PROGRAM_E_CTA,
-  PROGRAM_E_HERO,
-  PROGRAM_E_MODULES,
-  PROGRAM_E_ORGANISATION_BUILD,
-  PROGRAM_E_PATHWAY,
-  PROGRAM_E_SECTION,
-  PROGRAM_E_STATS,
+  PROGRAM_E_CTA as PROGRAM_E_CTA_RAW,
+  PROGRAM_E_HERO as PROGRAM_E_HERO_RAW,
+  PROGRAM_E_MODULES as PROGRAM_E_MODULES_RAW,
+  PROGRAM_E_ORGANISATION_BUILD as PROGRAM_E_ORGANISATION_BUILD_RAW,
+  PROGRAM_E_PATHWAY as PROGRAM_E_PATHWAY_RAW,
+  PROGRAM_E_SECTION as PROGRAM_E_SECTION_RAW,
+  PROGRAM_E_STATS as PROGRAM_E_STATS_RAW,
 } from './program-e-content';
+
+/*
+ * Admin overrides, resolved once at module load. The programme text is
+ * editable by decision, with the PDF caution shown in the panel — see
+ * `PDF_EDIT_WARNING` in `lib/admin/schema.ts`.
+ */
+const PROGRAM_E_CTA = withOverrides('program-e.PROGRAM_E_CTA', PROGRAM_E_CTA_RAW);
+const PROGRAM_E_HERO = withOverrides('program-e.PROGRAM_E_HERO', PROGRAM_E_HERO_RAW);
+const PROGRAM_E_MODULES = withOverrides('program-e.PROGRAM_E_MODULES', PROGRAM_E_MODULES_RAW);
+const PROGRAM_E_ORGANISATION_BUILD = withOverrides('program-e.PROGRAM_E_ORGANISATION_BUILD', PROGRAM_E_ORGANISATION_BUILD_RAW);
+const PROGRAM_E_PATHWAY = withOverrides('program-e.PROGRAM_E_PATHWAY', PROGRAM_E_PATHWAY_RAW);
+const PROGRAM_E_SECTION = withOverrides('program-e.PROGRAM_E_SECTION', PROGRAM_E_SECTION_RAW);
+const PROGRAM_E_STATS = withOverrides('program-e.PROGRAM_E_STATS', PROGRAM_E_STATS_RAW);
 
 /** Shared heading style for this program's body sections. */
 const HEADING_CLASS = 'mt-12 text-h3 font-semibold text-[var(--ds-neutral-800)]';

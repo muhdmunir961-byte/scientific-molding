@@ -329,7 +329,99 @@
   font-size: 0.875rem;
 }
 
-/* --- Editor: value tree --- */
+/* ==================================================================
+   Announcement banner
+   ==================================================================
+   Sits above the header and scrolls away with the page — it is not sticky, so
+   it cannot permanently consume viewport on a laptop. The tones are the
+   palette's own pairings: orange fill with white text, or the soft yellow tint
+   with charcoal, which is the same tint-plus-accent relationship the credential
+   rows and the success card use.
+   ================================================================== */
+
+.announce-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ds-space-4);
+  padding: var(--ds-space-3) var(--ds-space-6);
+  text-align: center;
+}
+
+.announce-banner-text {
+  margin: 0;
+  font-size: var(--ds-text-body-sm);
+  font-weight: 500;
+  line-height: var(--ds-leading-snug);
+}
+
+.announce-banner-link {
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+/* Orange: white text measures ~3.2:1 on --ds-orange-500, which clears AA for
+   this 14px semibold label. */
+.announce-banner-orange {
+  background-color: var(--ds-orange-500);
+  color: var(--ds-neutral-0);
+}
+
+.announce-banner-orange .announce-banner-link {
+  color: var(--ds-neutral-0);
+}
+
+/* Yellow: charcoal on the soft tint, the same pairing as the success card. */
+.announce-banner-yellow {
+  background-color: var(--ds-yellow-100);
+  color: var(--ds-neutral-800);
+}
+
+.announce-banner-yellow .announce-banner-link {
+  color: var(--ds-neutral-900);
+}
+
+/* Neutral: a quiet notice on a hairline, for a non-promotional message. */
+.announce-banner-neutral {
+  background-color: var(--ds-neutral-100);
+  color: var(--ds-neutral-800);
+  border-bottom: 1px solid var(--ds-neutral-200);
+}
+
+.announce-banner-neutral .announce-banner-link {
+  color: var(--ds-neutral-900);
+}
+
+.announce-banner-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-radius: var(--ds-radius-sm);
+  opacity: 0.75;
+  cursor: pointer;
+  transition: opacity var(--ds-duration-fast) var(--ds-ease-out);
+}
+
+.announce-banner-close:hover {
+  opacity: 1;
+}
+
+.announce-banner-close:focus-visible {
+  outline: none;
+  opacity: 1;
+  box-shadow: var(--ds-ring-orange);
+}
+
+/* --- Admin: editor value tree --- */
 
 .admin-object {
   min-width: 0;

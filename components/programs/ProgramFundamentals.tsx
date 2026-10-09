@@ -8,18 +8,39 @@
 import ProgramHero from './ProgramHero';
 import ProgramSection from '../shared/ProgramSection';
 import { ctaLabelFor } from './program-cta-content';
+import { withOverrides } from '@/lib/admin/overrides';
 import {
-  PROGRAM_A_BENEFITS,
-  PROGRAM_A_CTA,
-  PROGRAM_A_DAYS,
-  PROGRAM_A_FOUNDATIONS,
-  PROGRAM_A_HERO,
-  PROGRAM_A_LEARNING_FORMAT,
-  PROGRAM_A_OUTCOMES,
-  PROGRAM_A_PHILOSOPHY,
-  PROGRAM_A_PROBLEMS,
-  PROGRAM_A_WHY_MATTERS,
+  PROGRAM_A_BENEFITS as PROGRAM_A_BENEFITS_RAW,
+  PROGRAM_A_CTA as PROGRAM_A_CTA_RAW,
+  PROGRAM_A_DAYS as PROGRAM_A_DAYS_RAW,
+  PROGRAM_A_FOUNDATIONS as PROGRAM_A_FOUNDATIONS_RAW,
+  PROGRAM_A_HERO as PROGRAM_A_HERO_RAW,
+  PROGRAM_A_LEARNING_FORMAT as PROGRAM_A_LEARNING_FORMAT_RAW,
+  PROGRAM_A_OUTCOMES as PROGRAM_A_OUTCOMES_RAW,
+  PROGRAM_A_PHILOSOPHY as PROGRAM_A_PHILOSOPHY_RAW,
+  PROGRAM_A_PROBLEMS as PROGRAM_A_PROBLEMS_RAW,
+  PROGRAM_A_WHY_MATTERS as PROGRAM_A_WHY_MATTERS_RAW,
 } from './program-a-content';
+
+/*
+ * Admin overrides, resolved once at module load.
+ *
+ * Programme text is editable by decision, with the PDF caution shown in the
+ * panel: the copy is a verbatim extraction from the document the customer
+ * approved, so an edit means the page no longer matches it. See
+ * `PDF_EDIT_WARNING` in `lib/admin/schema.ts`.
+ */
+const PROGRAM_A_HERO = withOverrides('program-a.PROGRAM_A_HERO', PROGRAM_A_HERO_RAW);
+const PROGRAM_A_PROBLEMS = withOverrides('program-a.PROGRAM_A_PROBLEMS', PROGRAM_A_PROBLEMS_RAW);
+const PROGRAM_A_BENEFITS = withOverrides('program-a.PROGRAM_A_BENEFITS', PROGRAM_A_BENEFITS_RAW);
+const PROGRAM_A_OUTCOMES = withOverrides('program-a.PROGRAM_A_OUTCOMES', PROGRAM_A_OUTCOMES_RAW);
+const PROGRAM_A_PHILOSOPHY = withOverrides('program-a.PROGRAM_A_PHILOSOPHY', PROGRAM_A_PHILOSOPHY_RAW);
+const PROGRAM_A_FOUNDATIONS = withOverrides('program-a.PROGRAM_A_FOUNDATIONS', PROGRAM_A_FOUNDATIONS_RAW);
+const PROGRAM_A_DAYS = withOverrides('program-a.PROGRAM_A_DAYS', PROGRAM_A_DAYS_RAW);
+const PROGRAM_A_LEARNING_FORMAT = withOverrides('program-a.PROGRAM_A_LEARNING_FORMAT', PROGRAM_A_LEARNING_FORMAT_RAW);
+const PROGRAM_A_WHY_MATTERS = withOverrides('program-a.PROGRAM_A_WHY_MATTERS', PROGRAM_A_WHY_MATTERS_RAW);
+const PROGRAM_A_CTA = withOverrides('program-a.PROGRAM_A_CTA', PROGRAM_A_CTA_RAW);
+
 
 export default function ProgramFundamentals() {
   return (

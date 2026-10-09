@@ -42,7 +42,14 @@
  */
 
 import ScrollReveal from '../about/ScrollReveal';
-import { TRAINER_CREDIBILITY } from './trainer-credibility';
+import { withOverrides } from '@/lib/admin/overrides';
+import { TRAINER_CREDIBILITY as TRAINER_CREDIBILITY_RAW } from './trainer-credibility';
+
+/** The credit line, with any admin override applied. */
+const TRAINER_CREDIBILITY = withOverrides(
+  'trainer-credibility.TRAINER_CREDIBILITY_ONE_LINE',
+  TRAINER_CREDIBILITY_RAW.oneLine,
+);
 
 export interface ProgramHeroProps {
   /** Anchor id, e.g. "fundamentals". */
@@ -199,7 +206,7 @@ export default function ProgramHero({
              * HRD Corp claimable. The name and the figures are the SAME strings
              * from `trainer-credibility.ts`, so the two cannot drift.
              */}
-            <p className="program-hero-credibility">{TRAINER_CREDIBILITY.oneLine}</p>
+            <p className="program-hero-credibility">{TRAINER_CREDIBILITY}</p>
           </ScrollReveal>
         </div>
       </div>

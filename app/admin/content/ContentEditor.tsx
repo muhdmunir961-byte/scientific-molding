@@ -30,7 +30,14 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { MODULES } from '@/lib/admin/schema';
+import { allModules } from '@/lib/admin/schema';
+
+/*
+ * The dropdown lists every module, in page order, with the programme bodies
+ * grouped after the site chrome. `allModules()` is the single source so the
+ * dropdown and the overview page cannot disagree about what exists.
+ */
+const MODULE_OPTIONS = allModules();
 
 type JsonValue =
   | string
@@ -69,7 +76,7 @@ function humanise(key: string): string {
 }
 
 export default function ContentEditor() {
-  const [moduleId, setModuleId] = useState<string>(MODULES[0]?.id ?? 'hero');
+  const [moduleId, setModuleId] = useState<string>(MODULE_OPTIONS[0]?.id ?? 'hero');
   const [payload, setPayload] = useState<ModulePayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [meta, setMeta] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
@@ -92,7 +99,7 @@ export default function ContentEditor() {
   useEffect(() => {
     const fromUrl = new URLSearchParams(window.location.search).get('module');
     const initial =
-      fromUrl && MODULES.some((m) => m.id === fromUrl) ? fromUrl : moduleId;
+      fromUrl && MODULE_OPTIONS.some((m) => m.id === fromUrl) ? fromUrl : moduleId;
     setModuleId(initial);
     void load(initial);
     // Runs once; the module is then driven by the selector.
@@ -120,7 +127,7 @@ export default function ContentEditor() {
             void load(e.target.value);
           }}
         >
-          {MODULES.map((m) => (
+          {MODULE_OPTIONS.map((m) => (
             <option key={m.id} value={m.id}>
               {m.title}
             </option>

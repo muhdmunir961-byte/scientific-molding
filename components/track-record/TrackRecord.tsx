@@ -59,9 +59,20 @@ import ScrollReveal from '../about/ScrollReveal';
 import CountUp from '../shared/CountUp';
 import { withOverrides } from '@/lib/admin/overrides';
 import {
-  TRAINER_CREDIBILITY_CREDENTIALS,
-  TRAINER_CREDIBILITY_NAME,
+  TRAINER_CREDIBILITY_CREDENTIALS as TRAINER_CREDIBILITY_CREDENTIALS_RAW,
+  TRAINER_CREDIBILITY_NAME as TRAINER_CREDIBILITY_NAME_RAW,
 } from '../programs/trainer-credibility';
+
+/* Admin overrides, resolved once at module load. See Hero.tsx for the reasoning. */
+const TRAINER_CREDIBILITY_NAME = withOverrides(
+  'trainer-credibility.TRAINER_CREDIBILITY_NAME',
+  TRAINER_CREDIBILITY_NAME_RAW,
+);
+const TRAINER_CREDIBILITY_CREDENTIALS = withOverrides(
+  'trainer-credibility.TRAINER_CREDIBILITY_CREDENTIALS',
+  TRAINER_CREDIBILITY_CREDENTIALS_RAW,
+);
+
 import {
   CLIENT_TYPES as CLIENT_TYPES_RAW,
   CLIENT_TYPES_HEADING as CLIENT_TYPES_HEADING_RAW,

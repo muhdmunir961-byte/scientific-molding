@@ -115,7 +115,11 @@ const registeredKeys = [
   ...registry.matchAll(/'([a-z-]+)\.([A-Z0-9_]+)':/g),
 ].map((m) => `${m[1]}.${m[2]}`);
 
-const componentFiles = walk('components').filter((f) => /\.tsx?$/.test(f));
+const componentFiles = [
+  ...walk('components').filter((f) => /\.tsx?$/.test(f)),
+  // `app/page.tsx` composes the banner override, so the sweep must see it.
+  'app/page.tsx',
+];
 const consumedKeys = new Set();
 for (const file of componentFiles) {
   const source = read(file);
@@ -151,14 +155,26 @@ report(
  * file cannot tell which block an export name came from.
  */
 const schema = read('lib/admin/schema.ts');
+
+/*
+ * Editable exports come from `MODULES` (site chrome) and `PROGRAM_MODULES`
+ * (programme bodies). Both are editable; `LOCKED_MODULES` is empty by default
+ * and is read separately so a future locked module is not required to have a
+ * registry entry.
+ */
 const editableBlock = schema.slice(
   schema.indexOf('export const MODULES'),
   schema.indexOf('export const LOCKED_MODULES'),
 );
-
-const editableExportNames = [...editableBlock.matchAll(/name:\s*'([A-Z0-9_]+)'/g)].map(
-  (m) => m[1],
+const programmeBlock = schema.slice(
+  schema.indexOf('export const PROGRAM_MODULES'),
+  schema.indexOf('export function findModule'),
 );
+
+const editableExportNames = [
+  ...editableBlock.matchAll(/name:\s*'([A-Z0-9_]+)'/g),
+  ...programmeBlock.matchAll(/name:\s*'([A-Z0-9_]+)'/g),
+].map((m) => m[1]);
 
 /*
  * `PAGE_IMAGES` is the exception: it is listed in the panel so the paths are
@@ -174,7 +190,7 @@ const missingFromRegistry = editableExportNames.filter(
 );
 
 report(
-  editableExportNames.length >= 25,
+  editableExportNames.length >= 60,
   'the schema lists the editable exports',
   `found ${editableExportNames.length}`,
 );

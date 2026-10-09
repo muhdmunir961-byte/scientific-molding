@@ -1,6 +1,9 @@
 import EntranceLoader from '@/components/EntranceLoader';
 import About from '@/components/about/About';
 import Hero from '@/components/hero/Hero';
+import Banner from '@/components/shared/Banner';
+import { BANNER } from '@/components/shared/banner-content';
+import { withOverrides } from '@/lib/admin/overrides';
 import ProgramFundamentals from '@/components/programs/ProgramFundamentals';
 import ProgramMaterials from '@/components/programs/ProgramMaterials';
 import ProgramProcessDevelopment from '@/components/programs/ProgramProcessDevelopment';
@@ -75,11 +78,15 @@ import NavChrome from '@/components/nav/NavChrome';
  * rather than being split by a boundary that would mark nothing.
  */
 export default function HomePage() {
+  // Resolved on the server so the saved copy arrives as a prop; see Banner.tsx.
+  const banner = withOverrides('banner.BANNER', BANNER);
+
   return (
     <>
       <EntranceLoader>
         <Hero />
       </EntranceLoader>
+      <Banner content={banner} />
       <NavChrome />
       <About />
       <ProgramFundamentals />

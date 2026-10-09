@@ -28,7 +28,15 @@
  * context that tells the visitor which programme they are requesting.
  */
 
-import { PROGRAM_CTA_FOOTERS } from '../programs/program-cta-content';
+import { withOverrides } from '@/lib/admin/overrides';
+import { PROGRAM_CTA_FOOTERS as PROGRAM_CTA_FOOTERS_RAW } from '../programs/program-cta-content';
+
+/** The five programme CTAs, with any admin override applied. */
+const PROGRAM_CTA_FOOTERS = withOverrides(
+  'program-cta.PROGRAM_CTA_FOOTERS',
+  PROGRAM_CTA_FOOTERS_RAW,
+);
+
 
 export default function ProgramCtaFooter() {
   return (

@@ -67,6 +67,18 @@ export const PDF_LOCK_REASON =
   'This text is a verbatim extraction from the customer-supplied programme PDF. Editing it would diverge the published page from the approved document, so it is read-only. Change the PDF first, then the code.';
 
 /**
+ * The caution shown before the programme bodies are edited.
+ *
+ * The operator asked for full access, so the files are NOT locked. The risk is
+ * not technical — the page will render whatever is saved — it is that the text
+ * is a verbatim extraction from the PDF the customer approved, and about forty
+ * output assertions pin it. This wording is shown in the panel so the trade-off
+ * is stated at the moment of the edit rather than discovered afterwards.
+ */
+export const PDF_EDIT_WARNING =
+  'This text is a verbatim extraction from the customer-supplied programme PDF. Editing it means the published page no longer matches the document the customer approved, and ~47 output assertions will need updating. Change it only when the PDF itself has changed.';
+
+/**
  * Every editable module, in page order so the panel reads as a walk down the
  * page.
  */
@@ -162,6 +174,21 @@ export const MODULES: readonly ModuleSpec[] = [
     ],
   },
   {
+    id: 'banner',
+    title: 'Announcement banner',
+    description:
+      'A site-wide bar above the header. Off by default; turn it on for a booking notice, a schedule change or a promotion.',
+    file: 'components/shared/banner-content.ts',
+    exports: [
+      {
+        name: 'BANNER',
+        label: 'Banner',
+        description:
+          'Message, optional link, tone and dismissibility. Set "Enabled" to true to show it.',
+      },
+    ],
+  },
+  {
     id: 'nav',
     title: 'Navigation',
     description: 'Menu labels, the logo, and the quick actions in the mobile bar.',
@@ -178,100 +205,126 @@ export const MODULES: readonly ModuleSpec[] = [
 ] as const;
 
 /**
- * The programme body modules — listed so their content is discoverable, and
- * explicitly locked.
+ * Modules kept out of the normal flow.
  *
- * Separated from `MODULES` rather than mixed in with `mode: 'locked'`, because a
- * single list would mean every consumer had to check `mode` before trusting a
- * module to be writable — and the one place that forgot would be the one that
- * let an edit through. Two lists make "editable" a property of which list you
- * are iterating.
+ * Empty by default: the operator asked for full access, so every module is
+ * listed in `MODULES` or `PROGRAM_MODULES` with a warning rather than a lock.
+ * The array is kept so a future genuinely-immutable module has somewhere to go,
+ * and so consumers that iterate it do not need editing when one appears.
  */
-export const LOCKED_MODULES: readonly ModuleSpec[] = [
+export const LOCKED_MODULES: readonly ModuleSpec[] = [] as const;
+
+/**
+ * Programme body modules — editable, with the PDF caution attached.
+ *
+ * Split out so the panel can group them under one warning heading rather than
+ * interleaving them with the site chrome, and so the caution is attached to
+ * each export in one place.
+ */
+export const PROGRAM_MODULES: readonly ModuleSpec[] = [
   {
     id: 'trainer-credibility',
     title: 'Programme trainer credit',
-    description: 'The one-line credit under every program hero.',
+    description: 'The credit line under every program hero.',
     file: 'components/programs/trainer-credibility.ts',
     exports: [
-      { name: 'TRAINER_CREDIBILITY_ONE_LINE', label: 'Credit line', description: PDF_LOCK_REASON, mode: 'locked' },
+      { name: 'TRAINER_CREDIBILITY_NAME', label: 'Trainer name', description: PDF_EDIT_WARNING },
+      { name: 'TRAINER_CREDIBILITY_CREDENTIALS', label: 'Credentials', description: PDF_EDIT_WARNING },
+      { name: 'TRAINER_CREDIBILITY_ONE_LINE', label: 'Credit line', description: PDF_EDIT_WARNING },
     ],
   },
   {
     id: 'program-cta',
     title: 'Programme CTAs',
-    description: 'The five request links in the Contact section.',
+    description: 'The request links in the Contact section.',
     file: 'components/programs/program-cta-content.ts',
     exports: [
-      { name: 'PROGRAM_CTA_FOOTERS', label: 'Programme CTAs', description: PDF_LOCK_REASON, mode: 'locked' },
+      { name: 'PROGRAM_CTA_FOOTERS', label: 'Programme CTAs', description: PDF_EDIT_WARNING },
     ],
   },
   {
     id: 'program-a',
     title: 'Programme A — Fundamentals',
-    description: 'Verbatim from the customer PDF.',
+    description: 'Every heading and paragraph in the section.',
     file: 'components/programs/program-a-content.ts',
     exports: [
-      { name: 'PROGRAM_A_HERO', label: 'Hero', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_A_PROBLEMS', label: 'Problems', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_A_BENEFITS', label: 'Benefits', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_A_OUTCOMES', label: 'Outcomes', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_A_PHILOSOPHY', label: 'Philosophy', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_A_FOUNDATIONS', label: 'Foundations', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_A_DAYS', label: 'Day breakdown', description: PDF_LOCK_REASON, mode: 'locked' },
+      { name: 'PROGRAM_A_HERO', label: 'Hero', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_A_PROBLEMS', label: 'Problems', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_A_BENEFITS', label: 'Benefits', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_A_OUTCOMES', label: 'Outcomes', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_A_PHILOSOPHY', label: 'Philosophy', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_A_FOUNDATIONS', label: 'Foundations', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_A_DAYS', label: 'Day breakdown', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_A_LEARNING_FORMAT', label: 'Learning format', description: PDF_EDIT_WARNING },
     ],
   },
   {
     id: 'program-b',
     title: 'Programme B — Processability',
-    description: 'Verbatim from the customer PDF.',
+    description: 'Every heading and paragraph in the section.',
     file: 'components/programs/program-b-content.ts',
     exports: [
-      { name: 'PROGRAM_B_HERO', label: 'Hero', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_B_PROBLEMS', label: 'Problems', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_B_BENEFITS', label: 'Benefits', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_B_CAPABILITIES', label: 'Capabilities', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_B_MODULES', label: 'Modules', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_B_FRAMEWORK', label: 'Framework', description: PDF_LOCK_REASON, mode: 'locked' },
+      { name: 'PROGRAM_B_HERO', label: 'Hero', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_B_PROBLEMS', label: 'Problems', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_B_BENEFITS', label: 'Benefits', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_B_CAPABILITIES', label: 'Capabilities', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_B_MODULES', label: 'Modules', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_B_CORE_MODULES', label: 'Core modules', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_B_FRAMEWORK', label: 'Framework', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_B_TAKE_BACK', label: 'Take back', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_B_AUDIENCE', label: 'Audience', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_B_LEARNING_APPROACH', label: 'Learning approach', description: PDF_EDIT_WARNING },
     ],
   },
   {
     id: 'program-c',
     title: 'Programme C — Process Development',
-    description: 'Verbatim from the customer PDF.',
+    description: 'Every heading and paragraph in the section.',
     file: 'components/programs/program-c-content.ts',
     exports: [
-      { name: 'PROGRAM_C_HERO', label: 'Hero', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_C_PROBLEMS', label: 'Problems', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_C_BENEFITS', label: 'Benefits', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_C_OUTCOMES', label: 'Outcomes', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_C_PHILOSOPHY', label: 'Philosophy', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_C_DAYS', label: 'Day breakdown', description: PDF_LOCK_REASON, mode: 'locked' },
+      { name: 'PROGRAM_C_HERO', label: 'Hero', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_C_PROBLEMS', label: 'Problems', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_C_BENEFITS', label: 'Benefits', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_C_OUTCOMES', label: 'Outcomes', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_C_PHILOSOPHY', label: 'Philosophy', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_C_PERSPECTIVES', label: 'Perspectives', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_C_DAYS', label: 'Day breakdown', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_C_TAKE_BACK', label: 'Take back', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_C_AUDIENCE', label: 'Audience', description: PDF_EDIT_WARNING },
     ],
   },
   {
     id: 'program-d',
     title: 'Programme D — Defect Troubleshooting',
-    description: 'Verbatim from the customer PDF.',
+    description: 'Every heading and paragraph in the section.',
     file: 'components/programs/program-d-content.ts',
     exports: [
-      { name: 'PROGRAM_D_HERO', label: 'Hero', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_D_WARNING_SIGNS', label: 'Warning signs', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_D_BUSINESS_OUTCOMES', label: 'Outcomes', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_D_DEFECTS_COVERED', label: 'Defects covered', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_D_DAYS', label: 'Day breakdown', description: PDF_LOCK_REASON, mode: 'locked' },
+      { name: 'PROGRAM_D_HERO', label: 'Hero', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_D_WARNING_SIGNS', label: 'Warning signs', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_D_BUSINESS_OUTCOMES', label: 'Outcomes', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_D_DEFECTS_COVERED', label: 'Defects covered', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_D_CAPABILITIES', label: 'Capabilities', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_D_DAYS', label: 'Day breakdown', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_D_AUDIENCE', label: 'Audience', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_D_LEARNING_FORMAT', label: 'Learning format', description: PDF_EDIT_WARNING },
     ],
   },
   {
     id: 'program-e',
     title: 'Programme E — Training Pathway',
-    description: 'Verbatim from the customer PDF.',
+    description: 'Every heading and paragraph in the section.',
     file: 'components/programs/program-e-content.ts',
     exports: [
-      { name: 'PROGRAM_E_HERO', label: 'Hero', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_E_STATS', label: 'Figures', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_E_MODULES', label: 'Module cards', description: PDF_LOCK_REASON, mode: 'locked' },
-      { name: 'PROGRAM_E_PATHWAY', label: 'Pathway', description: PDF_LOCK_REASON, mode: 'locked' },
+      { name: 'PROGRAM_E_HERO', label: 'Hero', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_E_STATS', label: 'Figures', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_E_SECTION', label: 'Section heading', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_E_MODULES', label: 'Module cards', description: PDF_EDIT_WARNING },
+      { name: 'PROGRAM_E_PATHWAY', label: 'Pathway', description: PDF_EDIT_WARNING },
+      {
+        name: 'PROGRAM_E_ORGANISATION_BUILD',
+        label: 'What an organisation can build',
+        description: PDF_EDIT_WARNING,
+      },
     ],
   },
 ] as const;
@@ -300,10 +353,26 @@ export function findAnyModule(
   const editable = MODULES.find((m) => m.id === id);
   if (editable) return { module: editable, editable: true };
 
+  // Programme bodies are editable too — the PDF caution is guidance, not a lock.
+  const programme = PROGRAM_MODULES.find((m) => m.id === id);
+  if (programme) return { module: programme, editable: true };
+
   const locked = LOCKED_MODULES.find((m) => m.id === id);
   if (locked) return { module: locked, editable: false };
 
   return undefined;
+}
+
+/**
+ * Every module the panel lists, in the order it shows them.
+ *
+ * Site chrome first, then the programme bodies grouped under their own heading.
+ * The order is presentation, not permission — which list a module came from no
+ * longer decides whether it can be edited (see `findAnyModule`).
+ * @returns {readonly ModuleSpec[]}
+ */
+export function allModules(): readonly ModuleSpec[] {
+  return [...MODULES, ...PROGRAM_MODULES, ...LOCKED_MODULES];
 }
 
 /**
