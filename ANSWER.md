@@ -1,112 +1,112 @@
-# ANSWER.md — Decisions, Analysis and Open Questions
+# ANSWER.md — Keputusan, Analisis dan Soalan Terbuka
 
-> **Purpose.** Every diagnosis, design decision and outstanding question from the
-> admin/photo work is recorded here so it can be read in one place, without
-> reconstructing it from commit messages or chat.
+> **Tujuan.** Semua diagnosis, keputusan reka bentuk dan soalan yang belum selesai
+> daripada kerja admin/foto direkodkan di sini supaya boleh dibaca dalam satu
+> tempat, tanpa perlu digali semula daripada mesej commit atau chat.
 >
-> **How to read it.** Part 1 is the bug diagnoses. Part 2 is the data model.
-> Part 3 is every decision I made and *why* — including where I chose against the
-> obvious option. Part 4 is what is still open and needs you.
+> **Cara baca.** Bahagian 1 ialah diagnosis bug. Bahagian 2 ialah model data.
+> Bahagian 3 ialah setiap keputusan yang saya buat dan **sebabnya** — termasuk
+> tempat saya pilih sebaliknya daripada pilihan yang jelas. Bahagian 4 ialah apa
+> yang masih terbuka dan perlukan awak.
 >
-> Last updated: after commit `7dfc86d`.
+> Dikemas kini terakhir: selepas commit `3c938d1`.
 
 ---
 
-## Part 1 — Bug diagnoses
+## Bahagian 1 — Diagnosis bug
 
-### Bug 1 — `/admin/images` showed `Unknown module ""`
+### Bug 1 — `/admin/images` tunjuk `Unknown module ""`
 
-**Root cause.** The page asked for `?group=images`. The parameter was renamed
-from `group` to `module` when the admin schema stopped describing fields and
-started describing modules, and this one call site kept the old name. The API saw
-no `module`, so it returned the **module list**; the page found no `values` in
-that list and surfaced an empty-module error.
+**Punca akar.** Halaman itu minta `?group=images`. Parameter ditukar nama daripada
+`group` kepada `module` apabila skema admin berhenti menerangkan *field* dan mula
+menerangkan *module*, dan satu call site ini tertinggal nama lama. API tak nampak
+`module`, jadi ia pulangkan **senarai module**; halaman tak jumpa `values` dalam
+senarai itu lalu tunjuk ralat module kosong.
 
-**Fix, at both ends.**
-- The client now asks the images route directly (`?manifest=1`), which is where
-  the upload pipeline actually writes.
-- The content route now distinguishes `null` (no parameter → a legitimate list
-  request) from `''` (present but empty → `400` with a readable message). A
-  caller that sends nothing can no longer be silently treated as asking for
-  everything.
+**Fix, di kedua-dua hujung.**
+- Klien sekarang minta terus daripada route images (`?manifest=1`), iaitu tempat
+  pipeline upload sebenarnya menulis.
+- Route content kini bezakan `null` (tiada parameter → permintaan senarai yang
+  sah) daripada `''` (ada tapi kosong → `400` dengan mesej yang boleh dibaca).
+  Pemanggil yang hantar kosong tak boleh lagi disalah anggap sebagai minta semua.
 
-### Bug 2 — Content → Images showed `PAGE_IMAGES` as `null`
+### Bug 2 — Content → Images tunjuk `PAGE_IMAGES` sebagai `null`
 
-**Root cause.** `PAGE_IMAGES` had no registry entry, so `readExport()` returned
-`undefined` and the editor rendered `null`. Underneath that, there was no single
-place that could answer "what images does the site currently use?" — the six
-defaults were spread across `hero-content.ts`, `about-content.ts` and
+**Punca akar.** `PAGE_IMAGES` tiada entri dalam registry, jadi `readExport()`
+pulangkan `undefined` dan editor render `null`. Di bawahnya, tiada satu tempat
+yang boleh jawab "gambar apa yang site guna sekarang?" — enam default tu
+bertaburan dalam `hero-content.ts`, `about-content.ts` dan
 `testimonials-content.ts`.
 
-**Fix.** `lib/admin/images-manifest.ts` builds a real structure — one entry per
-slot with its `url` and its `source` (`override` / `default` / `unset`). It is
-**computed, never stored**, so it cannot be null.
+**Fix.** `lib/admin/images-manifest.ts` bina struktur sebenar — satu entri per
+slot dengan `url` dan `source` (`override` / `default` / `unset`). Ia
+**dikira, tidak disimpan**, jadi ia tak boleh jadi null.
 
-### Bug 3 — Deploy button returned `405`
+### Bug 3 — Butang Deploy pulangkan `405`
 
-**Root cause.** `lib/admin/deploy.ts` sent `GET`. Coolify v4 changed the deploy
-endpoint to `POST`.
+**Punca akar.** `lib/admin/deploy.ts` hantar `GET`. Coolify v4 tukar endpoint
+deploy kepada `POST`.
 
-**Confirmed against the live instance**, which is what separates "wrong method"
-from "wrong credentials":
+**Disahkan terhadap instance live**, dan inilah yang memisahkan "salah method"
+daripada "salah kredensial":
 
-| Method | Response |
+| Method | Respons |
 |---|---|
 | GET | `405 {"message":"This endpoint has changed to a POST request."}` |
 | POST | `401 {"message":"Unauthenticated."}` |
 
-**Fix.** POST, and the raw JSON envelope is replaced with sentences that say what
-to do: `401/403` → the token is missing or lacks the deploy permission, `404` →
-the uuid is wrong, `429` → rate-limited, `5xx` → check the dashboard.
+**Fix.** POST, dan envelope JSON mentah diganti dengan ayat yang beritahu apa nak
+buat: `401/403` → token tiada atau tiada kebenaran deploy, `404` → uuid salah,
+`429` → kena rate-limit, `5xx` → semak dashboard.
 
-### Bug 4 — Inconsistent image paths
+### Bug 4 — Path gambar tak konsisten
 
-Four separate defects, all of which made the panel report success while the site
-showed something else.
+Empat defect berasingan, semuanya buat panel laporkan berjaya sedangkan site
+tunjuk benda lain.
 
-| Defect | Consequence |
+| Defect | Akibat |
 |---|---|
-| Key was `images/<slot>.<ext>` | Re-uploading wrote the **same key**. The bytes changed, the URL did not, so every browser kept serving the old image from cache. |
-| No namespace | `images/lecture.jpg` said nothing about which module or category it belonged to. |
-| No verification | A PUT could succeed into a bucket whose public domain was not attached. The panel said "uploaded" and the site showed nothing. |
-| No delete | Objects accumulated forever. |
+| Key ialah `images/<slot>.<ext>` | Upload semula tulis **key sama**. Byte bertukar, URL tak bertukar, jadi setiap browser terus serve gambar lama dari cache. |
+| Tiada namespace | `images/lecture.jpg` tak beritahu apa-apa tentang module atau kategori mana ia milik. |
+| Tiada pengesahan | PUT boleh berjaya ke dalam bucket yang public domain-nya tak dipasang. Panel kata "uploaded", site tunjuk kosong. |
+| Tiada delete | Object terkumpul selama-lamanya. |
 
-**New key convention.**
+**Konvensyen key baharu.**
 
 ```
-images/<moduleSlug>/<category>/<timestamp>-<slug>.<ext>
+images/<moduleSlug>/<kategori>/<timestamp>-<slug>.<ext>
 
 images/m1-fundamental/lecture/1791578774717-lathe-setup.jpg
 ```
 
-A timestamp makes every upload a distinct key, so a replacement is a new URL and
-cannot be served stale. It also sorts chronologically in a bucket listing, which
-is how an operator actually looks for a recent upload.
+Timestamp buat setiap upload jadi key berbeza, jadi penggantian ialah URL baharu
+dan tak boleh diserve basi. Ia juga tersusun mengikut masa dalam senarai bucket,
+iaitu cara operator sebenarnya cari upload terbaru.
 
-**New verification.** After the PUT, a `HEAD` on the returned URL. If it does not
-resolve, the upload **fails loudly** with the URL named. The object is
-deliberately **not** deleted on a failed verify — that would destroy the upload
-over what may be a transient propagation delay.
+**Pengesahan baharu.** Selepas PUT, satu `HEAD` pada URL yang dipulangkan. Kalau
+ia tak resolve, upload **gagal dengan kuat** sambil menamakan URL itu. Object
+**sengaja tidak** dipadam bila pengesahan gagal — itu akan musnahkan upload
+disebabkan kelewatan propagasi yang mungkin sementara.
 
-### Bug 5 — Empty placeholder frames on the public About page
+### Bug 5 — Frame kosong pada halaman About awam
 
-**Root cause.** `TrainerPhoto.tsx` maps all four `SESSION_IMAGES`
-unconditionally, so a missing file renders the brand-gradient fallback. Four
-empty peach frames appear.
+**Punca akar.** `TrainerPhoto.tsx` map keempat-empat `SESSION_IMAGES` tanpa
+syarat, jadi fail yang tiada render fallback gradien brand. Empat frame peach
+kosong muncul.
 
-**Status: not yet fixed.** It is the smallest remaining item (logic only, no
+**Status: belum dibetulkan.** Ini item terkecil yang tinggal (logic sahaja, tiada
 restyling).
 
 ---
 
-## Part 2 — Data model
+## Bahagian 2 — Model data
 
-### `content/modules.json` — the seven modules
+### `content/modules.json` — tujuh module
 
-**Source of truth: `0_7_Module_SIM_Professional_Training.pdf`. Do not infer,
-rename or reorder.**
+**Sumber kebenaran: `0_7_Module_SIM_Professional_Training.pdf`. Jangan agak, tukar
+nama atau susun semula.**
 
-| slug | title | days | level |
+| slug | tajuk | hari | tahap |
 |---|---|---|---|
 | `m1-fundamental` | Fundamental of Scientific Molding | 2 | Foundation |
 | `m2-processability` | Processability of Thermoplastics in Injection Molding | 2 | Foundation |
@@ -116,30 +116,29 @@ rename or reorder.**
 | `m6-defects-troubleshooting` | Scientific Molding: Defects Troubleshooting | 2 | Application |
 | `m7-process-portability` | Scientific Molding: Process Portability | 2 | Advanced |
 
-Total: **16 days**.
+Jumlah: **16 hari**.
 
-This one file is read by the admin Overview, the admin dropdown, the per-module
-photo manager **and** the public Programs menu. Before it existed the site carried
-five modules under different slugs, which is how the menu came to disagree with
-the client's document.
+Fail ini sahaja dibaca oleh Overview admin, dropdown admin, pengurus foto
+per-module **dan** menu Programs awam. Sebelum ia wujud, site bawa lima module
+bawah slug berbeza — itulah sebabnya menu bercanggah dengan dokumen klien.
 
-### Old slug → new slug mapping
+### Pemetaan slug lama → slug baharu
 
-The site previously used five slugs that do not match the PDF. Each module now
-carries a `legacySlug` so images uploaded before this change stay reachable and
-an old bookmark still resolves.
+Site sebelum ini guna lima slug yang tak padan dengan PDF. Setiap module kini
+bawa `legacySlug` supaya gambar yang diupload sebelum perubahan ini kekal boleh
+dicapai dan bookmark lama masih resolve.
 
-| PDF module | old site slug | note |
+| Module PDF | slug lama site | nota |
 |---|---|---|
-| m1-fundamental | `fundamentals` | renamed |
-| m2-processability | `materials` | renamed |
-| m3-fundamental-pd | — | **new, no page yet** |
-| m4-process-development | `process-development` | renamed |
-| m5-parameter-setting | — | **new, no page yet** |
-| m6-defects-troubleshooting | `defect-troubleshooting` | renamed |
-| m7-process-portability | `pathway` | ⚠️ see Part 4 — different subject |
+| m1-fundamental | `fundamentals` | ditukar nama |
+| m2-processability | `materials` | ditukar nama |
+| m3-fundamental-pd | — | **baharu, belum ada page** |
+| m4-process-development | `process-development` | ditukar nama |
+| m5-parameter-setting | — | **baharu, belum ada page** |
+| m6-defects-troubleshooting | `defect-troubleshooting` | ditukar nama |
+| m7-process-portability | `pathway` | ⚠️ lihat Bahagian 4 — subjek berbeza |
 
-### `content/module-photos.json` — the galleries
+### `content/module-photos.json` — galeri
 
 ```jsonc
 {
@@ -147,196 +146,201 @@ an old bookmark still resolves.
     "m1-fundamental": {
       "lecture": [], "practical": [], "discussion": [], "presentation": []
     }
-    // ... one entry per module
+    // ... satu entri per module
   }
 }
 ```
 
-Both keys come from other files — module slugs from `modules.json`, categories
-from `PHOTO_CATEGORIES` — so the panel can only write keys it was given and the
-gallery cannot grow a fifth category by accident.
+Kedua-dua key datang daripada fail lain — slug module daripada `modules.json`,
+kategori daripada `PHOTO_CATEGORIES` — jadi panel hanya boleh tulis key yang ia
+diberi, dan galeri tak boleh tumbuh kategori kelima secara tak sengaja.
 
-### `Image` shape
+### Bentuk `Image`
 
 ```ts
 {
-  key: string         // stable identity, never changes
-  url: string         // public URL the site renders
-  alt: string         // screen-reader description
-  caption: string     // optional visible caption
-  order: number       // position within its category
-  uploadedAt: string  // ISO timestamp
+  key: string         // identiti stabil, tak pernah berubah
+  url: string         // URL awam yang site render
+  alt: string         // penerangan untuk screen reader
+  caption: string     // kapsyen yang dipaparkan, optional
+  order: number       // kedudukan dalam kategorinya
+  uploadedAt: string  // timestamp ISO
 }
 ```
 
-### Why each image carries a `key`
+### Kenapa setiap gambar bawa `key`
 
-An image **cannot** be identified by its index. Insert one photo at the top and
-every index below shifts, silently re-pairing captions with the wrong
-photographs. The key is generated once at upload — derived from the R2 key, so
-the manifest entry and the stored object cannot drift — and never changes.
-
----
-
-## Part 3 — Decisions and why
-
-### The nav links canonical slugs; the sections answer to both
-
-**Decision.** The menu links `#m1-fundamental`. The section still carries
-`id="fundamentals"` **and** gains an empty `<span id="m1-fundamental">`.
-
-**Why not just rename the section.** Every existing bookmark, external link and
-search result would break, and every prior assertion in `check-entrance.mjs`
-would fail. An empty anchor costs nothing visually and keeps all of them working.
-
-**Consequence for the checker.** `NAV_ANCHORS` now asserts the canonical slugs
-are *linked*, and `LEGACY_ANCHORS` asserts the old ids still *resolve*. The old
-ids are deliberately no longer linked.
-
-### Two modules are listed but not linked
-
-**Decision.** `m3` and `m5` appear in the menu as text carrying "coming soon",
-not as links.
-
-**Why.** An anchor pointing at a missing id does nothing when clicked, which a
-visitor reads as a broken site rather than as a module that is not published.
-Inventing a section for them is a content decision, not one the code should make.
-
-**Asserted.** `PENDING_MODULES` in `check-entrance.mjs` checks they are **not**
-linked — so adding a section without removing it from that list is caught.
-
-### Reorder is buttons, not drag-and-drop
-
-**Decision.** Up/down buttons.
-
-**Why.** Buttons are keyboard-operable for free, work on touch without a drag
-threshold, and cannot mis-drop. Drag would need a library or a hand-rolled
-pointer implementation, a keyboard fallback anyway, and would be the one
-interaction in the panel that behaves differently on a phone — for an operator
-editing eleven photos at a desk. The brief allowed either.
-
-### A reorder cannot delete
-
-**Decision.** `PATCH` requires every existing key to appear exactly once.
-
-**Why.** Without the check, a dropped key would silently remove a photograph
-through what the operator believed was a reorder — the worst possible way to lose
-data.
-
-### The manifest is written before the object is deleted
-
-**Decision.** On delete: manifest → commit → then remove the object.
-
-**Why.** Reversed, a failed commit would leave the live site pointing at bytes
-that no longer exist. This order's worst case is an orphaned object, which costs
-storage and breaks nothing. Whether the object went is reported in the response
-rather than hidden.
-
-### Each category saves independently
-
-**Decision.** No form-level Save button. A photo is already in R2 by the time the
-upload returns.
-
-**Why.** A form-level save would have to track uploaded-but-uncommitted objects
-and reconcile them on failure. Saving per change means panel state and the
-repository agree after every action.
-
-### Captions save on blur, not per keystroke
-
-**Decision.** `onBlur`, and only when the value actually changed.
-
-**Why.** A save per keystroke would commit to git on every character. Blur is the
-point at which the operator has finished. An untouched field never posts, so
-clicking through a gallery produces **no commits at all**.
-
-### `lib/admin/registry.ts` imports modules statically
-
-**Why not a dynamic `import()`.** Turbopack cannot resolve a path built from a
-variable — it either fails the build or falls back to tracing the entire project
-into the server output, which is the deploy-size problem the content store had
-already hit once. A static import map costs one line per module, and
-`check-admin.mjs` asserts every registered key is consumed.
-
-### The images route reads its own manifest
-
-**Why.** `PAGE_IMAGES` is the **output of the upload pipeline**, not text an
-operator types. Routing its read through the text-content API is exactly what
-produced Bug 2. Keeping the read and the write on one route means they cannot
-disagree about where the manifest lives.
-
-### `check-admin.mjs` asserts wiring, not just shape
-
-The load-bearing check is: **every registered export must be consumed via
-`withOverrides`**. That is the check that would have caught the original image
-bug, where the panel wrote the override and the component kept reading its
-default while every step reported success.
-
-It also asserts:
-- every admin API route calls the session guard
-- every admin page calls the page guard
-- the module list matches the PDF exactly, on slug, title, days and level
-- the days sum to 16
-- every route that takes a module slug validates it
-- every operator-facing group has a human label
+Gambar **tidak boleh** dikenal pasti melalui index-nya. Selitkan satu foto di
+atas, dan setiap index di bawahnya berganjak — kapsyen akan senyap-senyap
+berpasangan dengan foto yang salah. Key dijana sekali semasa upload — diterbitkan
+daripada key R2, jadi entri manifest dan object tersimpan tak boleh terpisah —
+dan tak pernah berubah.
 
 ---
 
-## Part 4 — Open questions and outstanding work
+## Bahagian 3 — Keputusan dan sebabnya
 
-### Needs your decision
+### Nav link slug kanonikal; section jawab kedua-duanya
 
-**1. `pathway` is not "Process Portability".**
+**Keputusan.** Menu link `#m1-fundamental`. Section masih bawa
+`id="fundamentals"` **dan** dapat `<span id="m1-fundamental">` yang kosong.
 
-The existing `#pathway` section is titled *"7-Module Professional Training
-Pathway"* — a portfolio overview. The PDF's m7 is *"Scientific Molding: Process
-Portability"*, a different subject. m7 currently maps to `legacySlug: "pathway"`.
+**Kenapa tak tukar nama section terus.** Setiap bookmark, link luar dan hasil
+carian yang sedia ada akan rosak, dan setiap assertion dalam
+`check-entrance.mjs` akan gagal. Anchor kosong tak makan apa-apa dari segi visual
+dan kekalkan semuanya berfungsi.
 
-Consequence: photos uploaded to m7 will land in a section that talks about
-something else. Options are to rename the section, build a section for it, or
-re-point m7 at a different anchor. **I have not changed any page copy.**
+**Kesan pada checker.** `NAV_ANCHORS` kini assert slug kanonikal mesti *dilink*,
+dan `LEGACY_ANCHORS` assert id lama masih *resolve*. Id lama sengaja tak dilink
+lagi.
 
-**2. `m3` and `m5` have no public page.**
+### Dua module disenarai tapi tak dilink
 
-They are defined by the PDF, they have photo galleries and admin pages, but the
-public site has no section for them. Photos uploaded there are stored and
-committed but **never displayed**. Either a section is added, or they stay
-menu-only until the content exists. You confirmed: build the slots now, fill them
-later.
+**Keputusan.** `m3` dan `m5` muncul dalam menu sebagai teks bertanda "coming
+soon", bukan sebagai link.
 
-**3. Coolify auto-deploy is not wired.**
+**Sebab.** Anchor yang tunjuk ke id yang tiada buat apa-apa bila diklik, dan
+pelawat baca itu sebagai site rosak, bukan sebagai module yang belum
+diterbitkan. Merekacipta section untuk mereka ialah keputusan content, bukan
+keputusan yang kod patut buat.
 
-Commits land on `main` and the live site does not change. This was diagnosed by
-pushing an empty commit and polling the served CSS hash at +3 and +7 minutes —
-unchanged both times. The panel's Deploy button covers it manually once
-`COOLIFY_WEBHOOK_URL` + `COOLIFY_API_TOKEN` are set, but auto-deploy on push is
-the correct primary mechanism.
+**Diassert.** `PENDING_MODULES` dalam `check-entrance.mjs` periksa mereka **tidak**
+dilink — jadi menambah section tanpa buang ia daripada senarai itu akan
+ditangkap.
 
-### Not yet built
+### Reorder guna butang, bukan drag-and-drop
 
-| Item | Size | Notes |
+**Keputusan.** Butang naik/turun.
+
+**Sebab.** Butang boleh dikendalikan dengan keyboard secara percuma, berfungsi di
+skrin sentuh tanpa threshold drag, dan tak boleh tersalah lepas. Drag perlukan
+library atau implementasi pointer buatan sendiri, fallback keyboard juga, dan
+akan jadi satu-satunya interaksi dalam panel yang berkelakuan berbeza di telefon
+— untuk operator yang edit sebelas foto di meja. Brief benarkan kedua-duanya.
+
+### Reorder tak boleh delete
+
+**Keputusan.** `PATCH` wajibkan setiap key sedia ada muncul tepat sekali.
+
+**Sebab.** Tanpa check itu, key yang tercicir akan senyap-senyap buang satu foto
+melalui apa yang operator sangka cuma susun semula — cara paling buruk untuk
+hilang data.
+
+### Manifest ditulis sebelum object dipadam
+
+**Keputusan.** Bila delete: manifest → commit → barulah buang object.
+
+**Sebab.** Kalau diterbalikkan, commit yang gagal akan tinggalkan site live
+menunjuk ke byte yang dah tiada. Urutan ini kes terburuknya ialah object yatim,
+yang cuma makan storage dan tak rosakkan apa-apa. Sama ada object itu pergi
+dilaporkan dalam respons, bukan disembunyikan.
+
+### Setiap kategori simpan sendiri
+
+**Keputusan.** Tiada butang Save peringkat borang. Foto sudah pun berada dalam R2
+bila upload pulang.
+
+**Sebab.** Save peringkat borang kena track object yang sudah diupload tapi belum
+commit dan reconcile bila gagal. Simpan per perubahan bermakna state panel dan
+repository bersetuju selepas setiap tindakan.
+
+### Kapsyen simpan on blur, bukan per keystroke
+
+**Keputusan.** `onBlur`, dan hanya bila nilai benar-benar berubah.
+
+**Sebab.** Simpan per keystroke akan commit ke git pada setiap aksara. Blur ialah
+titik operator sudah selesai berfikir. Field yang tak disentuh tak pernah post,
+jadi klik menelusuri galeri tak menghasilkan commit langsung.
+
+### `lib/admin/registry.ts` import module secara statik
+
+**Kenapa bukan `import()` dinamik.** Turbopack tak boleh resolve path yang dibina
+daripada pemboleh ubah — ia sama ada gagalkan build atau terpaksa trace seluruh
+projek ke dalam output server, iaitu masalah saiz deploy yang content store sudah
+pernah hadapi. Peta import statik cuma kos satu baris per module, dan
+`check-admin.mjs` assert setiap key berdaftar mesti digunakan.
+
+### Route images baca manifest-nya sendiri
+
+**Sebab.** `PAGE_IMAGES` ialah **output pipeline upload**, bukan teks yang
+operator taip. Menyalurkan bacaan-nya melalui API content-teks ialah tepat apa
+yang hasilkan Bug 2. Kekalkan baca dan tulis pada satu route bermakna mereka tak
+boleh bercanggah tentang di mana manifest itu tinggal.
+
+### `check-admin.mjs` assert perkaitan, bukan sekadar bentuk
+
+Check yang paling menanggung beban ialah: **setiap export berdaftar mesti
+digunakan melalui `withOverrides`**. Itulah check yang akan tangkap bug gambar
+asal, di mana panel tulis override dan komponen terus baca default-nya sedangkan
+setiap langkah melaporkan berjaya.
+
+Ia juga assert:
+- setiap route API admin panggil session guard
+- setiap halaman admin panggil page guard
+- senarai module padan dengan PDF tepat, pada slug, tajuk, hari dan tahap
+- jumlah hari ialah 16
+- setiap route yang ambil slug module mengesahkannya
+- setiap kumpulan yang operator sentuh ada label manusia
+
+---
+
+## Bahagian 4 — Soalan terbuka dan kerja tertunggak
+
+### Perlukan keputusan awak
+
+**1. `pathway` bukan "Process Portability".**
+
+Section `#pathway` yang sedia ada bertajuk *"7-Module Professional Training
+Pathway"* — satu portfolio overview. m7 dalam PDF ialah *"Scientific Molding:
+Process Portability"*, subjek yang berbeza. m7 sekarang dipetakan ke
+`legacySlug: "pathway"`.
+
+Akibatnya: foto yang diupload ke m7 akan masuk ke section yang bercakap tentang
+benda lain. Pilihannya ialah tukar nama section itu, bina section baharu, atau
+alih m7 ke anchor lain. **Saya tak ubah mana-mana copy halaman.**
+
+**2. `m3` dan `m5` tiada halaman awam.**
+
+Mereka ditakrifkan oleh PDF, mereka ada galeri foto dan halaman admin, tapi site
+awam tiada section untuk mereka. Foto yang diupload ke situ disimpan dan
+dicommit tetapi **tak pernah dipaparkan**. Sama ada section ditambah, atau mereka
+kekal menu-sahaja sehingga content wujud. Awak dah sahkan: bina slot sekarang,
+isi kemudian.
+
+**3. Coolify auto-deploy belum dipasang.**
+
+Commit sampai ke `main` dan site live tak berubah. Ini didiagnosis dengan push
+satu commit kosong dan poll hash CSS yang diserve pada +3 dan +7 minit — tak
+berubah kedua-duanya. Butang Deploy dalam panel menampungnya secara manual
+sebaik `COOLIFY_WEBHOOK_URL` + `COOLIFY_API_TOKEN` diset, tapi auto-deploy pada
+push ialah mekanisme utama yang betul.
+
+### Belum dibina
+
+| Item | Saiz | Nota |
 |---|---|---|
-| **F** — Testimonials CRUD | medium | add / edit / delete / reorder, publish toggle; render only published ones publicly |
-| **G** — Migration of existing slots | medium | the six special slots (logo, hero, trainer, 4 sessions) plus testimonial avatars, into the new schema, keeping old URLs valid |
-| **Bug 5** — Empty frames on About | small | logic only, no restyling |
-| Public module gallery | small | render the module photos on the public site |
+| **F** — Testimonials CRUD | sederhana | tambah / edit / delete / reorder, toggle publish; papar yang published sahaja di awam |
+| **G** — Migrasi slot sedia ada | sederhana | enam slot khas (logo, hero, trainer, 4 session) serta avatar testimonial, ke skema baharu, kekalkan URL lama sah |
+| **Bug 5** — Frame kosong di About | kecil | logic sahaja, tiada restyling |
+| Galeri module awam | kecil | papar foto module di site awam |
 
-### Known limitations
+### Batasan yang diketahui
 
-- **The local filesystem fallback loses images on redeploy.** Coolify rebuilds
-  the container from git, so anything written to `public/` at runtime is gone. The
-  panel warns about this; R2 is the supported path.
-- **`ADMIN_PASSWORD` is still weak.** It can change production content and upload
-  to R2. Use `openssl rand -base64 24`.
-- **Port 8000 on the Coolify host is reachable from the public internet.** That
-  exposes the Coolify dashboard to brute-force. Worth restricting at the firewall.
-- **One expected test failure.** `npm run verify` reports `607 pass, 1 fail` —
-  the testimonial placeholder gate. That is deliberate: the section ships with
-  bracketed placeholders and must not go live unreplaced.
+- **Fallback filesystem tempatan hilang gambar bila redeploy.** Coolify rebuild
+  container daripada git, jadi apa-apa yang ditulis ke `public/` semasa runtime
+  akan hilang. Panel beri amaran tentang ini; R2 ialah laluan yang disokong.
+- **`ADMIN_PASSWORD` masih lemah.** Ia boleh ubah content production dan upload
+  ke R2. Guna `openssl rand -base64 24`.
+- **Port 8000 pada host Coolify boleh dicapai dari internet awam.** Itu
+  mendedahkan dashboard Coolify kepada brute-force. Elok dihadkan di firewall.
+- **Satu kegagalan ujian yang dijangka.** `npm run verify` melaporkan
+  `607 pass, 1 fail` — gate placeholder testimonial. Itu memang disengajakan:
+  section itu ship dengan placeholder berkurung dan tak boleh live tanpa diganti.
 
-### Verification totals at `7dfc86d`
+### Jumlah pengesahan pada `3c938d1`
 
 ```
-Build          0 errors, 0 warnings
-check:admin    26 pass, 0 fail
-check:entrance 607 pass, 1 fail (the expected testimonial gate)
+Build          0 error, 0 warning
+check:admin    26 lulus, 0 gagal
+check:entrance 607 lulus, 1 gagal (gate testimonial yang dijangka)
 ```
