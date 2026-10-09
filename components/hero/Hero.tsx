@@ -36,11 +36,24 @@
 import CtaGroup from './CtaGroup';
 import HeroMedia from './HeroMedia';
 import StatStrip from './StatStrip';
+import { withOverrides } from '@/lib/admin/overrides';
 import {
-  HERO_COPY,
-  HERO_EYEBROW,
+  HERO_COPY as HERO_COPY_RAW,
+  HERO_EYEBROW as HERO_EYEBROW_RAW,
   HERO_HEADLINE_PARTS,
 } from './hero-content';
+
+/*
+ * Resolve the admin overrides once, at module load.
+ *
+ * `withOverrides` is a plain function rather than a hook: it runs during render
+ * on the server, which is where the content is needed. The saved values arrive
+ * as a module import, so there is no runtime fetch, no loading state and no
+ * client bundle cost — a page with no overrides behaves exactly as before.
+ */
+const HERO_COPY = withOverrides('hero.HERO_COPY', HERO_COPY_RAW);
+const HERO_EYEBROW = withOverrides('hero.HERO_EYEBROW', HERO_EYEBROW_RAW);
+
 
 /* ------------------------------------------------------------------ *
  * Reveal stagger

@@ -35,7 +35,17 @@
  * explicit on this point.
  */
 
-import { HERO_CONTACT, HERO_CTA, HERO_CTA_TARGET } from './hero-content';
+import { withOverrides } from '@/lib/admin/overrides';
+import {
+  HERO_CONTACT as HERO_CONTACT_RAW,
+  HERO_CTA as HERO_CTA_RAW,
+  HERO_CTA_TARGET,
+} from './hero-content';
+
+/* Admin overrides, resolved once at module load. See Hero.tsx for the reasoning. */
+const HERO_CTA = withOverrides('hero.HERO_CTA', HERO_CTA_RAW);
+const HERO_CONTACT = withOverrides('hero.HERO_CONTACT', HERO_CONTACT_RAW);
+
 
 const STAGGER_CTA_MS = 320;
 

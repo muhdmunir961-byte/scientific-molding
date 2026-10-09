@@ -29,7 +29,12 @@
  * `role`, no key handler, because activating a tile does nothing.
  */
 
-import { TRAINER_STATS } from './about-content';
+import { withOverrides } from '@/lib/admin/overrides';
+import { TRAINER_STATS as TRAINER_STATS_RAW } from './about-content';
+
+/** Track-record figures, with any admin override applied. */
+const TRAINER_STATS = withOverrides('about.TRAINER_STATS', TRAINER_STATS_RAW);
+
 
 export default function TrainerStatCards() {
   return (

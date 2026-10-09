@@ -37,14 +37,23 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import {
   actionHref,
-  LOGO,
-  NAV_CTA,
-  NAV_ITEMS,
-  PROGRAM_ITEMS,
-  PROGRAMS_LABEL,
-  QUICK_ACTIONS,
+  LOGO as LOGO_RAW,
+  NAV_CTA as NAV_CTA_RAW,
+  NAV_ITEMS as NAV_ITEMS_RAW,
+  PROGRAM_ITEMS as PROGRAM_ITEMS_RAW,
+  PROGRAMS_LABEL as PROGRAMS_LABEL_RAW,
+  QUICK_ACTIONS as QUICK_ACTIONS_RAW,
 } from './nav-content';
 import QuickIcon from './QuickIcon';
+import { withOverrides } from '@/lib/admin/overrides';
+
+/* Admin overrides, resolved once at module load. See Navbar.tsx for the reasoning. */
+const LOGO = withOverrides('nav.LOGO', LOGO_RAW);
+const NAV_ITEMS = withOverrides('nav.NAV_ITEMS', NAV_ITEMS_RAW);
+const PROGRAM_ITEMS = withOverrides('nav.PROGRAM_ITEMS', PROGRAM_ITEMS_RAW);
+const PROGRAMS_LABEL = withOverrides('nav.PROGRAMS_LABEL', PROGRAMS_LABEL_RAW);
+const NAV_CTA = withOverrides('nav.NAV_CTA', NAV_CTA_RAW);
+const QUICK_ACTIONS = withOverrides('nav.QUICK_ACTIONS', QUICK_ACTIONS_RAW);
 
 export interface MobileNavProps {
   /** Matches the hamburger's `aria-controls`. */

@@ -27,14 +27,22 @@ import {
 } from 'lucide-react';
 
 import ScrollReveal from '../about/ScrollReveal';
+import { withOverrides } from '@/lib/admin/overrides';
 import {
   WHY_CAPTION,
-  WHY_HERO,
+  WHY_HERO as WHY_HERO_RAW,
   WHY_ID,
-  WHY_LABELS,
-  WHY_PROBLEMS,
-  WHY_SHIFTS,
+  WHY_LABELS as WHY_LABELS_RAW,
+  WHY_PROBLEMS as WHY_PROBLEMS_RAW,
+  WHY_SHIFTS as WHY_SHIFTS_RAW,
 } from './why-content';
+
+/* Admin overrides, resolved once at module load. See Hero.tsx for the reasoning. */
+const WHY_HERO = withOverrides('why.WHY_HERO', WHY_HERO_RAW);
+const WHY_PROBLEMS = withOverrides('why.WHY_PROBLEMS', WHY_PROBLEMS_RAW);
+const WHY_SHIFTS = withOverrides('why.WHY_SHIFTS', WHY_SHIFTS_RAW);
+const WHY_LABELS = withOverrides('why.WHY_LABELS', WHY_LABELS_RAW);
+
 
 /**
  * Icon lookup for the eight items.

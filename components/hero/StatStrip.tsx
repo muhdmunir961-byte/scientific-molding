@@ -31,7 +31,12 @@
  */
 
 import CountUp from '../shared/CountUp';
-import { HERO_STATS } from './hero-content';
+import { withOverrides } from '@/lib/admin/overrides';
+import { HERO_STATS as HERO_STATS_RAW } from './hero-content';
+
+/** Stat figures, with any admin override applied. */
+const HERO_STATS = withOverrides('hero.HERO_STATS', HERO_STATS_RAW);
+
 
 const STAGGER_STATS_MS = 240;
 

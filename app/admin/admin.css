@@ -328,3 +328,167 @@
   color: var(--ds-neutral-500);
   font-size: 0.875rem;
 }
+
+/* --- Editor: value tree --- */
+
+.admin-object {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.admin-object-field {
+  margin-bottom: var(--ds-space-4);
+}
+
+.admin-object-field > .admin-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ds-neutral-500);
+  text-transform: uppercase;
+  letter-spacing: var(--ds-tracking-wide);
+}
+
+.admin-array {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-4);
+}
+
+.admin-array-item {
+  padding: var(--ds-space-4);
+  border: 1px solid var(--ds-neutral-200);
+  border-left: 3px solid var(--ds-orange-500);
+  border-radius: var(--ds-radius-md);
+  background-color: var(--ds-neutral-50);
+}
+
+.admin-array-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ds-space-3);
+  margin-bottom: var(--ds-space-3);
+}
+
+.admin-array-index {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: var(--ds-tracking-wide);
+  text-transform: uppercase;
+  color: var(--ds-neutral-500);
+}
+
+.admin-array-tools {
+  display: flex;
+  gap: var(--ds-space-2);
+}
+
+.admin-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  font-size: 0.8125rem;
+  color: var(--ds-neutral-800);
+  background-color: var(--ds-neutral-0);
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: var(--ds-radius-sm);
+  cursor: pointer;
+  transition: background-color var(--ds-duration-fast) var(--ds-ease-out);
+}
+
+.admin-icon-button:hover:not(:disabled) {
+  background-color: var(--ds-neutral-100);
+}
+
+.admin-icon-button:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange);
+}
+
+.admin-icon-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.admin-icon-danger {
+  color: #c62828;
+}
+
+.admin-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  cursor: pointer;
+}
+
+.admin-button-small {
+  align-self: flex-start;
+  min-height: 36px;
+  padding: var(--ds-space-2) var(--ds-space-4);
+  font-size: 0.8125rem;
+}
+
+/* A read-only export: the JSON is shown so the content stays discoverable
+   rather than hidden behind the lock. */
+.admin-json-readonly {
+  max-height: 24rem;
+  margin: 0;
+  padding: var(--ds-space-4);
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--ds-neutral-800);
+  background-color: var(--ds-neutral-50);
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: var(--ds-radius-md);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* --- Badges --- */
+
+.admin-badge {
+  display: inline-block;
+  margin-left: var(--ds-space-2);
+  padding: 2px 10px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: var(--ds-tracking-wide);
+  text-transform: uppercase;
+  vertical-align: middle;
+  color: var(--ds-orange-600);
+  background-color: var(--ds-orange-50);
+  border-radius: var(--ds-radius-full);
+}
+
+.admin-badge-locked {
+  color: var(--ds-neutral-500);
+  background-color: var(--ds-neutral-100);
+}
+
+/* --- Link list --- */
+
+.admin-link-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-link-list a {
+  color: var(--ds-orange-600);
+  text-decoration: none;
+}
+
+.admin-link-list a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}

@@ -20,7 +20,12 @@
 
 import { ExternalLink, Mail, MessageCircle, Phone } from 'lucide-react';
 
-import { CONTACT_DIRECT } from './contact-content';
+import { withOverrides } from '@/lib/admin/overrides';
+import { CONTACT_DIRECT as CONTACT_DIRECT_RAW } from './contact-content';
+
+/** Direct contact routes, with any admin override applied. */
+const CONTACT_DIRECT = withOverrides('contact.CONTACT_DIRECT', CONTACT_DIRECT_RAW);
+
 
 /** One row of the contact list. */
 function Route({

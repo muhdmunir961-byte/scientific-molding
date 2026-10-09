@@ -15,9 +15,12 @@
 
 import { ExternalLink, Mail, Phone } from 'lucide-react';
 
-import {
-  CONTACT_DIRECT,
-} from '../contact/contact-content';
+import { withOverrides } from '@/lib/admin/overrides';
+import { CONTACT_DIRECT as CONTACT_DIRECT_RAW } from '../contact/contact-content';
+
+/** Direct contact routes, with any admin override applied. */
+const CONTACT_DIRECT = withOverrides('contact.CONTACT_DIRECT', CONTACT_DIRECT_RAW);
+
 
 /** Anchor links, matching the section ids from PRD Section 4. */
 const QUICK_LINKS = [

@@ -1,18 +1,23 @@
 import Link from 'next/link';
 
-import { deploymentWarnings, isAuthConfigured, isGitConfigured, isR2Configured } from '@/lib/admin/config';
+import {
+  deploymentWarnings,
+  isAuthConfigured,
+  isGitConfigured,
+  isR2Configured,
+} from '@/lib/admin/config';
 import { requirePage } from '@/lib/admin/page-guard';
-import { CONTENT_GROUPS } from '@/lib/admin/schema';
+import { LOCKED_MODULES, MODULES, PDF_LOCK_REASON } from '@/lib/admin/schema';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * Admin overview.
  *
- * Shows what is editable and, importantly, which storage capabilities are
- * degraded. A save that persists locally but never reaches production is the
- * single failure mode a non-technical operator cannot diagnose, so it is stated
- * here rather than discovered later.
+ * Reports what is editable and, importantly, which storage capabilities are
+ * degraded. A save that persists locally but never reaches production is the one
+ * failure a non-technical operator cannot diagnose, so it is stated here rather
+ * than discovered later.
  */
 export default async function AdminPage() {
   await requirePage();
@@ -23,8 +28,8 @@ export default async function AdminPage() {
     <>
       <h1 className="admin-title">Overview</h1>
       <p className="admin-lede">
-        Edit the page content and upload images. Changes to text are committed to
-        the repository and the site redeploys automatically.
+        Edit the text and images on the page. Saving commits to the repository and
+        the site redeploys automatically.
       </p>
 
       {warnings.length > 0 && (
@@ -61,31 +66,40 @@ export default async function AdminPage() {
       </section>
 
       <section className="admin-card">
-        <h2 className="admin-card-title">What you can edit</h2>
+        <h2 className="admin-card-title">Editable content</h2>
         <p className="admin-card-desc">
-          These groups are safe to change. The five programme bodies are not
-          listed because they are verbatim copies of the customer PDFs.
+          {MODULES.length} sections. Choose one to edit its text.
         </p>
 
-        <ul>
-          {CONTENT_GROUPS.map((group) => (
-            <li key={group.id}>
-              <Link href={`/admin/content?group=${group.id}`}>{group.title}</Link>{' '}
-              — {group.description}
+        <ul className="admin-link-list">
+          {MODULES.map((module) => (
+            <li key={module.id}>
+              <Link href={`/admin/content?module=${module.id}`}>
+                <strong>{module.title}</strong>
+              </Link>
+              <span className="admin-muted"> — {module.description}</span>
             </li>
           ))}
         </ul>
+
+        <p className="admin-actions" style={{ marginTop: 'var(--ds-space-6)' }}>
+          <Link className="admin-button" href="/admin/images">
+            Manage images
+          </Link>
+        </p>
       </section>
 
       <section className="admin-card">
-        <h2 className="admin-card-title">Images</h2>
-        <p className="admin-card-desc">
-          Six image positions on the page. Each renders a brand gradient until a
-          file is uploaded, so the site never shows a broken frame.
-        </p>
-        <Link className="admin-button" href="/admin/images">
-          Go to images
-        </Link>
+        <h2 className="admin-card-title">Read-only content</h2>
+        <p className="admin-card-desc">{PDF_LOCK_REASON}</p>
+
+        <ul className="admin-muted">
+          {LOCKED_MODULES.map((module) => (
+            <li key={module.id}>
+              <Link href={`/admin/content?module=${module.id}`}>{module.title}</Link>
+            </li>
+          ))}
+        </ul>
       </section>
     </>
   );

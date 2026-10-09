@@ -37,13 +37,19 @@ import { Star } from 'lucide-react';
 import { useState } from 'react';
 
 import ScrollReveal from '../about/ScrollReveal';
+import { withOverrides } from '@/lib/admin/overrides';
 import {
-  TESTIMONIALS,
+  TESTIMONIALS as TESTIMONIALS_RAW,
   TESTIMONIALS_CAPTION,
-  TESTIMONIALS_HERO,
+  TESTIMONIALS_HERO as TESTIMONIALS_HERO_RAW,
   TESTIMONIALS_ID,
   type Testimonial,
 } from './testimonials-content';
+
+/* Admin overrides, resolved once at module load. See Hero.tsx for the reasoning. */
+const TESTIMONIALS_HERO = withOverrides('testimonials.TESTIMONIALS_HERO', TESTIMONIALS_HERO_RAW);
+const TESTIMONIALS = withOverrides('testimonials.TESTIMONIALS', TESTIMONIALS_RAW);
+
 
 /** The five rating positions, so the loop cannot drift from the denominator. */
 const RATING_MAX = 5;

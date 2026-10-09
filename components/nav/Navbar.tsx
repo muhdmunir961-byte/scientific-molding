@@ -36,13 +36,27 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   HEADER_HEIGHT,
   HEADER_SCROLL_THRESHOLD,
-  LOGO,
-  NAV_CTA,
-  NAV_ITEMS,
-  PROGRAM_ITEMS,
-  PROGRAMS_LABEL,
+  LOGO as LOGO_RAW,
+  NAV_CTA as NAV_CTA_RAW,
+  NAV_ITEMS as NAV_ITEMS_RAW,
+  PROGRAM_ITEMS as PROGRAM_ITEMS_RAW,
+  PROGRAMS_LABEL as PROGRAMS_LABEL_RAW,
   SECTION_IDS,
 } from './nav-content';
+import { withOverrides } from '@/lib/admin/overrides';
+
+/*
+ * Admin overrides, resolved once at module load.
+ *
+ * `nav-content.ts` is a plain module with no `'use client'`, so importing the
+ * resolver here does not pull the admin bundle into the nav. See `Hero.tsx` for
+ * the reasoning on `withOverrides` being a plain function rather than a hook.
+ */
+const LOGO = withOverrides('nav.LOGO', LOGO_RAW);
+const NAV_ITEMS = withOverrides('nav.NAV_ITEMS', NAV_ITEMS_RAW);
+const PROGRAM_ITEMS = withOverrides('nav.PROGRAM_ITEMS', PROGRAM_ITEMS_RAW);
+const PROGRAMS_LABEL = withOverrides('nav.PROGRAMS_LABEL', PROGRAMS_LABEL_RAW);
+const NAV_CTA = withOverrides('nav.NAV_CTA', NAV_CTA_RAW);
 import { useScrollspy } from './useScrollspy';
 
 export interface NavbarProps {

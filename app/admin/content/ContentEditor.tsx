@@ -3,215 +3,420 @@
 /**
  * Admin — content editor.
  *
- * One form, driven entirely by `lib/admin/schema.ts`. Adding an editable field
- * is one entry in the schema and nothing here changes, which is the point of
- * the declarative approach.
+ * ════════════════════════════════════════════════════════════════════════
+ *  A GENERIC EDITOR OVER A MODULE'S ACTUAL VALUE
  *
- * ── Why the group is chosen from a list rather than routed ──────────────
- * A query parameter (`/admin/content?group=hero`) keeps this a single client
- * component and a single API endpoint. A dynamic route segment per group would
- * mean four near-identical pages.
+ *  The editor does not know what a "testimonial" or a "stat figure" is. It
+ *  fetches a module export's current value — a string, an array of objects, a
+ *  nested object — and renders inputs that match the shape it finds:
+ *
+ *    string   → text input (or textarea when long)
+ *    number   → number input
+ *    boolean  → checkbox
+ *    array    → repeatable group, with add / remove / reorder
+ *    object   → nested fieldset
+ *
+ *  Adding a field to a content module therefore makes it editable with no change
+ *  to this file. Hand-writing a form per module was the alternative and it is
+ *  how a field ends up rendering but never saving.
+ *
+ *  ── Why arrays are replaced, not merged, on save ────────────────────────
+ *  The whole export is saved as one value. Element-wise merging would need a
+ *  stable identity per element to pair a saved entry with its default, and these
+ *  arrays carry titles rather than ids — pairing by index would silently
+ *  re-pair content when an item is inserted.
+ * ════════════════════════════════════════════════════════════════════════
  */
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { CONTENT_GROUPS } from '@/lib/admin/schema';
+import { MODULES } from '@/lib/admin/schema';
 
-interface FieldSpec {
-  key: string;
+type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
+interface ExportPayload {
+  name: string;
   label: string;
-  type: 'text' | 'textarea' | 'image' | 'number';
-  hint?: string;
-  maxLength?: number;
-  warnLength?: number;
+  description: string;
+  locked: boolean;
+  value: JsonValue | null;
+  hasOverride: boolean;
 }
 
-interface GroupPayload {
+interface ModulePayload {
   id: string;
   title: string;
   description: string;
-  fields: FieldSpec[];
-  values: Record<string, string>;
+  editable: boolean;
+  exports: ExportPayload[];
+}
+
+/** Longest string that still reads as a single-line input. */
+const TEXTAREA_THRESHOLD = 80;
+
+/** Turn `camelCase` / `snake_case` into a readable label. */
+function humanise(key: string): string {
+  return key
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/^./, (c) => c.toUpperCase());
 }
 
 export default function ContentEditor() {
-  const [groupId, setGroupId] = useState<string>(CONTENT_GROUPS[0]?.id ?? 'hero');
-  const [group, setGroup] = useState<GroupPayload | null>(null);
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [saving, setSaving] = useState(false);
+  const [moduleId, setModuleId] = useState<string>(MODULES[0]?.id ?? 'hero');
+  const [payload, setPayload] = useState<ModulePayload | null>(null);
   const [loading, setLoading] = useState(true);
-  const [banner, setBanner] = useState<{ tone: 'ok' | 'error'; text: string } | null>(
-    null,
-  );
+  const [meta, setMeta] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
 
   const load = useCallback(async (id: string) => {
     setLoading(true);
-    setBanner(null);
-    setErrors({});
+    setMeta(null);
     try {
-      const response = await fetch(`/api/admin/content?group=${encodeURIComponent(id)}`);
-      const body = (await response.json()) as { ok?: boolean; data?: GroupPayload };
-      if (body.ok && body.data) {
-        setGroup(body.data);
-        setValues(body.data.values);
-      }
+      const response = await fetch(`/api/admin/content?module=${encodeURIComponent(id)}`);
+      const body = (await response.json()) as { ok?: boolean; data?: ModulePayload; error?: string };
+      if (body.ok && body.data) setPayload(body.data);
+      else setMeta({ tone: 'error', text: body.error ?? 'Could not load this module.' });
+    } catch {
+      setMeta({ tone: 'error', text: 'Could not reach the server.' });
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    // Read the initial group from the URL so a link into a specific group works.
-    const fromUrl = new URLSearchParams(window.location.search).get('group');
-    const initial = fromUrl && CONTENT_GROUPS.some((g) => g.id === fromUrl) ? fromUrl : groupId;
-    setGroupId(initial);
+    const fromUrl = new URLSearchParams(window.location.search).get('module');
+    const initial =
+      fromUrl && MODULES.some((m) => m.id === fromUrl) ? fromUrl : moduleId;
+    setModuleId(initial);
     void load(initial);
-    // Intentionally runs once: the group is then driven by the selector.
+    // Runs once; the module is then driven by the selector.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function selectGroup(id: string) {
-    setGroupId(id);
-    void load(id);
-  }
+  return (
+    <>
+      <h1 className="admin-title">Content</h1>
+      <p className="admin-lede">
+        Edit the text on the page. Saving commits to the repository and the site
+        redeploys automatically.
+      </p>
+
+      <div className="admin-field">
+        <label className="admin-label" htmlFor="module-select">
+          Section
+        </label>
+        <select
+          id="module-select"
+          className="admin-input"
+          value={moduleId}
+          onChange={(e) => {
+            setModuleId(e.target.value);
+            void load(e.target.value);
+          }}
+        >
+          {MODULES.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.title}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {meta && (
+        <div className={`admin-notice admin-notice-${meta.tone}`} role="status">
+          {meta.text}
+        </div>
+      )}
+
+      {loading || !payload ? (
+        <p className="admin-muted">Loading…</p>
+      ) : (
+        <>
+          <p className="admin-lede">{payload.description}</p>
+
+          {payload.exports.map((item) => (
+            <ExportEditor
+              key={item.name}
+              moduleId={payload.id}
+              item={item}
+              onSaved={(text) => setMeta({ tone: 'ok', text })}
+              onError={(text) => setMeta({ tone: 'error', text })}
+            />
+          ))}
+        </>
+      )}
+    </>
+  );
+}
+
+/**
+ * One editable export.
+ *
+ * Holds the draft value, renders it by shape, and saves the whole value back.
+ * The draft is local state so a failed save does not lose the edit — the panel
+ * reports what went wrong and leaves the operator's work on screen.
+ */
+function ExportEditor({
+  moduleId,
+  item,
+  onSaved,
+  onError,
+}: {
+  moduleId: string;
+  item: ExportPayload;
+  onSaved: (text: string) => void;
+  onError: (text: string) => void;
+}) {
+  const [draft, setDraft] = useState<JsonValue>(item.value ?? '');
+  const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
 
   async function save() {
-    if (!group) return;
     setSaving(true);
-    setBanner(null);
-    setErrors({});
-
     try {
       const response = await fetch('/api/admin/content', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ group: group.id, values }),
+        body: JSON.stringify({ module: moduleId, export: item.name, value: draft }),
       });
       const body = (await response.json()) as {
         ok?: boolean;
         error?: string;
-        errors?: Record<string, string>;
         data?: { message?: string };
       };
-
       if (!response.ok || !body.ok) {
-        if (body.errors) setErrors(body.errors);
-        setBanner({ tone: 'error', text: body.error ?? 'Save failed.' });
+        onError(body.error ?? 'Save failed.');
         return;
       }
-
-      setBanner({ tone: 'ok', text: body.data?.message ?? 'Saved.' });
+      setDirty(false);
+      onSaved(`${item.label}: ${body.data?.message ?? 'Saved.'}`);
     } catch {
-      setBanner({ tone: 'error', text: 'Could not reach the server.' });
+      onError('Could not reach the server.');
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <>
-      <h1 className="admin-title">Content</h1>
-      <p className="admin-lede">
-        Choose a group, edit the fields, then save. Saving commits the change to
-        the repository and the site redeploys automatically.
-      </p>
+    <section className="admin-card">
+      <h2 className="admin-card-title">
+        {item.label}
+        {item.hasOverride && <span className="admin-badge">edited</span>}
+        {item.locked && <span className="admin-badge admin-badge-locked">read-only</span>}
+      </h2>
+      <p className="admin-card-desc">{item.description}</p>
 
-      <div className="admin-field">
-        <label className="admin-label" htmlFor="group-select">
-          Content group
-        </label>
-        <select
-          id="group-select"
-          className="admin-input"
-          value={groupId}
-          onChange={(e) => selectGroup(e.target.value)}
-        >
-          {CONTENT_GROUPS.map((g) => (
-            <option key={g.id} value={g.id}>
-              {g.title}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {banner && (
-        <div
-          className={`admin-notice admin-notice-${banner.tone === 'ok' ? 'ok' : 'error'}`}
-          role="status"
-        >
-          {banner.text}
-        </div>
-      )}
-
-      {loading || !group ? (
-        <p className="admin-muted">Loading…</p>
+      {item.locked ? (
+        <pre className="admin-json-readonly">{JSON.stringify(item.value, null, 2)}</pre>
       ) : (
-        <section className="admin-card">
-          <h2 className="admin-card-title">{group.title}</h2>
-          <p className="admin-card-desc">{group.description}</p>
-
-          {group.fields.map((field) => {
-            const error = errors[field.key];
-            const value = values[field.key] ?? '';
-
-            return (
-              <div className="admin-field" key={field.key}>
-                <label className="admin-label" htmlFor={`field-${field.key}`}>
-                  {field.label}
-                </label>
-
-                {field.hint && <p className="admin-hint">{field.hint}</p>}
-
-                {field.type === 'textarea' ? (
-                  <textarea
-                    id={`field-${field.key}`}
-                    className="admin-textarea"
-                    value={value}
-                    aria-invalid={error ? 'true' : 'false'}
-                    onChange={(e) =>
-                      setValues((v) => ({ ...v, [field.key]: e.target.value }))
-                    }
-                  />
-                ) : (
-                  <input
-                    id={`field-${field.key}`}
-                    className="admin-input"
-                    type="text"
-                    value={value}
-                    aria-invalid={error ? 'true' : 'false'}
-                    onChange={(e) =>
-                      setValues((v) => ({ ...v, [field.key]: e.target.value }))
-                    }
-                  />
-                )}
-
-                {field.maxLength && (
-                  <p className="admin-hint">
-                    {value.length} / {field.maxLength} characters
-                    {field.warnLength && value.length > field.warnLength
-                      ? ' — getting long; check how it wraps on the page'
-                      : ''}
-                  </p>
-                )}
-
-                {error && <p className="admin-error">{error}</p>}
-              </div>
-            );
-          })}
+        <>
+          <ValueEditor
+            value={draft}
+            onChange={(next) => {
+              setDraft(next);
+              setDirty(true);
+            }}
+          />
 
           <div className="admin-actions">
             <button
               type="button"
               className="admin-button"
               onClick={save}
-              disabled={saving}
+              disabled={saving || !dirty}
             >
-              {saving ? 'Saving…' : 'Save changes'}
+              {saving ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}
             </button>
+            {dirty && (
+              <button
+                type="button"
+                className="admin-button admin-button-secondary"
+                onClick={() => {
+                  setDraft(item.value ?? '');
+                  setDirty(false);
+                }}
+                disabled={saving}
+              >
+                Discard
+              </button>
+            )}
           </div>
-        </section>
+        </>
       )}
-    </>
+    </section>
   );
+}
+
+/**
+ * Render inputs for whatever shape the value has.
+ *
+ * This recursion is the whole reason the editor scales: a value of any depth is
+ * editable without a description of it existing anywhere. Hand-writing a form
+ * per module was the alternative, and it is how a field ends up rendering but
+ * never saving.
+ */
+function ValueEditor({
+  value,
+  onChange,
+  depth = 0,
+}: {
+  value: JsonValue;
+  onChange: (next: JsonValue) => void;
+  depth?: number;
+}) {
+  if (typeof value === 'string') {
+    const long = value.length > TEXTAREA_THRESHOLD || value.includes('\n');
+    return long ? (
+      <textarea
+        className="admin-textarea"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={Math.min(8, Math.max(3, Math.ceil(value.length / 70)))}
+      />
+    ) : (
+      <input
+        className="admin-input"
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    );
+  }
+
+  if (typeof value === 'number') {
+    return (
+      <input
+        className="admin-input"
+        type="number"
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+      />
+    );
+  }
+
+  if (typeof value === 'boolean') {
+    return (
+      <label className="admin-checkbox">
+        <input
+          type="checkbox"
+          checked={value}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+        <span className="admin-muted">{value ? 'Yes' : 'No'}</span>
+      </label>
+    );
+  }
+
+  if (value === null) return <p className="admin-muted">(empty)</p>;
+
+  if (Array.isArray(value)) {
+    return (
+      <div className="admin-array">
+        {value.map((item, index) => (
+          <div className="admin-array-item" key={index}>
+            <div className="admin-array-head">
+              <span className="admin-array-index">#{index + 1}</span>
+              <div className="admin-array-tools">
+                <button
+                  type="button"
+                  className="admin-icon-button"
+                  aria-label={`Move item ${index + 1} up`}
+                  disabled={index === 0}
+                  onClick={() => {
+                    const next = [...value];
+                    const moved = next.splice(index, 1)[0];
+                    next.splice(index - 1, 0, moved as JsonValue);
+                    onChange(next);
+                  }}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  className="admin-icon-button"
+                  aria-label={`Move item ${index + 1} down`}
+                  disabled={index === value.length - 1}
+                  onClick={() => {
+                    const next = [...value];
+                    const moved = next.splice(index, 1)[0];
+                    next.splice(index + 1, 0, moved as JsonValue);
+                    onChange(next);
+                  }}
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  className="admin-icon-button admin-icon-danger"
+                  aria-label={`Remove item ${index + 1}`}
+                  onClick={() => onChange(value.filter((_, i) => i !== index))}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <ValueEditor
+              value={item}
+              depth={depth + 1}
+              onChange={(next) => onChange(value.map((v, i) => (i === index ? next : v)))}
+            />
+          </div>
+        ))}
+
+        {value.length > 0 && (
+          <button
+            type="button"
+            className="admin-button admin-button-secondary admin-button-small"
+            onClick={() => onChange([...value, cloneShape(value[0])])}
+          >
+            + Add item
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // A plain object: one labelled field per key.
+  return (
+    <fieldset className="admin-object">
+      {Object.entries(value).map(([key, child]) => (
+        <div className="admin-object-field" key={key}>
+          <label className="admin-label">{humanise(key)}</label>
+          <ValueEditor
+            value={child}
+            depth={depth + 1}
+            onChange={(next) => onChange({ ...value, [key]: next })}
+          />
+        </div>
+      ))}
+    </fieldset>
+  );
+}
+
+/**
+ * A blank value matching an existing item's shape.
+ *
+ * Copying the shape rather than guessing means "add item" produces something the
+ * renderer and the content module can both consume — a hardcoded `''` would break
+ * the moment an array holds objects, which most of them do.
+ * @param {JsonValue|undefined} sample
+ * @returns {JsonValue}
+ */
+function cloneShape(sample: JsonValue | undefined): JsonValue {
+  if (sample === undefined) return '';
+  if (typeof sample === 'string') return '';
+  if (typeof sample === 'number') return 0;
+  if (typeof sample === 'boolean') return false;
+  if (sample === null) return '';
+  if (Array.isArray(sample)) return [];
+  const out: Record<string, JsonValue> = {};
+  for (const [k, v] of Object.entries(sample)) out[k] = cloneShape(v);
+  return out;
 }

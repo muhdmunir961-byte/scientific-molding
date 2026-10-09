@@ -40,8 +40,13 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 
-import { actionHref, QUICK_ACTIONS } from './nav-content';
+import { actionHref, QUICK_ACTIONS as QUICK_ACTIONS_RAW } from './nav-content';
 import QuickIcon from './QuickIcon';
+import { withOverrides } from '@/lib/admin/overrides';
+
+/** Quick actions, with any admin override applied. */
+const QUICK_ACTIONS = withOverrides('nav.QUICK_ACTIONS', QUICK_ACTIONS_RAW);
+
 
 /** Scroll distance, in px, after which the bar slides in. */
 export const STICKY_BAR_THRESHOLD = 400;

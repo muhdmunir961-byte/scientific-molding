@@ -17,7 +17,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import { IMAGE_SLOTS, type ImageSlotName } from '@/lib/admin/schema';
+import { IMAGE_SLOTS, type ImageSlotName } from '@/lib/admin/image-slots';
 
 type Status = 'idle' | 'uploading' | 'saved' | 'error';
 

@@ -41,7 +41,15 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-import { TRAINER_CREDENTIALS } from './about-content';
+import { withOverrides } from '@/lib/admin/overrides';
+import { TRAINER_CREDENTIALS as TRAINER_CREDENTIALS_RAW } from './about-content';
+
+/** Credentials, with any admin override applied. Resolved once at module load. */
+const TRAINER_CREDENTIALS = withOverrides(
+  'about.TRAINER_CREDENTIALS',
+  TRAINER_CREDENTIALS_RAW,
+);
+
 
 /**
  * Map the icon name stored in the content module to its component.

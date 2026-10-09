@@ -57,20 +57,36 @@ import {
 
 import ScrollReveal from '../about/ScrollReveal';
 import CountUp from '../shared/CountUp';
+import { withOverrides } from '@/lib/admin/overrides';
 import {
   TRAINER_CREDIBILITY_CREDENTIALS,
   TRAINER_CREDIBILITY_NAME,
 } from '../programs/trainer-credibility';
 import {
-  CLIENT_TYPES,
-  CLIENT_TYPES_HEADING,
+  CLIENT_TYPES as CLIENT_TYPES_RAW,
+  CLIENT_TYPES_HEADING as CLIENT_TYPES_HEADING_RAW,
   TRACK_RECORD_CAPTION,
-  TRACK_RECORD_HERO,
-  TRACK_RECORD_HRDC,
+  TRACK_RECORD_HERO as TRACK_RECORD_HERO_RAW,
+  TRACK_RECORD_HRDC as TRACK_RECORD_HRDC_RAW,
   TRACK_RECORD_ID,
-  TRACK_RECORD_STATEMENT,
-  TRACK_RECORD_STATS,
+  TRACK_RECORD_STATEMENT as TRACK_RECORD_STATEMENT_RAW,
+  TRACK_RECORD_STATS as TRACK_RECORD_STATS_RAW,
 } from './track-record-content';
+
+/* Admin overrides, resolved once at module load. See Hero.tsx for the reasoning. */
+const TRACK_RECORD_HERO = withOverrides('track-record.TRACK_RECORD_HERO', TRACK_RECORD_HERO_RAW);
+const TRACK_RECORD_STATS = withOverrides('track-record.TRACK_RECORD_STATS', TRACK_RECORD_STATS_RAW);
+const TRACK_RECORD_HRDC = withOverrides('track-record.TRACK_RECORD_HRDC', TRACK_RECORD_HRDC_RAW);
+const TRACK_RECORD_STATEMENT = withOverrides(
+  'track-record.TRACK_RECORD_STATEMENT',
+  TRACK_RECORD_STATEMENT_RAW,
+);
+const CLIENT_TYPES_HEADING = withOverrides(
+  'track-record.CLIENT_TYPES_HEADING',
+  CLIENT_TYPES_HEADING_RAW,
+);
+const CLIENT_TYPES = withOverrides('track-record.CLIENT_TYPES', CLIENT_TYPES_RAW);
+
 
 /**
  * Icon lookup for the client-type strip.

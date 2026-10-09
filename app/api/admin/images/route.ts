@@ -21,7 +21,7 @@
 import { NextResponse } from 'next/server';
 
 import { requireSession, fail } from '@/lib/admin/guard';
-import { IMAGE_SLOTS, type ImageSlotName } from '@/lib/admin/schema';
+import { IMAGE_SLOTS, type ImageSlotName } from '@/lib/admin/image-slots';
 import { storeImage, validateImage } from '@/lib/admin/store';
 
 export const runtime = 'nodejs';

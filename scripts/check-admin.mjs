@@ -101,53 +101,104 @@ report(
 );
 
 /* ------------------------------------------------------------------ *
- * 4. The schema and the defaults agree
+ * 4. Every registered export is consumed by a component
  * ------------------------------------------------------------------ */
 
-const schema = read('lib/admin/schema.ts');
-const defaults = read('lib/admin/defaults.ts');
+/*
+ * The bug this check exists to prevent: the panel saves an override, the
+ * component still reads its default, and every step reports success. That
+ * happened with the image path and it would happen with text — the registry
+ * would grow while the components kept importing their raw constants.
+ */
+const registry = read('lib/admin/registry.ts');
+const registeredKeys = [
+  ...registry.matchAll(/'([a-z-]+)\.([A-Z0-9_]+)':/g),
+].map((m) => `${m[1]}.${m[2]}`);
 
-const schemaGroups = [...schema.matchAll(/^\s{4}id:\s*'([a-z-]+)',/gm)].map((m) => m[1]);
-const defaultKeys = [...defaults.matchAll(/^\s{2}([a-z-]+):\s*\{/gm)].map((m) => m[1]);
+const componentFiles = walk('components').filter((f) => /\.tsx?$/.test(f));
+const consumedKeys = new Set();
+for (const file of componentFiles) {
+  const source = read(file);
+  for (const m of source.matchAll(/withOverrides\(\s*'([a-z-]+)\.([A-Z0-9_]+)'/g)) {
+    consumedKeys.add(`${m[1]}.${m[2]}`);
+  }
+}
 
-const missingDefaults = schemaGroups.filter((id) => !defaultKeys.includes(id));
+const unwired = registeredKeys.filter((k) => !consumedKeys.has(k));
 
 report(
-  schemaGroups.length >= 4,
-  'the schema declares the content groups',
-  `found ${schemaGroups.length}: ${schemaGroups.join(', ')}`,
+  registeredKeys.length >= 25,
+  'the content registry is populated',
+  `found ${registeredKeys.length} keys`,
 );
 report(
-  missingDefaults.length === 0,
-  'every schema group has built-in defaults',
-  `a group without defaults renders blank inputs on first load: ${missingDefaults.join(', ')}`,
+  unwired.length === 0,
+  'every registered export is consumed via withOverrides',
+  `the panel would save these and the site would ignore them: ${unwired.join(', ')}`,
 );
 
 /* ------------------------------------------------------------------ *
- * 5. The generated-module path is bundler-resolvable
+ * 5. The schema and the registry agree
+ * ------------------------------------------------------------------ */
+
+/*
+ * Only EDITABLE exports need a registry entry — a locked (PDF-derived) export
+ * is rendered read-only from the schema, so it has no value to read through the
+ * override machinery.
+ *
+ * The two lists are parsed separately rather than by searching the whole file,
+ * because `LOCKED_MODULES` appears after `MODULES` and a single regex over the
+ * file cannot tell which block an export name came from.
+ */
+const schema = read('lib/admin/schema.ts');
+const editableBlock = schema.slice(
+  schema.indexOf('export const MODULES'),
+  schema.indexOf('export const LOCKED_MODULES'),
+);
+
+const editableExportNames = [...editableBlock.matchAll(/name:\s*'([A-Z0-9_]+)'/g)].map(
+  (m) => m[1],
+);
+
+/*
+ * `PAGE_IMAGES` is the exception: it is listed in the panel so the paths are
+ * discoverable, but its value is managed by the image upload flow rather than by
+ * a text field, so it has no registry entry by design.
+ */
+const REGISTRY_EXEMPT = new Set(['PAGE_IMAGES']);
+
+const registryExportNames = new Set(registeredKeys.map((k) => k.split('.')[1]));
+
+const missingFromRegistry = editableExportNames.filter(
+  (n) => !registryExportNames.has(n) && !REGISTRY_EXEMPT.has(n),
+);
+
+report(
+  editableExportNames.length >= 25,
+  'the schema lists the editable exports',
+  `found ${editableExportNames.length}`,
+);
+report(
+  missingFromRegistry.length === 0,
+  'every editable schema export has a registry entry',
+  `listed in the panel but with no value to read: ${missingFromRegistry.join(', ')}`,
+);
+
+/* ------------------------------------------------------------------ *
+ * 6. Content module path literals stay bundler-resolvable
  * ------------------------------------------------------------------ */
 
 const store = read('lib/admin/content-store.ts');
-const generated = read('lib/admin/generated.ts');
-
 report(
   /join\(process\.cwd\(\),\s*'components',\s*'generated'\)/.test(store),
   'the generated-module path is built from literals',
   'a path the bundler cannot resolve statically makes it trace the whole project into the deploy',
 );
 
-const dirMatch = generated.match(/GENERATED_DIR\s*=\s*'([^']+)'/);
-const declaredDir = dirMatch ? dirMatch[1] : '';
 report(
-  declaredDir === 'components/generated',
-  'GENERATED_DIR matches the literal path in the store',
-  `store uses components/generated, generated.ts declares "${declaredDir}"`,
-);
-
-report(
-  existsSync(join(root, 'components/generated')),
-  'the generated directory is committed',
-  'components/shared/image-content.ts requires a file from it, so it must exist on a fresh checkout',
+  existsSync(join(root, 'components/generated/content-overrides.generated.ts')),
+  'the overrides file is committed',
+  'lib/admin/overrides.ts imports it unconditionally, so a fresh clone must have it',
 );
 
 /* ------------------------------------------------------------------ *

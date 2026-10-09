@@ -26,14 +26,27 @@ import ScrollReveal from '../about/ScrollReveal';
 import ContactDirect from './ContactDirect';
 import ProgramCtaFooter from './ProgramCtaFooter';
 import { ConsentField, Field, ProgramCheckboxes } from './FormFields';
+import { withOverrides } from '@/lib/admin/overrides';
 import {
-  CONTACT_HERO,
+  CONTACT_CONSENT as CONTACT_CONSENT_RAW,
+  CONTACT_HERO as CONTACT_HERO_RAW,
   CONTACT_ID,
-  CONTACT_LABELS,
-  CONTACT_PLACEHOLDERS,
+  CONTACT_LABELS as CONTACT_LABELS_RAW,
+  CONTACT_PLACEHOLDERS as CONTACT_PLACEHOLDERS_RAW,
   CONTACT_PROGRAMS,
-  CONTACT_SUCCESS,
+  CONTACT_SUCCESS as CONTACT_SUCCESS_RAW,
 } from './contact-content';
+
+/* Admin overrides, resolved once at module load. See Hero.tsx for the reasoning. */
+const CONTACT_HERO = withOverrides('contact.CONTACT_HERO', CONTACT_HERO_RAW);
+const CONTACT_LABELS = withOverrides('contact.CONTACT_LABELS', CONTACT_LABELS_RAW);
+const CONTACT_PLACEHOLDERS = withOverrides(
+  'contact.CONTACT_PLACEHOLDERS',
+  CONTACT_PLACEHOLDERS_RAW,
+);
+const CONTACT_CONSENT = withOverrides('contact.CONTACT_CONSENT', CONTACT_CONSENT_RAW);
+const CONTACT_SUCCESS = withOverrides('contact.CONTACT_SUCCESS', CONTACT_SUCCESS_RAW);
+
 
 /**
  * Validation messages.

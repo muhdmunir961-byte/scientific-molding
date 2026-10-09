@@ -1,42 +1,55 @@
 /**
- * Content store — read a content group, write it back.
+ * Content store — read a module export, write a new value back.
  *
- * ── Why a git commit and not just a file write ──────────────────────────
- * Coolify builds from the repository. A file written inside the running
- * container is gone at the next deploy, so a save that only touched the
- * filesystem would look successful and then silently vanish. Committing through
- * the GitHub API is what makes the change actually persist. Without a token the
- * store writes locally and the panel shows a warning that the change will not
- * reach production — a visible degraded state rather than a silent one.
+ * ════════════════════════════════════════════════════════════════════════
+ *  WHY THE WRITE IS ONE JSON FILE, NOT PER-MODULE REGENERATION
  *
- * See `lib/admin/generated.ts` for why the write produces a separate generated
- * module rather than editing the commented content file in place.
+ *  An earlier revision generated one `.ts` module per editable group. That does
+ *  not scale to ~125 exports across 14 modules: every save would rewrite a file
+ *  per module, and each generated file needed its own parser.
+ *
+ *  Instead the panel maintains a single `content-overrides.generated.ts` holding
+ *  a JSON map of `<module>.<export>` → value. `lib/admin/overrides.ts` merges
+ *  each entry over the hand-written default at render time.
+ *
+ *  That gives three properties the per-module approach could not:
+ *
+ *    1. One writer, one reader, one merge — no per-shape code to keep in step.
+ *    2. The merge is additive, so adding a field to a content module does not
+ *       invalidate saved overrides for its neighbours.
+ *    3. The whole edit history is a diff of one readable file.
+ *
+ *  ── Why a git commit and not just a file write ──────────────────────────
+ *  Coolify builds from the repository. A file written inside the running
+ *  container is gone at the next deploy, so a save that only touched the
+ *  filesystem would look successful and then silently vanish. Committing through
+ *  the GitHub API is what makes the change persist. Without a token the store
+ *  writes locally and the panel warns that the change will not reach production.
+ * ════════════════════════════════════════════════════════════════════════
  */
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { gitConfig, isGitConfigured } from './config';
-import { defaultsFor } from './defaults';
-import { GENERATED_DIR, generatedPath, parseGenerated, renderModule } from './generated';
-import type { GroupSpec } from './schema';
-
-// `GENERATED_DIR` is asserted equal to the literal in `GENERATED_ROOT` by
-// `scripts/check-admin.mjs`, so the two cannot drift apart unnoticed.
-void GENERATED_DIR;
+import type { JsonValue } from './overrides';
 
 /**
- * Absolute path of the generated-module directory.
+ * Absolute path of the generated directory.
  *
  * The path segments are literals rather than imported constants so the bundler
  * can resolve the directory at build time. A value it cannot see through — even
  * a plain `const` imported from another module — makes Turbopack trace the
  * entire project into the server output, which bloats the deploy and can hit
- * size limits. The warning is real, not cosmetic: the directory is
- * `components/generated`, and the literal below must match `GENERATED_DIR` in
- * `./generated`.
+ * size limits.
  */
 const GENERATED_ROOT = join(process.cwd(), 'components', 'generated');
+
+/** The single generated overrides file. */
+const OVERRIDES_FILE = 'content-overrides.generated.ts';
+
+/** Repo-relative path of the overrides file, for the GitHub API. */
+export const OVERRIDES_PATH = `components/generated/${OVERRIDES_FILE}`;
 
 export interface SaveResult {
   /** How the change was persisted. */
@@ -48,8 +61,93 @@ export interface SaveResult {
 }
 
 /**
- * Commit a file to the repository through the GitHub contents API.
+ * Render the overrides file from a map.
  *
+ * Values are JSON-encoded rather than template-literal interpolated: JSON
+ * escaping handles quotes, newlines and backslashes correctly, and a quote or an
+ * apostrophe in a testimonial is entirely likely. A template literal would break
+ * the file the first time someone typed one.
+ *
+ * Keys are sorted so a diff reads as content changes rather than as reordering,
+ * and the output is pretty-printed so an operator can review a commit.
+ *
+ * @param {Record<string, JsonValue>} overrides
+ * @returns {string}
+ */
+export function renderOverridesFile(overrides: Record<string, JsonValue>): string {
+  const keys = Object.keys(overrides).sort();
+
+  const body = keys
+    .map((key) => {
+      const value = JSON.stringify(overrides[key], null, 2).split('\n').join('\n  ');
+      return `  ${JSON.stringify(key)}: ${value},`;
+    })
+    .join('\n');
+
+  return [
+    '/* GENERATED FILE — do not edit by hand.',
+    ' *',
+    ' * Written by the admin panel: /admin/content saves here and commits the result.',
+    ' *',
+    ' * ── Shape ─────────────────────────────────────────────────────────────',
+    ' * A flat map of `<module>.<export>` keys to the module\'s JSON-serialised value.',
+    ' * `lib/admin/overrides.ts` merges each entry over the hand-written default at',
+    ' * that key, so an absent key means "use the default in the content module".',
+    ' *',
+    ' * ── Why this file is checked in even when empty ────────────────────────',
+    ' * `lib/admin/overrides.ts` imports it unconditionally, so it must exist for a',
+    ' * fresh clone to build. An empty map is the honest representation of "nothing',
+    ' * has been overridden yet", and it keeps the import static — which lets the',
+    ' * bundler tree-shake and avoids the guarded `require` the image override needed.',
+    ' */',
+    '',
+    'export const OVERRIDES: Record<string, unknown> = {',
+    body,
+    '};',
+    '',
+  ].join('\n');
+}
+
+/**
+ * Read the saved override map from disk.
+ *
+ * Parsed out of the generated file rather than imported, because the file is
+ * written at runtime and an `import` would be resolved at build time — a save
+ * would not be visible to the next read until a rebuild.
+ *
+ * The parse is deliberately narrow: it matches `"key": <value>` pairs. That is
+ * exactly the shape `renderOverridesFile` produces, so the reader and writer
+ * cannot disagree about the format.
+ *
+ * @returns {Promise<Record<string, JsonValue>>}
+ */
+export async function readOverrides(): Promise<Record<string, JsonValue>> {
+  try {
+    const source = await readFile(join(GENERATED_ROOT, OVERRIDES_FILE), 'utf8');
+
+    const start = source.indexOf('export const OVERRIDES');
+    if (start === -1) return {};
+    const open = source.indexOf('{', start);
+    const close = source.lastIndexOf('}');
+    if (open === -1 || close <= open) return {};
+
+    // The object body is valid JSON once the trailing commas are removed, so
+    // JSON.parse does the work rather than a hand-rolled tokeniser.
+    const body = source
+      .slice(open + 1, close)
+      .replace(/,\s*$/, '')
+      .replace(/,\s*(?=[}\]])/g, '');
+
+    return body.trim() ? (JSON.parse(`{${body}}`) as Record<string, JsonValue>) : {};
+  } catch {
+    // No file yet, or an unreadable one. An empty map means "no overrides",
+    // which is the correct behaviour for a fresh checkout.
+    return {};
+  }
+}
+
+/**
+ * Commit a file to the repository through the GitHub contents API.
  * @param {string} path repo-relative path
  * @param {string} content file source
  * @param {string} message commit message
@@ -76,8 +174,8 @@ async function commitToGitHub(
   let existingSha: string | undefined;
   const head = await fetch(`${url}?ref=${encodeURIComponent(branch)}`, { headers });
   if (head.ok) {
-    const body = (await head.json()) as { sha?: string };
-    existingSha = body.sha;
+    const headBody = (await head.json()) as { sha?: string };
+    existingSha = headBody.sha;
   }
 
   const response = await fetch(url, {
@@ -93,9 +191,7 @@ async function commitToGitHub(
 
   if (!response.ok) {
     const detail = await response.text().catch(() => '');
-    throw new Error(
-      `GitHub commit failed (${response.status}). ${detail.slice(0, 200)}`,
-    );
+    throw new Error(`GitHub commit failed (${response.status}). ${detail.slice(0, 200)}`);
   }
 
   const result = (await response.json()) as { commit?: { sha?: string } };
@@ -103,23 +199,32 @@ async function commitToGitHub(
 }
 
 /**
- * Save a group's values.
- * @param {GroupSpec} group
- * @param {Record<string, string>} values validated values
+ * Save a single export's value, merging it into the existing override map.
+ *
+ * Merging rather than replacing is what lets the panel save one folder at a
+ * time: writing the whole map would mean a save from a stale browser tab
+ * silently reverts every other module edited since it loaded.
+ *
+ * @param {string} moduleId
+ * @param {string} exportName
+ * @param {JsonValue} value the new value for this export
  * @returns {Promise<SaveResult>}
  */
-export async function saveGroup(
-  group: GroupSpec,
-  values: Record<string, string>,
+export async function saveExport(
+  moduleId: string,
+  exportName: string,
+  value: JsonValue,
 ): Promise<SaveResult> {
-  const path = generatedPath(group);
-  const source = renderModule(group, values);
+  const key = `${moduleId}.${exportName}`;
+  const existing = await readOverrides();
+  const merged: Record<string, JsonValue> = { ...existing, [key]: value };
+  const source = renderOverridesFile(merged);
 
   if (isGitConfigured()) {
     const sha = await commitToGitHub(
-      path,
+      OVERRIDES_PATH,
       source,
-      `content(${group.id}): update from admin panel`,
+      `content(${moduleId}): update ${exportName} from admin panel`,
     );
     return {
       storage: 'git',
@@ -129,34 +234,11 @@ export async function saveGroup(
   }
 
   await mkdir(GENERATED_ROOT, { recursive: true });
-  await writeFile(join(GENERATED_ROOT, `${group.id}-content.generated.ts`), source, 'utf8');
+  await writeFile(join(GENERATED_ROOT, OVERRIDES_FILE), source, 'utf8');
 
   return {
     storage: 'local',
     message:
       'Saved to the local filesystem only. Set GITHUB_TOKEN and GITHUB_REPO for this to reach production.',
   };
-}
-
-/**
- * Read the current values for a group: the generated module when present,
- * otherwise the hand-written defaults.
- *
- * @param {GroupSpec} group
- * @returns {Promise<Record<string,string>>} field key to value
- */
-export async function readGroup(group: GroupSpec): Promise<Record<string, string>> {
-  const fallback = defaultsFor(group);
-
-  try {
-    const source = await readFile(
-      join(GENERATED_ROOT, `${group.id}-content.generated.ts`),
-      'utf8',
-    );
-    // Merge over the defaults so a partially written module still fills the
-    // form rather than leaving blank inputs.
-    return { ...fallback, ...parseGenerated(source, group) };
-  } catch {
-    return fallback;
-  }
 }

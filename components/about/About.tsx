@@ -28,7 +28,21 @@ import CredentialList from './CredentialList';
 import ScrollReveal from './ScrollReveal';
 import TrainerPhoto from './TrainerPhoto';
 import TrainerStatCards from './TrainerStatCards';
-import { TRAINER_EYEBROW, TRAINER_NAME } from './about-content';
+import { withOverrides } from '@/lib/admin/overrides';
+import {
+  TRAINER_EYEBROW as TRAINER_EYEBROW_RAW,
+  TRAINER_NAME as TRAINER_NAME_RAW,
+} from './about-content';
+
+/*
+ * Admin overrides, resolved once at module load. A plain function rather than a
+ * hook: this runs on the server during render, where the content is needed, and
+ * the saved values arrive as a module import — so there is no fetch, no loading
+ * state and no client bundle cost.
+ */
+const TRAINER_NAME = withOverrides('about.TRAINER_NAME', TRAINER_NAME_RAW);
+const TRAINER_EYEBROW = withOverrides('about.TRAINER_EYEBROW', TRAINER_EYEBROW_RAW);
+
 
 export default function About() {
   return (
