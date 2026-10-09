@@ -6,7 +6,7 @@
 
 export const PAGE_IMAGES = {
   hero: "https://assets.scientificmoldings.com/images/hero.jpg",
-  trainerPortrait: "/images/trainer-portrait.jpg",
+  trainerPortrait: "https://assets.scientificmoldings.com/images/trainer-portrait.jpg",
   session1: "/images/session-1.jpg",
   session2: "/images/session-2.jpg",
   session3: "/images/session-3.jpg",
