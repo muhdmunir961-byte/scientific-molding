@@ -1,0 +1,12 @@
+{
+  "$comment": "Module photo galleries. SOURCE OF SHAPE: client brief - each of the 7 modules has 4 activity categories, each holding an ordered list of photos. Keys are canonical module slugs from content/modules.json and category slugs from lib/modules.ts. An empty array means 'no photos yet', which is the correct state for a fresh checkout. Written by the admin panel and committed through the GitHub API; the public site reads it through lib/gallery.ts.",
+  "modules": {
+    "m1-fundamental": { "lecture": [], "practical": [], "discussion": [], "presentation": [] },
+    "m2-processability": { "lecture": [], "practical": [], "discussion": [], "presentation": [] },
+    "m3-fundamental-pd": { "lecture": [], "practical": [], "discussion": [], "presentation": [] },
+    "m4-process-development": { "lecture": [], "practical": [], "discussion": [], "presentation": [] },
+    "m5-parameter-setting": { "lecture": [], "practical": [], "discussion": [], "presentation": [] },
+    "m6-defects-troubleshooting": { "lecture": [], "practical": [], "discussion": [], "presentation": [] },
+    "m7-process-portability": { "lecture": [], "practical": [], "discussion": [], "presentation": [] }
+  }
+}

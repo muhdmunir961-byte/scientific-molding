@@ -56,6 +56,77 @@ export interface SignedRequest {
 }
 
 /**
+ * Build a signed DELETE request for an R2 object.
+ *
+ * A DELETE carries no body, so the payload hash is the hash of the empty
+ * string — a constant SHA-256 the server also computes. Getting that right
+ * matters: signing a DELETE as though it had a body produces
+ * `SignatureDoesNotMatch` with no further explanation.
+ *
+ * @param {Omit<SignArgs, 'body'|'contentType'>} args
+ * @returns {SignedRequest}
+ */
+export function signDeleteRequest({
+  accountId,
+  accessKeyId,
+  secretAccessKey,
+  bucket,
+  key,
+}: Omit<SignArgs, 'body' | 'contentType'>): SignedRequest {
+  const host = `${accountId}.r2.cloudflarestorage.com`;
+  const canonicalUri = `/${bucket}/${key}`;
+
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
+  const dateStamp = amzDate.slice(0, 8);
+
+  /** SHA-256 of the empty string. */
+  const payloadHash = sha256Hex('');
+
+  const canonicalHeaders =
+    `host:${host}\n` +
+    `x-amz-content-sha256:${payloadHash}\n` +
+    `x-amz-date:${amzDate}\n`;
+  const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+
+  const canonicalRequest = [
+    'DELETE',
+    canonicalUri,
+    '',
+    canonicalHeaders,
+    signedHeaders,
+    payloadHash,
+  ].join('\n');
+
+  const credentialScope = `${dateStamp}/${REGION}/${SERVICE}/aws4_request`;
+  const stringToSign = [
+    ALGORITHM,
+    amzDate,
+    credentialScope,
+    sha256Hex(canonicalRequest),
+  ].join('\n');
+
+  const kDate = hmac(`AWS4${secretAccessKey}`, dateStamp);
+  const kRegion = hmac(kDate, REGION);
+  const kService = hmac(kRegion, SERVICE);
+  const kSigning = hmac(kService, 'aws4_request');
+  const signature = createHmac('sha256', kSigning).update(stringToSign, 'utf8').digest('hex');
+
+  const authorization =
+    `${ALGORITHM} Credential=${accessKeyId}/${credentialScope}, ` +
+    `SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+  return {
+    url: `https://${host}${canonicalUri}`,
+    headers: {
+      Authorization: authorization,
+      'x-amz-content-sha256': payloadHash,
+      'x-amz-date': amzDate,
+    },
+  };
+}
+
+/**
  * Build a signed PUT request for an R2 object.
  *
  * The canonical request must list headers in lowercase, sorted order — the
