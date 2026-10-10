@@ -1,6 +1,6 @@
 {
   "$schema": "./module.schema.json",
-  "$comment": "DRAFT - every item marked status draft-needs-trainer-review is proposed copy, not fact. The only facts are slug, title, days, level, published, and the series-wide values. See docs/m3-m5-review.md for the approval checklist. Nothing here renders publicly while published is false.",
+  "$comment": "DRAFT SUPPLIED BY THE TRAINER, not written by the build. Every block carries status. `fact` marks a value taken from content/modules.json or a series-wide constant; `draft-needs-trainer-review` marks the course content, which the trainer supplied and still needs to sign off before publication. Nothing renders publicly while published is false.",
 
   "slug": "m5-parameter-setting",
   "title": "Systematic Parameter Setting for Injection Molding",
@@ -10,9 +10,9 @@
   "status": "draft-needs-trainer-review",
 
   "headline": {
-    "value": "SYSTEMATIC PARAMETER SETTING FOR INJECTION MOULDING",
-    "status": "fact",
-    "note": "Title from content/modules.json, with Moulding spelling to match the site's headings."
+    "value": "SYSTEMATIC PARAMETER SETTING FOR INJECTION MOLDING",
+    "status": "draft-needs-trainer-review",
+    "note": "Trainer's draft. Uses MOLDING, matching content/modules.json and differing from M3's headline spelling - flagged for a decision rather than silently changed."
   },
 
   "promise": {
@@ -21,43 +21,32 @@
     "note": "Description from content/modules.json."
   },
 
-  "tags": {
-    "value": ["Parameter logic", "Structured method", "Consistency"],
-    "status": "fact",
-    "note": "From content/modules.json."
-  },
-
-  "seriesOutcome": {
-    "value": "Promote a logical, shared approach to process-setting discussions.",
-    "status": "fact"
-  },
-
   "problems": {
     "status": "draft-needs-trainer-review",
     "items": [
       {
-        "title": "Settings are copied from the last job",
-        "description": "A previous setup is reused on a different tool or material without checking whether it still applies."
+        "title": "Settings differ by person",
+        "description": "the same mould is set up differently on every shift."
       },
       {
-        "title": "No agreed order for setting a process",
-        "description": "Two engineers reach a workable process by different routes, so neither can explain the other's."
+        "title": "Changes without a reason",
+        "description": "parameters are changed with no stated intent."
       },
       {
-        "title": "Changes are made without a stated reason",
-        "description": "A parameter moves to fix one symptom and creates another nobody connects to it."
+        "title": "Several changes at once",
+        "description": "the team cannot tell which action worked."
       },
       {
-        "title": "Discussions rely on opinion",
-        "description": "Production and engineering disagree about a setting with no shared framework to resolve it."
+        "title": "No agreed order of decisions",
+        "description": "setting discussions jump randomly between parameters."
       },
       {
-        "title": "Records do not explain the decision",
-        "description": "The sheet shows the final numbers but not why they are those numbers."
+        "title": "Copied setups",
+        "description": "values from a similar job are reused without checking the conditions."
       },
       {
-        "title": "Setup depends on who is on shift",
-        "description": "The same job runs differently depending on which engineer set the machine."
+        "title": "Reasoning not recorded",
+        "description": "the next person inherits numbers but not the logic."
       }
     ]
   },
@@ -67,33 +56,33 @@
     "items": [
       {
         "number": "01",
-        "title": "Consistent setups across shifts",
+        "title": "More consistent setups",
         "category": "Consistency",
-        "description": "One method produces the same process whoever is running it."
+        "description": "one method across shifts and personnel."
       },
       {
         "number": "02",
-        "title": "Faster, more confident decision-making",
-        "category": "Speed",
-        "description": "A defined order removes the guesswork from where to start."
+        "title": "Clearer setting discussions",
+        "category": "Communication",
+        "description": "production, quality and engineering use the same logic."
       },
       {
         "number": "03",
-        "title": "Fewer 'fix one, break another' changes",
-        "category": "Stability",
-        "description": "Decisions are made in sequence, so the effect of each is visible."
+        "title": "Fewer unexplained changes",
+        "category": "Control",
+        "description": "every change has an intent and a recorded response."
       },
       {
         "number": "04",
-        "title": "Shared language between teams",
-        "category": "Collaboration",
-        "description": "Production, engineering and quality discuss settings using the same terms."
+        "title": "Better setup records",
+        "category": "Documentation",
+        "description": "decisions can be followed and reviewed."
       },
       {
         "number": "05",
-        "title": "Setups that can be repeated and audited",
-        "category": "Traceability",
-        "description": "The record explains the reasoning, not only the final figures."
+        "title": "Less dependence on individuals",
+        "category": "Know-how",
+        "description": "the method belongs to the team, not one person."
       }
     ]
   },
@@ -103,24 +92,18 @@
     "labels": { "before": "BEFORE", "after": "AFTER" },
     "rows": [
       {
-        "before": "Copies settings from the previous job",
-        "after": "Establishes settings in a defined order, starting from what the material requires"
+        "before": "Change several parameters and hope",
+        "after": "Change one thing at a time with a stated intent"
       },
       {
-        "before": "Adjusts a parameter to quiet a symptom",
-        "after": "States the reason for each change and checks its effect before moving on"
+        "before": "Copy the last setup",
+        "after": "Decide settings from plastic conditions and evidence"
       },
       {
-        "before": "Explains a setting from memory or experience",
-        "after": "Explains a setting from the method and the recorded evidence"
+        "before": "Numbers handed over without reasons",
+        "after": "Rationale recorded for the next person"
       }
     ]
-  },
-
-  "whyMatters": {
-    "status": "draft-needs-trainer-review",
-    "heading": "Why Order Matters More Than Any Number",
-    "statement": "A SETTING IS A DECISION, NOT A NUMBER TO COPY. When the order of decisions is shared, a process can be explained, repeated and improved by anyone on the team. This module builds that order, so the four-day programme can develop it further."
   },
 
   "outcomes": {
@@ -128,28 +111,28 @@
     "items": [
       {
         "number": "01",
-        "title": "Explain why a setting is a decision rather than a value",
-        "description": "State what a chosen parameter is intended to achieve."
+        "title": "Explain the logic of each major parameter group",
+        "description": "In terms of the four plastic conditions."
       },
       {
         "number": "02",
-        "title": "Apply a defined order when setting up a process",
-        "description": "Establish parameters in sequence rather than adjusting at random."
+        "title": "Follow a structured method for deciding and ordering settings",
+        "description": "Apply the method rather than adjusting at random."
       },
       {
         "number": "03",
-        "title": "Justify a parameter change with evidence",
-        "description": "Support each move with an observation rather than an opinion."
+        "title": "Justify a parameter decision with evidence and a clear intent",
+        "description": "State what the change is for and what supports it."
       },
       {
         "number": "04",
-        "title": "Record settings so another engineer can repeat them",
-        "description": "Capture the reasoning alongside the numbers."
+        "title": "Apply controlled changes and record the process response",
+        "description": "One change at a time, with its effect written down."
       },
       {
         "number": "05",
-        "title": "Discuss a setting using shared terminology",
-        "description": "Take part in a production-versus-engineering discussion with a common framework."
+        "title": "Communicate and document setting decisions so others can follow them",
+        "description": "Hand over the reasoning, not only the numbers."
       }
     ]
   },
@@ -158,23 +141,23 @@
     "status": "draft-needs-trainer-review",
     "days": [
       {
-        "label": "DAY 1",
-        "stage": "PARAMETER LOGIC",
+        "label": "Day 1",
+        "stage": "Parameter logic",
         "topics": [
-          "Machine settings are inputs, not proof - revisiting what a parameter actually does",
-          "The four plastic conditions as the frame for every setting decision",
-          "A defined order for setting up a process, and why the order is not arbitrary",
-          "Why there are no universal setpoints: method over recipes"
+          "Settings as inputs, not proof",
+          "Linking parameters to Temperature, Flow, Pressure and Cooling",
+          "Parameter groups",
+          "Why a structured sequence matters"
         ]
       },
       {
-        "label": "DAY 2",
-        "stage": "JUSTIFYING AND RECORDING",
+        "label": "Day 2",
+        "stage": "Structured method in practice",
         "topics": [
-          "Connecting each setting to an observable effect before moving to the next",
-          "Justifying a change: what evidence supports a parameter move",
-          "Recording a setup so it can be repeated by another engineer",
-          "Agreeing terminology for setting discussions across production, engineering and quality"
+          "A step-by-step decision framework on prepared case studies",
+          "Change control (one change at a time)",
+          "Recording the rationale",
+          "Group review of settings and consistency across shifts"
         ]
       }
     ]
@@ -184,11 +167,12 @@
     "status": "draft-needs-trainer-review",
     "heading": "Who Should Attend",
     "items": [
-      "Process engineers who set and adjust injection moulding parameters",
-      "Setup technicians responsible for repeatable changeovers",
-      "Production supervisors who approve a running process",
-      "Quality engineers involved in setting-related discussions"
-    ]
+      "Process engineers and technicians",
+      "Setup technicians",
+      "Production supervisors",
+      "Technical managers"
+    ],
+    "note": "Recommended after M3."
   },
 
   "learningFormat": {
@@ -196,9 +180,10 @@
     "heading": "Learning Format",
     "items": [
       "Guided discussions",
-      "Prepared samples and case studies",
+      "Prepared case studies",
+      "Decision worksheets",
       "Process diagrams",
-      "Participant worksheets"
+      "Group review"
     ]
   },
 
@@ -215,13 +200,13 @@
 
   "managementTakeaway": {
     "status": "draft-needs-trainer-review",
-    "value": "Consistency at the machine is a decision-making problem before it is a technical one. Two days here gives the team one order for setting a process, so the same job runs the same way on every shift."
+    "value": "A consistent method turns parameter setting from personal habit into shared engineering capability."
   },
 
   "safetyNotice": {
-    "status": "fact",
-    "note": "Series-wide line, reused unchanged.",
-    "value": "Equipment operation, process changes and mould service are restricted to qualified, authorised personnel."
+    "status": "draft-needs-trainer-review",
+    "note": "Trainer's footer wording, supplied for both modules. Kept verbatim rather than replaced with the shorter series line.",
+    "value": "Training uses prepared case studies, process data and authorised observations. Equipment operation, process changes and mold service are restricted to qualified, authorised personnel."
   },
 
   "cta": {

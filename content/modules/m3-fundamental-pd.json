@@ -1,6 +1,6 @@
 {
   "$schema": "./module.schema.json",
-  "$comment": "DRAFT - every item marked status draft-needs-trainer-review is proposed copy, not fact. The only facts are slug, title, days, level, published, and the series-wide values. See docs/m3-m5-review.md for the approval checklist. Nothing here renders publicly while published is false.",
+  "$comment": "DRAFT SUPPLIED BY THE TRAINER, not written by the build. Every block carries status. `fact` marks a value taken from content/modules.json or a series-wide constant; `draft-needs-trainer-review` marks the course content, which the trainer supplied and still needs to sign off before publication. Nothing renders publicly while published is false.",
 
   "slug": "m3-fundamental-pd",
   "title": "Fundamental of Scientific Molding - Process Development",
@@ -10,9 +10,9 @@
   "status": "draft-needs-trainer-review",
 
   "headline": {
-    "value": "FUNDAMENTAL OF SCIENTIFIC MOULDING - PROCESS DEVELOPMENT",
-    "status": "fact",
-    "note": "Title from content/modules.json."
+    "value": "FUNDAMENTAL OF SCIENTIFIC MOULDING: PROCESS DEVELOPMENT",
+    "status": "draft-needs-trainer-review",
+    "note": "Trainer's draft. Uses MOULDING where content/modules.json uses Molding - flagged for a decision rather than silently changed."
   },
 
   "promise": {
@@ -21,43 +21,32 @@
     "note": "Description from content/modules.json."
   },
 
-  "tags": {
-    "value": ["Development basics", "Process phases", "Data thinking"],
-    "status": "fact",
-    "note": "From content/modules.json."
-  },
-
-  "seriesOutcome": {
-    "value": "Prepare the team for more advanced process-development learning.",
-    "status": "fact"
-  },
-
   "problems": {
     "status": "draft-needs-trainer-review",
     "items": [
       {
-        "title": "Development happens by trial and error",
-        "description": "Settings are adjusted until a part looks acceptable, with no record of what was learned."
+        "title": "Unstructured start-ups",
+        "description": "the process is set up differently each time, depending on who is on shift."
       },
       {
-        "title": "No shared definition of finished",
-        "description": "A process is called ready on one shift and questioned on the next."
+        "title": "No development phases",
+        "description": "filling, packing and cooling are adjusted together without separating their roles."
       },
       {
-        "title": "Process data is collected but not read",
-        "description": "Cycle figures are recorded because the form asks for them, then filed without interpretation."
+        "title": "Settings recorded, evidence ignored",
+        "description": "values are written down, but actual process outputs are not read."
       },
       {
-        "title": "Every setup starts from scratch",
-        "description": "A previous job is treated as a fresh problem rather than as a starting point."
+        "title": "No shared meaning of \"stable\"",
+        "description": "teams do not agree on what repeatable means."
       },
       {
-        "title": "Development work depends on one person",
-        "description": "Progress stalls when the engineer who set the process is absent."
+        "title": "Data collected but unused",
+        "description": "numbers are gathered without a clear purpose."
       },
       {
-        "title": "Handover loses the reasoning",
-        "description": "The production team receives a running process but not the thinking that produced it."
+        "title": "Not ready for advanced learning",
+        "description": "the basics are missing, so advanced development training is hard to absorb."
       }
     ]
   },
@@ -67,33 +56,33 @@
     "items": [
       {
         "number": "01",
-        "title": "Development time becomes predictable",
-        "category": "Time",
-        "description": "A structured sequence replaces open-ended trial and error."
+        "title": "More organised start-up",
+        "category": "Efficiency",
+        "description": "replace random adjustment with a clear development sequence."
       },
       {
         "number": "02",
-        "title": "Fewer unexplained process changes",
-        "category": "Stability",
-        "description": "Settings move for a recorded reason rather than at the machine."
+        "title": "Clearer process thinking",
+        "category": "Understanding",
+        "description": "connect each process phase to what the plastic experiences."
       },
       {
         "number": "03",
-        "title": "Faster, cleaner handover to production",
-        "category": "Handover",
-        "description": "The receiving team inherits the reasoning, not only the numbers."
+        "title": "Better use of process data",
+        "category": "Data",
+        "description": "turn recorded values into usable evidence."
       },
       {
         "number": "04",
-        "title": "Knowledge stays with the company",
-        "category": "Risk",
-        "description": "Development method is documented, so it survives staff movement."
+        "title": "Shared development language",
+        "category": "Teamwork",
+        "description": "align engineering, production and quality."
       },
       {
         "number": "05",
-        "title": "A team ready for advanced development",
-        "category": "Readiness",
-        "description": "Engineers arrive at the four-day programme with the foundations in place."
+        "title": "Readiness for advanced capability",
+        "category": "Growth path",
+        "description": "prepare the team for 4-day Process Development."
       }
     ]
   },
@@ -103,24 +92,18 @@
     "labels": { "before": "BEFORE", "after": "AFTER" },
     "rows": [
       {
-        "before": "Adjusts settings until the part looks acceptable",
-        "after": "Follows defined process phases and records each decision"
+        "before": "Adjust settings until parts look acceptable",
+        "after": "Follow a phase-by-phase development logic"
       },
       {
-        "before": "Judges a process ready by appearance alone",
-        "after": "Decides readiness against agreed, observable evidence"
+        "before": "Record setpoints only",
+        "after": "Read actual outputs alongside setpoints"
       },
       {
-        "before": "Treats each setup as a new problem",
-        "after": "Starts from the previous job and develops deliberately"
+        "before": "\"Stable\" means \"it ran well today\"",
+        "after": "Repeatability has a shared meaning and indicators"
       }
     ]
-  },
-
-  "whyMatters": {
-    "status": "draft-needs-trainer-review",
-    "heading": "Why Structure Comes Before Detail",
-    "statement": "PROCESS DEVELOPMENT IS A SEQUENCE, NOT A SEARCH. Without a defined order, every job becomes a fresh experiment, and the result depends on who is standing at the machine. Learning the phases first gives the team a shared method, so the advanced studies in the four-day programme have something to build on."
   },
 
   "outcomes": {
@@ -128,28 +111,28 @@
     "items": [
       {
         "number": "01",
-        "title": "Describe the phases of structured process development",
-        "description": "Name each stage and explain what it is for."
+        "title": "Describe the process phases and what each is meant to achieve",
+        "description": "Name the phases and state the purpose of each."
       },
       {
         "number": "02",
-        "title": "Collect basic process data with purpose",
-        "description": "Record the figures that answer a stated question."
+        "title": "Separate process inputs from actual process outputs",
+        "description": "Distinguish what is set from what the process actually does."
       },
       {
         "number": "03",
-        "title": "Read a process record and explain what it shows",
-        "description": "Turn recorded numbers into a plain statement about the process."
+        "title": "Read basic process data and explain what it suggests",
+        "description": "Turn recorded figures into a statement about the process."
       },
       {
         "number": "04",
-        "title": "Judge whether a process is repeatable",
-        "description": "Decide readiness from evidence rather than from appearance."
+        "title": "Explain what repeatability means and recognise its basic indicators",
+        "description": "State the definition and the signs that support it."
       },
       {
         "number": "05",
-        "title": "Explain a development decision to another engineer",
-        "description": "Justify a setting or a change using the record, not memory."
+        "title": "Record process information clearly for the wider team",
+        "description": "Document so another engineer can follow it."
       }
     ]
   },
@@ -158,23 +141,24 @@
     "status": "draft-needs-trainer-review",
     "days": [
       {
-        "label": "DAY 1",
-        "stage": "FOUNDATIONS OF DEVELOPMENT",
+        "label": "Day 1",
+        "stage": "Understand the structure",
         "topics": [
-          "Why process development must be structured - the cost of trial and error",
-          "The phases of development, in order, and what each phase produces",
-          "Machine settings are inputs, not proof - what that changes about how we work",
-          "Connecting a setting to an observable effect using the four plastic conditions"
+          "Why development must be structured",
+          "The four plastic conditions (Temperature | Flow | Pressure | Cooling)",
+          "Process phases",
+          "Inputs versus outputs"
         ]
       },
       {
-        "label": "DAY 2",
-        "stage": "DATA AND REPEATABILITY",
+        "label": "Day 2",
+        "stage": "Apply the basics",
         "topics": [
-          "Collecting basic process data: what to record and what to leave out",
-          "Reading a process record - turning numbers into a statement about the process",
-          "What \"repeatable\" means, and how to decide a process is ready",
-          "Recording and explaining a development decision for the next engineer"
+          "Basic data thinking",
+          "Recording and documenting",
+          "The concept of repeatability",
+          "A simple development sequence applied to a prepared case study",
+          "Readiness review and pathway to M4"
         ]
       }
     ]
@@ -184,11 +168,12 @@
     "status": "draft-needs-trainer-review",
     "heading": "Who Should Attend",
     "items": [
-      "Process and production engineers moving into development work",
-      "Engineering graduates preparing to run trials under supervision",
-      "Technicians who support process setup and changeovers",
-      "Team leaders who approve a process as ready for production"
-    ]
+      "Process engineers and technicians",
+      "Setup technicians",
+      "Production supervisors",
+      "QA/QC personnel"
+    ],
+    "note": "Recommended after M1 and M2."
   },
 
   "learningFormat": {
@@ -196,8 +181,9 @@
     "heading": "Learning Format",
     "items": [
       "Guided discussions",
-      "Prepared samples and case studies",
       "Process diagrams",
+      "Prepared data sets",
+      "Case studies",
       "Participant worksheets"
     ]
   },
@@ -215,13 +201,13 @@
 
   "managementTakeaway": {
     "status": "draft-needs-trainer-review",
-    "value": "Structured development is what turns a process into an asset the organisation owns. Two days here gives the team a shared method for building it, and the foundation the four-day advanced programme requires."
+    "value": "Structured development starts with understanding the process, not with changing settings."
   },
 
   "safetyNotice": {
-    "status": "fact",
-    "note": "Series-wide line, reused unchanged.",
-    "value": "Equipment operation, process changes and mould service are restricted to qualified, authorised personnel."
+    "status": "draft-needs-trainer-review",
+    "note": "Trainer's footer wording, supplied for both modules. Kept verbatim rather than replaced with the shorter series line.",
+    "value": "Training uses prepared case studies, process data and authorised observations. Equipment operation, process changes and mold service are restricted to qualified, authorised personnel."
   },
 
   "cta": {
