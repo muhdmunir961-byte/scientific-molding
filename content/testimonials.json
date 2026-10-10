@@ -27,7 +27,7 @@
       "id": "testimonial-3",
       "name": "[Name]",
       "role": "[Role]",
-      "company": "[Company]",
+      "company": "Premium Sound Solutions",
       "quote": "[Testimonial text — 2-3 sentences]",
       "photo": "/images/testimonial-3.jpg",
       "moduleSlug": null,
