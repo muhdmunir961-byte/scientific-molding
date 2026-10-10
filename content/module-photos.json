@@ -4,17 +4,17 @@
     "m1-fundamental": {
       "lecture": [],
       "practical": [],
-      "discussion": [
+      "discussion": [],
+      "presentation": [
         {
-          "key": "images/m1-fundamental/discussion/1791601719148-nagoya-3",
-          "url": "https://assets.scientificmoldings.com/images/m1-fundamental/discussion/1791601719148-nagoya-3",
+          "key": "images/m1-fundamental/presentation/1791601815284-lesso-3",
+          "url": "https://assets.scientificmoldings.com/images/m1-fundamental/presentation/1791601815284-lesso-3",
           "alt": "",
           "caption": "",
           "order": 0,
-          "uploadedAt": "2026-10-10T03:08:39.524Z"
+          "uploadedAt": "2026-10-10T03:10:15.815Z"
         }
-      ],
-      "presentation": []
+      ]
     },
     "m2-processability": {
       "lecture": [],
