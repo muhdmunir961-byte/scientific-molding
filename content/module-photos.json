@@ -55,7 +55,16 @@
     },
     "m4-process-development": {
       "lecture": [],
-      "practical": [],
+      "practical": [
+        {
+          "key": "images/m4-process-development/practical/1791637224775-hld-1",
+          "url": "https://assets.scientificmoldings.com/images/m4-process-development/practical/1791637224775-hld-1",
+          "alt": "",
+          "caption": "",
+          "order": 0,
+          "uploadedAt": "2026-10-10T13:00:25.243Z"
+        }
+      ],
       "discussion": [],
       "presentation": []
     },
