@@ -24,17 +24,6 @@
       "order": 1
     },
     {
-      "id": "testimonial-3",
-      "name": "[Name]",
-      "role": "[Role]",
-      "company": "[Company]",
-      "quote": "[Testimonial text — 2-3 sentences]",
-      "photo": "/images/testimonial-3.jpg",
-      "moduleSlug": null,
-      "published": false,
-      "order": 2
-    },
-    {
       "id": "testimonial-mv1v12i5",
       "name": "New testimonial",
       "role": "",
@@ -43,18 +32,18 @@
       "photo": "",
       "moduleSlug": null,
       "published": false,
-      "order": 3
+      "order": 2
     },
     {
-      "id": "testimonial-mv2eo12m",
-      "name": "New testimonial",
-      "role": "",
-      "company": "",
-      "quote": "Replace this with the quote the person actually gave.",
-      "photo": "",
+      "id": "testimonial-3",
+      "name": "[Name]",
+      "role": "[Role]",
+      "company": "[Company]",
+      "quote": "[Testimonial text — 2-3 sentences]",
+      "photo": "/images/testimonial-3.jpg",
       "moduleSlug": null,
       "published": false,
-      "order": 4
+      "order": 3
     }
   ]
 }
