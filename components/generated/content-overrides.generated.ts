@@ -52,6 +52,7 @@ export const OVERRIDES: Record<string, unknown> = {
     "Injection Molding Driver License (L5, German Training Center)",
     "Former Process Engineer",
     "Senior Lecturer (Injection Molding), Plastics Processing Department",
-    "National Occupational Skills Standard (NOSS) Panel Expert – Plastic Processing."
+    "National Occupational Skills Standard (NOSS) Panel Expert – Plastic Processing.",
+    "Award-Winning Expert Educator / MARA 2026"
   ],
 };
