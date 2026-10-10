@@ -24,33 +24,33 @@
     },
     "m3-fundamental-pd": {
       "lecture": [],
-      "practical": [
+      "practical": [],
+      "discussion": [
         {
-          "key": "images/m3-fundamental-pd/practical/1791602932276-ah-2-1",
-          "url": "https://assets.scientificmoldings.com/images/m3-fundamental-pd/practical/1791602932276-ah-2-1",
+          "key": "images/m3-fundamental-pd/discussion/1791603027158-jc-4",
+          "url": "https://assets.scientificmoldings.com/images/m3-fundamental-pd/discussion/1791603027158-jc-4",
           "alt": "",
           "caption": "",
           "order": 0,
-          "uploadedAt": "2026-10-10T03:28:52.882Z"
+          "uploadedAt": "2026-10-10T03:30:27.511Z"
         },
         {
-          "key": "images/m3-fundamental-pd/practical/1791602932883-d4-8",
-          "url": "https://assets.scientificmoldings.com/images/m3-fundamental-pd/practical/1791602932883-d4-8",
+          "key": "images/m3-fundamental-pd/discussion/1791603027512-jc-6",
+          "url": "https://assets.scientificmoldings.com/images/m3-fundamental-pd/discussion/1791603027512-jc-6",
           "alt": "",
           "caption": "",
           "order": 1,
-          "uploadedAt": "2026-10-10T03:28:53.296Z"
+          "uploadedAt": "2026-10-10T03:30:27.835Z"
         },
         {
-          "key": "images/m3-fundamental-pd/practical/1791602933298-jst-11",
-          "url": "https://assets.scientificmoldings.com/images/m3-fundamental-pd/practical/1791602933298-jst-11",
+          "key": "images/m3-fundamental-pd/discussion/1791603027837-jst-0-24-2",
+          "url": "https://assets.scientificmoldings.com/images/m3-fundamental-pd/discussion/1791603027837-jst-0-24-2",
           "alt": "",
           "caption": "",
           "order": 2,
-          "uploadedAt": "2026-10-10T03:28:54.010Z"
+          "uploadedAt": "2026-10-10T03:30:28.178Z"
         }
       ],
-      "discussion": [],
       "presentation": []
     },
     "m4-process-development": {
