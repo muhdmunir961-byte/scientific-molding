@@ -3,12 +3,12 @@
   "testimonials": [
     {
       "id": "testimonial-1",
-      "name": "Eddy",
-      "role": "Engineering Team",
-      "company": "JST Connectors (M) Sdn.Bhd",
+      "name": "[Name]",
+      "role": "[Role]",
+      "company": "[Company]",
       "quote": "[Testimonial text — 2-3 sentences]",
       "photo": "/images/testimonial-1.jpg",
-      "moduleSlug": "m6-defects-troubleshooting",
+      "moduleSlug": null,
       "published": false,
       "order": 0
     },
@@ -33,6 +33,17 @@
       "moduleSlug": null,
       "published": false,
       "order": 2
+    },
+    {
+      "id": "testimonial-mv1v12i5",
+      "name": "New testimonial",
+      "role": "",
+      "company": "",
+      "quote": "Replace this with the quote the person actually gave.",
+      "photo": "",
+      "moduleSlug": null,
+      "published": false,
+      "order": 3
     }
   ]
 }
