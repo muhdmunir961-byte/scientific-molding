@@ -336,6 +336,38 @@ export const PROGRAM_MODULES: readonly ModuleSpec[] = [
       },
     ],
   },
+  {
+    id: 'program-m3',
+    title: 'Programme M3 — Fundamental Process Development',
+    description: 'Trainer-approved M3 content awaiting publication approval.',
+    file: 'components/programs/program-m3-content.ts',
+    exports: [
+      { name: 'PROGRAM_M3_HERO', label: 'Hero', description: 'Trainer-approved content.' },
+      { name: 'PROGRAM_M3_PROBLEMS', label: 'Problems', description: 'Trainer-approved content.' },
+      { name: 'PROGRAM_M3_BENEFITS', label: 'Benefits', description: 'Trainer-approved content.' },
+      { name: 'PROGRAM_M3_OUTCOMES', label: 'Outcomes', description: 'Trainer-approved content.' },
+      { name: 'PROGRAM_M3_PHILOSOPHY', label: 'Philosophy', description: 'Trainer-approved content.' },
+      { name: 'PROGRAM_M3_DAYS', label: 'Day breakdown', description: 'Trainer-approved content.' },
+      { name: 'PROGRAM_M3_LEARNING_FORMAT', label: 'Learning format', description: 'Trainer-approved content.' },
+      { name: 'PROGRAM_M3_AUDIENCE', label: 'Audience', description: 'Trainer-approved content.' },
+    ],
+  },
+  {
+    id: 'program-m5',
+    title: 'Programme M5 — Systematic Parameter Setting',
+    description: 'Trainer-approved M5 content awaiting publication approval.',
+    file: 'components/programs/program-m5-content.ts',
+    exports: [
+      { name: 'PROGRAM_M5_HERO', label: 'Hero', description: 'Trainer-approved content.' },
+      { name: 'PROGRAM_M5_PROBLEMS', label: 'Problems', description: 'Trainer-approved content.' },
+      { name: 'PROGRAM_M5_BENEFITS', label: 'Benefits', description: 'Trainer-approved content.' },
+      { name: 'PROGRAM_M5_OUTCOMES', label: 'Outcomes', description: 'Trainer-approved content.' },
+      { name: 'PROGRAM_M5_PHILOSOPHY', label: 'Philosophy', description: 'Trainer-approved content.' },
+      { name: 'PROGRAM_M5_DAYS', label: 'Day breakdown', description: 'Trainer-approved content.' },
+      { name: 'PROGRAM_M5_LEARNING_FORMAT', label: 'Learning format', description: 'Trainer-approved content.' },
+      { name: 'PROGRAM_M5_AUDIENCE', label: 'Audience', description: 'Trainer-approved content.' },
+    ],
+  },
 ] as const;
 
 /**

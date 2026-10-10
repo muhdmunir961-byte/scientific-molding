@@ -32,6 +32,8 @@ import { PROGRAM_A_CTA, PROGRAM_A_HERO } from '../programs/program-a-content';
 import { PROGRAM_B_CTA, PROGRAM_B_HERO } from '../programs/program-b-content';
 import { PROGRAM_C_CTA, PROGRAM_C_HERO } from '../programs/program-c-content';
 import { PROGRAM_D_CTA, PROGRAM_D_HERO } from '../programs/program-d-content';
+import { PROGRAM_M3_CTA, PROGRAM_M3_HERO } from '../programs/program-m3-content';
+import { PROGRAM_M5_CTA, PROGRAM_M5_HERO } from '../programs/program-m5-content';
 
 export interface ProgramCtaEntry {
   /** Anchor id of the program, also the `?program=` slug. */
@@ -75,6 +77,12 @@ export const PROGRAM_CTA_FOOTERS: readonly ProgramCtaEntry[] = [
     label: 'Request Process Development',
   },
   {
+    slug: PROGRAM_M3_HERO.id,
+    headline: PROGRAM_M3_CTA.headline,
+    body: PROGRAM_M3_CTA.body,
+    label: 'Request Fundamental Process Development',
+  },
+  {
     slug: PROGRAM_D_HERO.id,
     headline: PROGRAM_D_CTA.headline,
     body: PROGRAM_D_CTA.body,
@@ -85,5 +93,11 @@ export const PROGRAM_CTA_FOOTERS: readonly ProgramCtaEntry[] = [
     headline: PROGRAM_E_CTA.headline,
     body: PROGRAM_E_CTA.body,
     label: 'Request the 7-Module Pathway',
+  },
+  {
+    slug: PROGRAM_M5_HERO.id,
+    headline: PROGRAM_M5_CTA.headline,
+    body: PROGRAM_M5_CTA.body,
+    label: 'Request Parameter Setting',
   },
 ] as const;

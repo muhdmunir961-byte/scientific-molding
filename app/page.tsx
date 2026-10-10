@@ -6,7 +6,9 @@ import { BANNER } from '@/components/shared/banner-content';
 import { withOverrides } from '@/lib/admin/overrides';
 import ProgramFundamentals from '@/components/programs/ProgramFundamentals';
 import ProgramMaterials from '@/components/programs/ProgramMaterials';
+import ProgramProcessDevelopmentM3 from '@/components/programs/ProgramProcessDevelopmentM3';
 import ProgramProcessDevelopment from '@/components/programs/ProgramProcessDevelopment';
+import ProgramParameterSettingM5 from '@/components/programs/ProgramParameterSettingM5';
 import ProgramDefectTroubleshooting from '@/components/programs/ProgramDefectTroubleshooting';
 import ProgramPathway from '@/components/programs/ProgramPathway';
 import Why from '@/components/why/Why';
@@ -91,7 +93,9 @@ export default function HomePage() {
       <About />
       <ProgramFundamentals />
       <ProgramMaterials />
+      <ProgramProcessDevelopmentM3 />
       <ProgramProcessDevelopment />
+      <ProgramParameterSettingM5 />
       <ProgramDefectTroubleshooting />
       <ProgramPathway />
       <Why />

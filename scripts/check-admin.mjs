@@ -116,7 +116,7 @@ report(
  */
 const registry = read('lib/admin/registry.ts');
 const registeredKeys = [
-  ...registry.matchAll(/'([a-z-]+)\.([A-Z0-9_]+)':/g),
+  ...registry.matchAll(/'([a-z0-9-]+)\.([A-Z0-9_]+)':/g),
 ].map((m) => `${m[1]}.${m[2]}`);
 
 const componentFiles = [
@@ -127,7 +127,7 @@ const componentFiles = [
 const consumedKeys = new Set();
 for (const file of componentFiles) {
   const source = read(file);
-  for (const m of source.matchAll(/withOverrides\(\s*'([a-z-]+)\.([A-Z0-9_]+)'/g)) {
+  for (const m of source.matchAll(/withOverrides\(\s*'([a-z0-9-]+)\.([A-Z0-9_]+)'/g)) {
     consumedKeys.add(`${m[1]}.${m[2]}`);
   }
 }

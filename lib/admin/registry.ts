@@ -128,6 +128,26 @@ import {
   PROGRAM_E_PATHWAY,
   PROGRAM_E_ORGANISATION_BUILD,
 } from '@/components/programs/program-e-content';
+import {
+  PROGRAM_M3_HERO,
+  PROGRAM_M3_PROBLEMS,
+  PROGRAM_M3_BENEFITS,
+  PROGRAM_M3_OUTCOMES,
+  PROGRAM_M3_PHILOSOPHY,
+  PROGRAM_M3_DAYS,
+  PROGRAM_M3_LEARNING_FORMAT,
+  PROGRAM_M3_AUDIENCE,
+} from '@/components/programs/program-m3-content';
+import {
+  PROGRAM_M5_HERO,
+  PROGRAM_M5_PROBLEMS,
+  PROGRAM_M5_BENEFITS,
+  PROGRAM_M5_OUTCOMES,
+  PROGRAM_M5_PHILOSOPHY,
+  PROGRAM_M5_DAYS,
+  PROGRAM_M5_LEARNING_FORMAT,
+  PROGRAM_M5_AUDIENCE,
+} from '@/components/programs/program-m5-content';
 
 /**
  * Every export the panel may edit, keyed `<moduleId>.<exportName>`.
@@ -230,6 +250,24 @@ const REGISTRY: Record<string, JsonValue> = {
   'program-e.PROGRAM_E_MODULES': PROGRAM_E_MODULES as unknown as JsonValue,
   'program-e.PROGRAM_E_PATHWAY': PROGRAM_E_PATHWAY as unknown as JsonValue,
   'program-e.PROGRAM_E_ORGANISATION_BUILD': PROGRAM_E_ORGANISATION_BUILD as unknown as JsonValue,
+
+  'program-m3.PROGRAM_M3_HERO': PROGRAM_M3_HERO as unknown as JsonValue,
+  'program-m3.PROGRAM_M3_PROBLEMS': PROGRAM_M3_PROBLEMS as unknown as JsonValue,
+  'program-m3.PROGRAM_M3_BENEFITS': PROGRAM_M3_BENEFITS as unknown as JsonValue,
+  'program-m3.PROGRAM_M3_OUTCOMES': PROGRAM_M3_OUTCOMES as unknown as JsonValue,
+  'program-m3.PROGRAM_M3_PHILOSOPHY': PROGRAM_M3_PHILOSOPHY as unknown as JsonValue,
+  'program-m3.PROGRAM_M3_DAYS': PROGRAM_M3_DAYS as unknown as JsonValue,
+  'program-m3.PROGRAM_M3_LEARNING_FORMAT': PROGRAM_M3_LEARNING_FORMAT as unknown as JsonValue,
+  'program-m3.PROGRAM_M3_AUDIENCE': PROGRAM_M3_AUDIENCE as unknown as JsonValue,
+
+  'program-m5.PROGRAM_M5_HERO': PROGRAM_M5_HERO as unknown as JsonValue,
+  'program-m5.PROGRAM_M5_PROBLEMS': PROGRAM_M5_PROBLEMS as unknown as JsonValue,
+  'program-m5.PROGRAM_M5_BENEFITS': PROGRAM_M5_BENEFITS as unknown as JsonValue,
+  'program-m5.PROGRAM_M5_OUTCOMES': PROGRAM_M5_OUTCOMES as unknown as JsonValue,
+  'program-m5.PROGRAM_M5_PHILOSOPHY': PROGRAM_M5_PHILOSOPHY as unknown as JsonValue,
+  'program-m5.PROGRAM_M5_DAYS': PROGRAM_M5_DAYS as unknown as JsonValue,
+  'program-m5.PROGRAM_M5_LEARNING_FORMAT': PROGRAM_M5_LEARNING_FORMAT as unknown as JsonValue,
+  'program-m5.PROGRAM_M5_AUDIENCE': PROGRAM_M5_AUDIENCE as unknown as JsonValue,
 };
 
 /**
