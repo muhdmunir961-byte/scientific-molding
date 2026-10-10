@@ -1,0 +1,251 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "module.schema.json",
+  "title": "Training module draft",
+  "$comment": "Describes the shape of content/modules/<slug>.json - the per-module content files drafted for modules with no source PDF. It mirrors the STRUCTURE of the existing TypeScript modules (program-a-content.ts etc.) field for field, so a JSON draft and a TypeScript module describe the same kind of thing. It is deliberately NOT a copy of the TS types: those live in code and cannot drift from what the components read, while this file describes data that is not yet in code at all.",
+
+  "type": "object",
+  "required": ["slug", "title", "days", "level", "published", "status"],
+  "additionalProperties": true,
+
+  "properties": {
+    "$schema": { "type": "string" },
+    "$comment": { "type": "string" },
+
+    "slug": {
+      "type": "string",
+      "description": "Canonical slug. Must match content/modules.json.",
+      "pattern": "^m[0-9]-[a-z-]+$"
+    },
+    "title": {
+      "type": "string",
+      "description": "Title copied from content/modules.json, unaltered."
+    },
+    "days": { "type": "integer", "minimum": 1, "maximum": 10 },
+    "level": {
+      "type": "string",
+      "enum": ["Foundation", "Bridge", "Advanced", "Application"]
+    },
+    "published": {
+      "type": "boolean",
+      "description": "False keeps the detail page off the public site. The module still appears in the 7-module list with title, days and level."
+    },
+    "status": { "$ref": "#/definitions/reviewStatus" },
+
+    "headline": { "$ref": "#/definitions/labelledString" },
+    "promise": { "$ref": "#/definitions/labelledString" },
+    "seriesOutcome": { "$ref": "#/definitions/labelledString" },
+
+    "tags": {
+      "type": "object",
+      "required": ["status", "value"],
+      "properties": {
+        "status": { "$ref": "#/definitions/reviewStatus" },
+        "note": { "type": "string" },
+        "value": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+      }
+    },
+
+    "problems": { "$ref": "#/definitions/titledList" },
+    "benefits": { "$ref": "#/definitions/benefitList" },
+    "outcomes": { "$ref": "#/definitions/numberedList" },
+
+    "beforeAfter": {
+      "type": "object",
+      "required": ["status", "labels", "rows"],
+      "properties": {
+        "status": { "$ref": "#/definitions/reviewStatus" },
+        "note": { "type": "string" },
+        "labels": {
+          "type": "object",
+          "required": ["before", "after"],
+          "properties": {
+            "before": { "type": "string" },
+            "after": { "type": "string" }
+          }
+        },
+        "rows": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "required": ["before", "after"],
+            "properties": {
+              "before": { "type": "string" },
+              "after": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "whyMatters": {
+      "type": "object",
+      "required": ["status", "heading", "statement"],
+      "properties": {
+        "status": { "$ref": "#/definitions/reviewStatus" },
+        "note": { "type": "string" },
+        "heading": { "type": "string" },
+        "statement": { "type": "string" }
+      }
+    },
+
+    "courseStructure": {
+      "type": "object",
+      "required": ["status", "days"],
+      "properties": {
+        "status": { "$ref": "#/definitions/reviewStatus" },
+        "note": { "type": "string" },
+        "days": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["label", "topics"],
+            "properties": {
+              "label": { "type": "string" },
+              "stage": { "type": "string" },
+              "topics": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 4,
+                "items": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "audience": { "$ref": "#/definitions/labelledStringList" },
+    "learningFormat": { "$ref": "#/definitions/labelledStringList" },
+    "managementTakeaway": { "$ref": "#/definitions/labelledString" },
+    "safetyNotice": { "$ref": "#/definitions/labelledString" },
+
+    "philosophy": {
+      "type": "object",
+      "required": ["status", "heading", "lines"],
+      "properties": {
+        "status": { "$ref": "#/definitions/reviewStatus" },
+        "note": { "type": "string" },
+        "heading": { "type": "string" },
+        "lines": { "type": "array", "minItems": 3, "items": { "type": "string" } }
+      }
+    },
+
+    "cta": {
+      "type": "object",
+      "required": ["status", "headline", "body", "programSlug"],
+      "properties": {
+        "status": { "$ref": "#/definitions/reviewStatus" },
+        "note": { "type": "string" },
+        "headline": { "type": "string" },
+        "body": { "type": "string" },
+        "programSlug": { "type": "string" },
+        "contactConfig": { "type": "string" },
+        "phone": { "type": "string" },
+        "phoneHref": { "type": "string" },
+        "email": { "type": "string" },
+        "emailHref": { "type": "string" }
+      }
+    }
+  },
+
+  "definitions": {
+    "reviewStatus": {
+      "type": "string",
+      "enum": ["fact", "draft-needs-trainer-review"],
+      "description": "`fact` marks a value taken verbatim from content/modules.json or a series-wide constant. Everything else is proposed copy awaiting the trainer, and nothing marked draft may go live."
+    },
+    "labelledString": {
+      "type": "object",
+      "required": ["status", "value"],
+      "properties": {
+        "status": { "$ref": "#/definitions/reviewStatus" },
+        "note": { "type": "string" },
+        "value": { "type": "string" }
+      }
+    },
+    "labelledStringList": {
+      "type": "object",
+      "required": ["status", "heading", "items"],
+      "properties": {
+        "status": { "$ref": "#/definitions/reviewStatus" },
+        "note": { "type": "string" },
+        "heading": { "type": "string" },
+        "items": { "type": "array", "minItems": 2, "items": { "type": "string" } }
+      }
+    },
+    "titledList": {
+      "type": "object",
+      "required": ["status", "items"],
+      "properties": {
+        "status": { "$ref": "#/definitions/reviewStatus" },
+        "note": { "type": "string" },
+        "items": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 6,
+          "items": {
+            "type": "object",
+            "required": ["title", "description"],
+            "properties": {
+              "title": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "numberedList": {
+      "type": "object",
+      "required": ["status", "items"],
+      "properties": {
+        "status": { "$ref": "#/definitions/reviewStatus" },
+        "note": { "type": "string" },
+        "items": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["number", "title", "description"],
+            "properties": {
+              "number": { "type": "string", "pattern": "^[0-9]{2}$" },
+              "title": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "benefitList": {
+      "type": "object",
+      "required": ["status", "items"],
+      "properties": {
+        "status": { "$ref": "#/definitions/reviewStatus" },
+        "note": { "type": "string" },
+        "items": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["number", "title", "category", "description"],
+            "properties": {
+              "number": { "type": "string", "pattern": "^[0-9]{2}$" },
+              "title": { "type": "string" },
+              "category": {
+                "type": "string",
+                "description": "Short label naming the management concern this speaks to, e.g. Time, Risk, Consistency."
+              },
+              "description": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

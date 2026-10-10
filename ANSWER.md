@@ -353,7 +353,40 @@ yang sebenarnya penting.
 
 ---
 
-## Bahagian 5 — Kosong (semua kerja selesai)
+## Bahagian 5 — Draf M3 dan M5
+
+M3 dan M5 **tiada PDF sumber**, jadi semua kandungan kursus untuk keduanya
+**ditulis untuk semakan**, bukan diekstrak. Lima module lain ialah salinan
+verbatim daripada PDF yang diluluskan.
+
+| Fail | Isi |
+|---|---|
+| `content/modules/m3-fundamental-pd.json` | Draf penuh M3 |
+| `content/modules/m5-parameter-setting.json` | Draf penuh M5 |
+| `content/modules/module.schema.json` | Bentuk yang disahkan oleh kedua-duanya |
+| `docs/m3-m5-review.md` | Senarai semak untuk trainer meluluskan setiap item |
+| `scripts/check-module-drafts.mjs` | `npm run check:drafts` |
+
+**Setiap blok dalam fail JSON bertanda `status`:**
+
+| Tanda | Maksud |
+|---|---|
+| `fact` | Datang dari `content/modules.json` atau pemalar siri. Bukan draf. |
+| `draft-needs-trainer-review` | **Ditulis untuk semakan. Perlu kelulusan trainer.** |
+
+**Kedua-dua fail `published: false`**, dan tiada komponen mengimport
+`content/modules/` — jadi tiada draf boleh sampai ke page. Dua module ini masih
+muncul dalam menu dengan **tajuk, hari dan level sahaja**, bertanda "coming soon".
+
+**Apa yang check ini halang:**
+- Draf ditanda published sebelum content betul → build gagal
+- Draf muncul dalam served HTML → build gagal
+- Slug draf tak wujud dalam manifest → build gagal
+- Blok tanpa `status` → build gagal
+
+---
+
+## Bahagian 6 — Kosong (semua kerja selesai)
 
 Tiada kerja tertunggak yang boleh saya buat tanpa input awak. Dua isu di Bahagian
 4 (pathway/m7 dan m3/m5) memerlukan keputusan content, bukan kerja kod.

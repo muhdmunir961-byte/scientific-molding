@@ -1,0 +1,239 @@
+{
+  "$schema": "./module.schema.json",
+  "$comment": "DRAFT - every item marked status draft-needs-trainer-review is proposed copy, not fact. The only facts are slug, title, days, level, published, and the series-wide values. See docs/m3-m5-review.md for the approval checklist. Nothing here renders publicly while published is false.",
+
+  "slug": "m5-parameter-setting",
+  "title": "Systematic Parameter Setting for Injection Molding",
+  "days": 2,
+  "level": "Bridge",
+  "published": false,
+  "status": "draft-needs-trainer-review",
+
+  "headline": {
+    "value": "SYSTEMATIC PARAMETER SETTING FOR INJECTION MOULDING",
+    "status": "fact",
+    "note": "Title from content/modules.json, with Moulding spelling to match the site's headings."
+  },
+
+  "promise": {
+    "value": "Introduce a consistent framework for parameter-setting decisions.",
+    "status": "fact",
+    "note": "Description from content/modules.json."
+  },
+
+  "tags": {
+    "value": ["Parameter logic", "Structured method", "Consistency"],
+    "status": "fact",
+    "note": "From content/modules.json."
+  },
+
+  "seriesOutcome": {
+    "value": "Promote a logical, shared approach to process-setting discussions.",
+    "status": "fact"
+  },
+
+  "problems": {
+    "status": "draft-needs-trainer-review",
+    "items": [
+      {
+        "title": "Settings are copied from the last job",
+        "description": "A previous setup is reused on a different tool or material without checking whether it still applies."
+      },
+      {
+        "title": "No agreed order for setting a process",
+        "description": "Two engineers reach a workable process by different routes, so neither can explain the other's."
+      },
+      {
+        "title": "Changes are made without a stated reason",
+        "description": "A parameter moves to fix one symptom and creates another nobody connects to it."
+      },
+      {
+        "title": "Discussions rely on opinion",
+        "description": "Production and engineering disagree about a setting with no shared framework to resolve it."
+      },
+      {
+        "title": "Records do not explain the decision",
+        "description": "The sheet shows the final numbers but not why they are those numbers."
+      },
+      {
+        "title": "Setup depends on who is on shift",
+        "description": "The same job runs differently depending on which engineer set the machine."
+      }
+    ]
+  },
+
+  "benefits": {
+    "status": "draft-needs-trainer-review",
+    "items": [
+      {
+        "number": "01",
+        "title": "Consistent setups across shifts",
+        "category": "Consistency",
+        "description": "One method produces the same process whoever is running it."
+      },
+      {
+        "number": "02",
+        "title": "Faster, more confident decision-making",
+        "category": "Speed",
+        "description": "A defined order removes the guesswork from where to start."
+      },
+      {
+        "number": "03",
+        "title": "Fewer 'fix one, break another' changes",
+        "category": "Stability",
+        "description": "Decisions are made in sequence, so the effect of each is visible."
+      },
+      {
+        "number": "04",
+        "title": "Shared language between teams",
+        "category": "Collaboration",
+        "description": "Production, engineering and quality discuss settings using the same terms."
+      },
+      {
+        "number": "05",
+        "title": "Setups that can be repeated and audited",
+        "category": "Traceability",
+        "description": "The record explains the reasoning, not only the final figures."
+      }
+    ]
+  },
+
+  "beforeAfter": {
+    "status": "draft-needs-trainer-review",
+    "labels": { "before": "BEFORE", "after": "AFTER" },
+    "rows": [
+      {
+        "before": "Copies settings from the previous job",
+        "after": "Establishes settings in a defined order, starting from what the material requires"
+      },
+      {
+        "before": "Adjusts a parameter to quiet a symptom",
+        "after": "States the reason for each change and checks its effect before moving on"
+      },
+      {
+        "before": "Explains a setting from memory or experience",
+        "after": "Explains a setting from the method and the recorded evidence"
+      }
+    ]
+  },
+
+  "whyMatters": {
+    "status": "draft-needs-trainer-review",
+    "heading": "Why Order Matters More Than Any Number",
+    "statement": "A SETTING IS A DECISION, NOT A NUMBER TO COPY. When the order of decisions is shared, a process can be explained, repeated and improved by anyone on the team. This module builds that order, so the four-day programme can develop it further."
+  },
+
+  "outcomes": {
+    "status": "draft-needs-trainer-review",
+    "items": [
+      {
+        "number": "01",
+        "title": "Explain why a setting is a decision rather than a value",
+        "description": "State what a chosen parameter is intended to achieve."
+      },
+      {
+        "number": "02",
+        "title": "Apply a defined order when setting up a process",
+        "description": "Establish parameters in sequence rather than adjusting at random."
+      },
+      {
+        "number": "03",
+        "title": "Justify a parameter change with evidence",
+        "description": "Support each move with an observation rather than an opinion."
+      },
+      {
+        "number": "04",
+        "title": "Record settings so another engineer can repeat them",
+        "description": "Capture the reasoning alongside the numbers."
+      },
+      {
+        "number": "05",
+        "title": "Discuss a setting using shared terminology",
+        "description": "Take part in a production-versus-engineering discussion with a common framework."
+      }
+    ]
+  },
+
+  "courseStructure": {
+    "status": "draft-needs-trainer-review",
+    "days": [
+      {
+        "label": "DAY 1",
+        "stage": "PARAMETER LOGIC",
+        "topics": [
+          "Machine settings are inputs, not proof - revisiting what a parameter actually does",
+          "The four plastic conditions as the frame for every setting decision",
+          "A defined order for setting up a process, and why the order is not arbitrary",
+          "Why there are no universal setpoints: method over recipes"
+        ]
+      },
+      {
+        "label": "DAY 2",
+        "stage": "JUSTIFYING AND RECORDING",
+        "topics": [
+          "Connecting each setting to an observable effect before moving to the next",
+          "Justifying a change: what evidence supports a parameter move",
+          "Recording a setup so it can be repeated by another engineer",
+          "Agreeing terminology for setting discussions across production, engineering and quality"
+        ]
+      }
+    ]
+  },
+
+  "audience": {
+    "status": "draft-needs-trainer-review",
+    "heading": "Who Should Attend",
+    "items": [
+      "Process engineers who set and adjust injection moulding parameters",
+      "Setup technicians responsible for repeatable changeovers",
+      "Production supervisors who approve a running process",
+      "Quality engineers involved in setting-related discussions"
+    ]
+  },
+
+  "learningFormat": {
+    "status": "draft-needs-trainer-review",
+    "heading": "Learning Format",
+    "items": [
+      "Guided discussions",
+      "Prepared samples and case studies",
+      "Process diagrams",
+      "Participant worksheets"
+    ]
+  },
+
+  "philosophy": {
+    "status": "fact",
+    "note": "Series-wide values, reused unchanged.",
+    "heading": "Philosophy",
+    "lines": [
+      "MATERIAL + MOULD + MACHINE + PROCESS",
+      "TEMPERATURE | FLOW | PRESSURE | COOLING",
+      "Observe the evidence. Understand the material. Connect the cause-and-effect."
+    ]
+  },
+
+  "managementTakeaway": {
+    "status": "draft-needs-trainer-review",
+    "value": "Consistency at the machine is a decision-making problem before it is a technical one. Two days here gives the team one order for setting a process, so the same job runs the same way on every shift."
+  },
+
+  "safetyNotice": {
+    "status": "fact",
+    "note": "Series-wide line, reused unchanged.",
+    "value": "Equipment operation, process changes and mould service are restricted to qualified, authorised personnel."
+  },
+
+  "cta": {
+    "status": "fact",
+    "note": "Contact routes read from the site's single contact config, not retyped.",
+    "headline": "SET A PROCESS THE SAME WAY EVERY TIME",
+    "body": "Request a customised in-house training proposal for your engineering team.",
+    "programSlug": "m5-parameter-setting",
+    "contactConfig": "components/contact/contact-content.ts#CONTACT_DIRECT",
+    "phone": "+60 12-488 5247",
+    "phoneHref": "tel:+60124885247",
+    "email": "hafiedzzul@gmail.com",
+    "emailHref": "mailto:hafiedzzul@gmail.com"
+  }
+}

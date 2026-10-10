@@ -1,0 +1,239 @@
+{
+  "$schema": "./module.schema.json",
+  "$comment": "DRAFT - every item marked status draft-needs-trainer-review is proposed copy, not fact. The only facts are slug, title, days, level, published, and the series-wide values. See docs/m3-m5-review.md for the approval checklist. Nothing here renders publicly while published is false.",
+
+  "slug": "m3-fundamental-pd",
+  "title": "Fundamental of Scientific Molding - Process Development",
+  "days": 2,
+  "level": "Bridge",
+  "published": false,
+  "status": "draft-needs-trainer-review",
+
+  "headline": {
+    "value": "FUNDAMENTAL OF SCIENTIFIC MOULDING - PROCESS DEVELOPMENT",
+    "status": "fact",
+    "note": "Title from content/modules.json."
+  },
+
+  "promise": {
+    "value": "Build the essential principles behind structured process development.",
+    "status": "fact",
+    "note": "Description from content/modules.json."
+  },
+
+  "tags": {
+    "value": ["Development basics", "Process phases", "Data thinking"],
+    "status": "fact",
+    "note": "From content/modules.json."
+  },
+
+  "seriesOutcome": {
+    "value": "Prepare the team for more advanced process-development learning.",
+    "status": "fact"
+  },
+
+  "problems": {
+    "status": "draft-needs-trainer-review",
+    "items": [
+      {
+        "title": "Development happens by trial and error",
+        "description": "Settings are adjusted until a part looks acceptable, with no record of what was learned."
+      },
+      {
+        "title": "No shared definition of finished",
+        "description": "A process is called ready on one shift and questioned on the next."
+      },
+      {
+        "title": "Process data is collected but not read",
+        "description": "Cycle figures are recorded because the form asks for them, then filed without interpretation."
+      },
+      {
+        "title": "Every setup starts from scratch",
+        "description": "A previous job is treated as a fresh problem rather than as a starting point."
+      },
+      {
+        "title": "Development work depends on one person",
+        "description": "Progress stalls when the engineer who set the process is absent."
+      },
+      {
+        "title": "Handover loses the reasoning",
+        "description": "The production team receives a running process but not the thinking that produced it."
+      }
+    ]
+  },
+
+  "benefits": {
+    "status": "draft-needs-trainer-review",
+    "items": [
+      {
+        "number": "01",
+        "title": "Development time becomes predictable",
+        "category": "Time",
+        "description": "A structured sequence replaces open-ended trial and error."
+      },
+      {
+        "number": "02",
+        "title": "Fewer unexplained process changes",
+        "category": "Stability",
+        "description": "Settings move for a recorded reason rather than at the machine."
+      },
+      {
+        "number": "03",
+        "title": "Faster, cleaner handover to production",
+        "category": "Handover",
+        "description": "The receiving team inherits the reasoning, not only the numbers."
+      },
+      {
+        "number": "04",
+        "title": "Knowledge stays with the company",
+        "category": "Risk",
+        "description": "Development method is documented, so it survives staff movement."
+      },
+      {
+        "number": "05",
+        "title": "A team ready for advanced development",
+        "category": "Readiness",
+        "description": "Engineers arrive at the four-day programme with the foundations in place."
+      }
+    ]
+  },
+
+  "beforeAfter": {
+    "status": "draft-needs-trainer-review",
+    "labels": { "before": "BEFORE", "after": "AFTER" },
+    "rows": [
+      {
+        "before": "Adjusts settings until the part looks acceptable",
+        "after": "Follows defined process phases and records each decision"
+      },
+      {
+        "before": "Judges a process ready by appearance alone",
+        "after": "Decides readiness against agreed, observable evidence"
+      },
+      {
+        "before": "Treats each setup as a new problem",
+        "after": "Starts from the previous job and develops deliberately"
+      }
+    ]
+  },
+
+  "whyMatters": {
+    "status": "draft-needs-trainer-review",
+    "heading": "Why Structure Comes Before Detail",
+    "statement": "PROCESS DEVELOPMENT IS A SEQUENCE, NOT A SEARCH. Without a defined order, every job becomes a fresh experiment, and the result depends on who is standing at the machine. Learning the phases first gives the team a shared method, so the advanced studies in the four-day programme have something to build on."
+  },
+
+  "outcomes": {
+    "status": "draft-needs-trainer-review",
+    "items": [
+      {
+        "number": "01",
+        "title": "Describe the phases of structured process development",
+        "description": "Name each stage and explain what it is for."
+      },
+      {
+        "number": "02",
+        "title": "Collect basic process data with purpose",
+        "description": "Record the figures that answer a stated question."
+      },
+      {
+        "number": "03",
+        "title": "Read a process record and explain what it shows",
+        "description": "Turn recorded numbers into a plain statement about the process."
+      },
+      {
+        "number": "04",
+        "title": "Judge whether a process is repeatable",
+        "description": "Decide readiness from evidence rather than from appearance."
+      },
+      {
+        "number": "05",
+        "title": "Explain a development decision to another engineer",
+        "description": "Justify a setting or a change using the record, not memory."
+      }
+    ]
+  },
+
+  "courseStructure": {
+    "status": "draft-needs-trainer-review",
+    "days": [
+      {
+        "label": "DAY 1",
+        "stage": "FOUNDATIONS OF DEVELOPMENT",
+        "topics": [
+          "Why process development must be structured - the cost of trial and error",
+          "The phases of development, in order, and what each phase produces",
+          "Machine settings are inputs, not proof - what that changes about how we work",
+          "Connecting a setting to an observable effect using the four plastic conditions"
+        ]
+      },
+      {
+        "label": "DAY 2",
+        "stage": "DATA AND REPEATABILITY",
+        "topics": [
+          "Collecting basic process data: what to record and what to leave out",
+          "Reading a process record - turning numbers into a statement about the process",
+          "What \"repeatable\" means, and how to decide a process is ready",
+          "Recording and explaining a development decision for the next engineer"
+        ]
+      }
+    ]
+  },
+
+  "audience": {
+    "status": "draft-needs-trainer-review",
+    "heading": "Who Should Attend",
+    "items": [
+      "Process and production engineers moving into development work",
+      "Engineering graduates preparing to run trials under supervision",
+      "Technicians who support process setup and changeovers",
+      "Team leaders who approve a process as ready for production"
+    ]
+  },
+
+  "learningFormat": {
+    "status": "draft-needs-trainer-review",
+    "heading": "Learning Format",
+    "items": [
+      "Guided discussions",
+      "Prepared samples and case studies",
+      "Process diagrams",
+      "Participant worksheets"
+    ]
+  },
+
+  "philosophy": {
+    "status": "fact",
+    "note": "Series-wide values, reused unchanged.",
+    "heading": "Philosophy",
+    "lines": [
+      "MATERIAL + MOULD + MACHINE + PROCESS",
+      "TEMPERATURE | FLOW | PRESSURE | COOLING",
+      "Observe the evidence. Understand the material. Connect the cause-and-effect."
+    ]
+  },
+
+  "managementTakeaway": {
+    "status": "draft-needs-trainer-review",
+    "value": "Structured development is what turns a process into an asset the organisation owns. Two days here gives the team a shared method for building it, and the foundation the four-day advanced programme requires."
+  },
+
+  "safetyNotice": {
+    "status": "fact",
+    "note": "Series-wide line, reused unchanged.",
+    "value": "Equipment operation, process changes and mould service are restricted to qualified, authorised personnel."
+  },
+
+  "cta": {
+    "status": "fact",
+    "note": "Contact routes read from the site's single contact config, not retyped.",
+    "headline": "BUILD A SHARED DEVELOPMENT METHOD",
+    "body": "Request a customised in-house training proposal for your engineering team.",
+    "programSlug": "m3-fundamental-pd",
+    "contactConfig": "components/contact/contact-content.ts#CONTACT_DIRECT",
+    "phone": "+60 12-488 5247",
+    "phoneHref": "tel:+60124885247",
+    "email": "hafiedzzul@gmail.com",
+    "emailHref": "mailto:hafiedzzul@gmail.com"
+  }
+}
