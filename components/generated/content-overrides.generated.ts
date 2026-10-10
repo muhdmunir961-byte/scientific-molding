@@ -45,4 +45,13 @@ export const OVERRIDES: Record<string, unknown> = {
       "icon": "clipboard-check"
     }
   ],
+  "trainer-credibility.TRAINER_CREDIBILITY_CREDENTIALS": [
+    "Professional Technologist",
+    "HRD Corp Accredited Trainer",
+    "Global Certification for Plastics Professionals (Routsis, USA)",
+    "Injection Molding Driver License (L5, German Training Center)",
+    "Former Process Engineer",
+    "Senior Lecturer (Injection Molding), Plastics Processing Department",
+    "National Occupational Skills Standard (NOSS) Panel Expert – Plastic Processing."
+  ],
 };
