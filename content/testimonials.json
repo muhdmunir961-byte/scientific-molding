@@ -20,7 +20,7 @@
       "quote": "[Testimonial text — 2-3 sentences]",
       "photo": "/images/testimonial-2.jpg",
       "moduleSlug": null,
-      "published": false,
+      "published": true,
       "order": 1
     },
     {
