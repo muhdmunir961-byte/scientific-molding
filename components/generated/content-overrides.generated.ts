@@ -49,6 +49,11 @@ export const OVERRIDES: Record<string, unknown> = {
       "icon": "award"
     }
   ],
+  "testimonials.TESTIMONIALS_HERO": {
+    "eyebrow": "TESTIMONIALS",
+    "title": "What Participants Say.",
+    "subcopy": "Feedback from engineers and managers who have completed the training "
+  },
   "trainer-credibility.TRAINER_CREDIBILITY_CREDENTIALS": [
     "Professional Technologist",
     "HRD Corp Accredited Trainer",
