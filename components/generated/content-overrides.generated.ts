@@ -33,7 +33,7 @@ export const OVERRIDES: Record<string, unknown> = {
       "icon": "gauge"
     },
     {
-      "label": "Former Process Engineer",
+      "label": "Former Snr Process Engineer",
       "icon": "factory"
     },
     {
@@ -50,11 +50,11 @@ export const OVERRIDES: Record<string, unknown> = {
     }
   ],
   "trainer-credibility.TRAINER_CREDIBILITY_CREDENTIALS": [
-    "Professional Technologist (MBOT)",
+    "Professional Technologist",
     "HRD Corp Accredited Trainer",
     "Global Certification for Plastics Professionals (Routsis, USA)",
     "Injection Molding Driver License (L5, German Training Center)",
-    "Former Snr Process Engineer",
+    "Former Process Engineer",
     "Senior Lecturer (Injection Molding), Plastics Processing Department",
     "National Occupational Skills Standard (NOSS) Panel Expert – Plastic Processing.",
     "Award-Winning Expert Educator / MARA 2026"
