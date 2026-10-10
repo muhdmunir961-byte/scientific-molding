@@ -43,6 +43,10 @@ export const OVERRIDES: Record<string, unknown> = {
     {
       "label": "National Occupational Skills Standard (NOSS) Panel Expert – Plastic Processing",
       "icon": "clipboard-check"
+    },
+    {
+      "label": "Award-Winning Expert Educator / MARA 2026",
+      "icon": "award"
     }
   ],
   "trainer-credibility.TRAINER_CREDIBILITY_CREDENTIALS": [
