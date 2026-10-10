@@ -15,4 +15,34 @@
  */
 
 export const OVERRIDES: Record<string, unknown> = {
+  "about.TRAINER_CREDENTIALS": [
+    {
+      "label": "Professional Technologist (MBOT)",
+      "icon": "badge-check"
+    },
+    {
+      "label": "HRD Corp Accredited Trainer",
+      "icon": "graduation-cap"
+    },
+    {
+      "label": "Global Certification for Plastics Professionals (Routsis, USA)",
+      "icon": "award"
+    },
+    {
+      "label": "Injection Molding Driver License (L5, German Training Center)",
+      "icon": "gauge"
+    },
+    {
+      "label": "Former Process Engineer",
+      "icon": "factory"
+    },
+    {
+      "label": "Senior Lecturer (Injection Molding), Plastics Processing Department",
+      "icon": "presentation"
+    },
+    {
+      "label": "National Occupational Skills Standard (NOSS) Panel Expert – Plastic Processing",
+      "icon": "clipboard-check"
+    }
+  ],
 };
