@@ -9,7 +9,7 @@
       "quote": "[Testimonial text — 2-3 sentences]",
       "photo": "/images/testimonial-1.jpg",
       "moduleSlug": null,
-      "published": true,
+      "published": false,
       "order": 0
     },
     {
@@ -66,6 +66,17 @@
       "moduleSlug": null,
       "published": false,
       "order": 5
+    },
+    {
+      "id": "testimonial-mv3tauh5",
+      "name": "New testimonial",
+      "role": "",
+      "company": "",
+      "quote": "Replace this with the quote the person actually gave.",
+      "photo": "",
+      "moduleSlug": null,
+      "published": false,
+      "order": 6
     }
   ]
 }
