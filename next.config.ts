@@ -24,7 +24,7 @@ import type { NextConfig } from 'next';
  * allowance.
  */
 function r2RemotePatterns(): NonNullable<NextConfig['images']>['remotePatterns'] {
-  const raw = (process.env.R2_PUBLIC_URL ?? '').trim();
+  const raw = (process.env.R2_PUBLIC_URL ?? 'https://assets.scientificmoldings.com').trim();
   if (!raw) return [];
 
   try {

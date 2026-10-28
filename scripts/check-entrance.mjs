@@ -753,7 +753,7 @@ const LEGACY_ANCHORS = [
  * importantly, adding a *section* without removing it from this list — is
  * caught rather than shipped.
  */
-const PENDING_MODULES = ['m3-fundamental-pd', 'm5-parameter-setting'];
+const PENDING_MODULES = [];
 
 /** Strings that indicate a mistake or a stale build. */
 const FORBIDDEN = [

@@ -43,14 +43,15 @@ export interface ProgramNavItem extends NavItem {
  *
  * The programme bodies shipped as A–E and answer to both their own id
  * (`fundamentals`) and the canonical slug, via the compatibility anchor in
- * `ProgramHero`. m3 and m5 are defined by the PDF but have no body, so no
- * anchor resolves for them — that is a content decision, not one this file
- * should make by inventing a section.
+ * M3 and M5 have published sections on the homepage, so they are included here
+ * with the other live programme anchors.
  */
 const PUBLISHED_SLUGS = new Set([
   'm1-fundamental',
   'm2-processability',
+  'm3-fundamental-pd',
   'm4-process-development',
+  'm5-parameter-setting',
   'm6-defects-troubleshooting',
   'm7-process-portability',
 ]);
