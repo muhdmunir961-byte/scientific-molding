@@ -17,7 +17,16 @@
       ]
     },
     "m2-processability": {
-      "lecture": [],
+      "lecture": [
+        {
+          "key": "images/m2-processability/lecture/1793194843776-jc-5",
+          "url": "https://assets.scientificmoldings.com/images/m2-processability/lecture/1793194843776-jc-5",
+          "alt": "",
+          "caption": "",
+          "order": 0,
+          "uploadedAt": "2026-10-28T13:40:46.564Z"
+        }
+      ],
       "practical": [],
       "discussion": [],
       "presentation": []
