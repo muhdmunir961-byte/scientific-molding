@@ -54,19 +54,11 @@
       ],
       "discussion": [
         {
-          "key": "images/m3-fundamental-pd/discussion/1791603027158-jc-4",
-          "url": "https://assets.scientificmoldings.com/images/m3-fundamental-pd/discussion/1791603027158-jc-4",
-          "alt": "",
-          "caption": "",
-          "order": 0,
-          "uploadedAt": "2026-10-10T03:30:27.511Z"
-        },
-        {
           "key": "images/m3-fundamental-pd/discussion/1791603027512-jc-6",
           "url": "https://assets.scientificmoldings.com/images/m3-fundamental-pd/discussion/1791603027512-jc-6",
           "alt": "",
           "caption": "",
-          "order": 1,
+          "order": 0,
           "uploadedAt": "2026-10-10T03:30:27.835Z"
         },
         {
@@ -74,7 +66,7 @@
           "url": "https://assets.scientificmoldings.com/images/m3-fundamental-pd/discussion/1791603027837-jst-0-24-2",
           "alt": "",
           "caption": "",
-          "order": 2,
+          "order": 1,
           "uploadedAt": "2026-10-10T03:30:28.178Z"
         }
       ],
