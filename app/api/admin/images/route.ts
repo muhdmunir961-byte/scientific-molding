@@ -24,6 +24,8 @@ import { readImagesManifest, renderImagesManifest } from '@/lib/admin/content-st
 import { requireSession, fail } from '@/lib/admin/guard';
 import { IMAGE_SLOTS, slotsByGroup, type ImageSlotName } from '@/lib/admin/image-slots';
 import { storeImage, validateImage } from '@/lib/admin/store';
+import { readGalleryFile } from '@/lib/admin/gallery-store';
+import { PHOTO_CATEGORIES } from '@/lib/modules';
 
 export const runtime = 'nodejs';
 
@@ -51,10 +53,16 @@ export async function GET(request: Request): Promise<NextResponse> {
   const wantsManifest = new URL(request.url).searchParams.get('manifest');
 
   if (wantsManifest === '1') {
-    return NextResponse.json({
+    const response = NextResponse.json({
       ok: true,
-      data: { values: await readImagesManifest() },
+      data: {
+        values: await readImagesManifest(),
+        galleries: await readGalleryFile(),
+        categories: PHOTO_CATEGORIES,
+      },
     });
+    response.headers.set('Cache-Control', 'private, no-store, max-age=0');
+    return response;
   }
 
   return NextResponse.json({

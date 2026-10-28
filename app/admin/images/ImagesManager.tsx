@@ -18,8 +18,15 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { IMAGE_SLOTS, slotsByGroup, type ImageSlotName } from '@/lib/admin/image-slots';
+import { MODULES, PHOTO_CATEGORIES, type PhotoCategory } from '@/lib/modules';
+import type { GalleryFile } from '@/lib/gallery';
 
 type Status = 'idle' | 'uploading' | 'saved' | 'error';
+
+function previewUrl(path: string, version: number): string {
+  if (!path || !version) return path;
+  return `${path}${path.includes('?') ? '&' : '?'}adminPreview=${version}`;
+}
 
 /** The slots, already grouped by where they appear on the page. */
 const SLOT_GROUPS = slotsByGroup();
@@ -33,6 +40,8 @@ export default function ImagesManager() {
     null,
   );
   const [loading, setLoading] = useState(true);
+  const [previewVersions, setPreviewVersions] = useState<Record<string, number>>({});
+  const [galleries, setGalleries] = useState<GalleryFile>({});
   const refs = useRef<Record<string, HTMLInputElement | null>>({});
 
   // Load the current paths from the images manifest.
@@ -49,11 +58,13 @@ export default function ImagesManager() {
          * module LIST, and the page read `undefined` from it — which is what
          * produced the "Unknown module \"\"" error on screen.
          */
-        const response = await fetch('/api/admin/images?manifest=1');
+        const response = await fetch(`/api/admin/images?manifest=1&t=${Date.now()}`, {
+          cache: 'no-store',
+        });
         const body = (await response.json()) as {
           ok?: boolean;
           error?: string;
-          data?: { values?: Record<string, string> };
+          data?: { values?: Record<string, string>; galleries?: GalleryFile };
         };
 
         if (cancelled) return;
@@ -67,6 +78,7 @@ export default function ImagesManager() {
         }
 
         setPaths(body.data?.values ?? {});
+        setGalleries(body.data?.galleries ?? {});
       } catch {
         if (!cancelled) {
           setBanner({ tone: 'error', text: 'Could not reach the server.' });
@@ -104,7 +116,10 @@ export default function ImagesManager() {
 
       const key = body.data.key;
       const nextPath = body.data.path;
-      if (key) setPaths((p) => ({ ...p, [key]: nextPath }));
+      if (key) {
+        setPaths((p) => ({ ...p, [key]: nextPath }));
+        setPreviewVersions((v) => ({ ...v, [key]: Date.now() }));
+      }
       setStatus((s) => ({ ...s, [slot]: 'saved' }));
       setMessages((m) => ({ ...m, [slot]: body.data?.message ?? 'Uploaded.' }));
     } catch {
@@ -143,9 +158,9 @@ export default function ImagesManager() {
     <>
       <h1 className="admin-title">Images</h1>
       <p className="admin-lede">
-        Upload a file for any position, then save to publish the new paths. Each
-        frame shows a brand gradient until a file exists, so the page never
-        renders a broken image.
+        Upload a file for any position. Uploads are stored first; click Save image
+        paths to commit the manifest to GitHub so the next Coolify deploy keeps
+        them. Existing uploads are loaded from the current manifest on every visit.
       </p>
 
       {banner && (
@@ -170,7 +185,10 @@ export default function ImagesManager() {
                   <SlotCard
                     key={slot}
                     slot={slot}
-                    path={paths[IMAGE_SLOTS[slot].key] ?? ''}
+                    path={previewUrl(
+                      paths[IMAGE_SLOTS[slot].key] ?? '',
+                      previewVersions[IMAGE_SLOTS[slot].key] ?? 0,
+                    )}
                     state={status[slot] ?? 'idle'}
                     message={messages[slot] ?? ''}
                     registerRef={(el) => {
@@ -193,9 +211,72 @@ export default function ImagesManager() {
               {saving ? 'Saving…' : 'Save image paths'}
             </button>
           </div>
+
+          <ModuleGalleryOverview galleries={galleries} />
         </>
       )}
     </>
+  );
+}
+
+function ModuleGalleryOverview({ galleries }: { galleries: GalleryFile }) {
+  const modulesWithPhotos = MODULES.map((module) => {
+    const gallery = galleries[module.slug];
+    const photos = PHOTO_CATEGORIES.flatMap((category) =>
+      (gallery?.[category.slug as PhotoCategory] ?? []).map((image) => ({
+        ...image,
+        category: category.label,
+      })),
+    );
+    return { module, photos };
+  }).filter(({ photos }) => photos.length > 0);
+
+  return (
+    <section className="admin-image-group" aria-labelledby="module-gallery-overview">
+      <h2 id="module-gallery-overview" className="admin-image-group-title">
+        Module gallery photos already on the website
+      </h2>
+      <p className="admin-lede">
+        These are the photos currently stored in <code>content/module-photos.json</code> and
+        rendered by the public module galleries. Use the module link to edit captions,
+        alt text, order, or delete a photo.
+      </p>
+      {modulesWithPhotos.length === 0 ? (
+        <p className="admin-muted">No module gallery photos are stored yet.</p>
+      ) : (
+        modulesWithPhotos.map(({ module, photos }) => (
+          <section className="admin-card" key={module.slug}>
+            <div className="admin-actions" style={{ justifyContent: 'space-between' }}>
+              <div>
+                <h3 className="admin-card-title">{module.title}</h3>
+                <p className="admin-muted">
+                  {photos.length} photo{photos.length === 1 ? '' : 's'} across {new Set(photos.map((photo) => photo.category)).size} categories
+                </p>
+              </div>
+              <a className="admin-button admin-button-secondary" href={`/admin/modules/${module.slug}`}>
+                Edit module gallery
+              </a>
+            </div>
+            <div className="admin-image-grid">
+              {photos.map((photo) => (
+                <figure className="admin-card" key={photo.key}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={previewUrl(photo.url, 0)}
+                    alt={photo.alt || `${photo.category} photo for ${module.title}`}
+                    loading="lazy"
+                    style={{ width: '100%', aspectRatio: '4 / 3', objectFit: 'cover' }}
+                  />
+                  <figcaption className="admin-muted">
+                    {photo.category} · {photo.caption || 'No caption'}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+        ))
+      )}
+    </section>
   );
 }
 
