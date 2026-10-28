@@ -59,7 +59,13 @@ export default function AdminShell({ deployEnabled }: { deployEnabled: boolean }
 
   return (
     <header className="admin-header">
-      <span className="admin-brand">SMTS Admin</span>
+      <Link className="admin-brand" href="/admin" aria-label="Scientific Molding admin home">
+        <span className="admin-brand-mark" aria-hidden="true">SM</span>
+        <span className="admin-brand-copy">
+          <strong>Scientific Molding</strong>
+          <small>Content workspace</small>
+        </span>
+      </Link>
 
       <nav className="admin-nav" aria-label="Admin">
         {LINKS.map((link) => (
@@ -88,14 +94,15 @@ export default function AdminShell({ deployEnabled }: { deployEnabled: boolean }
             className="admin-nav-trigger"
             aria-haspopup="true"
             aria-expanded={modulesOpen}
+            aria-controls="admin-module-menu"
             onClick={() => setModulesOpen((open) => !open)}
             data-active={pathname.startsWith('/admin/modules')}
           >
-            Modules ▾
+            Modules <span aria-hidden="true">⌄</span>
           </button>
 
           {modulesOpen && (
-            <ul className="admin-nav-menu">
+            <ul className="admin-nav-menu" id="admin-module-menu">
               {MODULES.map((module) => (
                 <li key={module.slug}>
                   <Link

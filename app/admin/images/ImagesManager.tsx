@@ -43,6 +43,13 @@ export default function ImagesManager() {
   const [previewVersions, setPreviewVersions] = useState<Record<string, number>>({});
   const [galleries, setGalleries] = useState<GalleryFile>({});
   const refs = useRef<Record<string, HTMLInputElement | null>>({});
+  const totalModulePhotos = Object.values(galleries).reduce(
+    (total, gallery) => total + PHOTO_CATEGORIES.reduce(
+      (subtotal, category) => subtotal + (gallery?.[category.slug as PhotoCategory]?.length ?? 0),
+      0,
+    ),
+    0,
+  );
 
   // Load the current paths from the images manifest.
   useEffect(() => {
@@ -163,6 +170,23 @@ export default function ImagesManager() {
         them. Existing uploads are loaded from the current manifest on every visit.
       </p>
 
+      {!loading && (
+        <div className="admin-image-summary" aria-label="Image inventory summary">
+          <div className="admin-image-summary-item">
+            <strong>{Object.keys(IMAGE_SLOTS).length}</strong>
+            <span>site image slots</span>
+          </div>
+          <div className="admin-image-summary-item">
+            <strong>{totalModulePhotos}</strong>
+            <span>module gallery photos</span>
+          </div>
+          <div className="admin-image-summary-item">
+            <strong>{MODULES.length}</strong>
+            <span>modules checked</span>
+          </div>
+        </div>
+      )}
+
       {banner && (
         <div
           className={`admin-notice admin-notice-${banner.tone === 'ok' ? 'ok' : 'error'}`}
@@ -245,7 +269,7 @@ function ModuleGalleryOverview({ galleries }: { galleries: GalleryFile }) {
         <p className="admin-muted">No module gallery photos are stored yet.</p>
       ) : (
         modulesWithPhotos.map(({ module, photos }) => (
-          <section className="admin-card" key={module.slug}>
+          <section className="admin-card admin-gallery-module" key={module.slug}>
             <div className="admin-actions" style={{ justifyContent: 'space-between' }}>
               <div>
                 <h3 className="admin-card-title">{module.title}</h3>
@@ -257,18 +281,18 @@ function ModuleGalleryOverview({ galleries }: { galleries: GalleryFile }) {
                 Edit module gallery
               </a>
             </div>
-            <div className="admin-image-grid">
+            <div className="admin-image-grid admin-module-photo-grid">
               {photos.map((photo) => (
-                <figure className="admin-card" key={photo.key}>
+                <figure className="admin-gallery-photo" key={photo.key}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={previewUrl(photo.url, 0)}
                     alt={photo.alt || `${photo.category} photo for ${module.title}`}
                     loading="lazy"
-                    style={{ width: '100%', aspectRatio: '4 / 3', objectFit: 'cover' }}
                   />
-                  <figcaption className="admin-muted">
-                    {photo.category} · {photo.caption || 'No caption'}
+                  <figcaption>
+                    <strong>{photo.category}</strong>
+                    <span>{photo.caption || 'No caption added'}</span>
                   </figcaption>
                 </figure>
               ))}

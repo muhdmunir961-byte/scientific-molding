@@ -40,7 +40,7 @@ export default function DeployButton({ enabled }: { enabled: boolean }) {
 
       setResult({
         tone: 'ok',
-        text: 'Deploy queued. The build takes one to three minutes — refresh the site after that.',
+        text: body.data?.detail ?? 'Deploy queued. The build takes one to three minutes — refresh the site after that.',
       });
     } catch {
       setResult({ tone: 'error', text: 'Could not reach the server.' });
