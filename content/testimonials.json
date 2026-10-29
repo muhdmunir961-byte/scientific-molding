@@ -2,17 +2,6 @@
   "$comment": "Testimonials. Written by the admin panel and committed through the GitHub API. The public site renders only entries with published: true.",
   "testimonials": [
     {
-      "id": "testimonial-1",
-      "name": "Hafiz",
-      "role": "Snr Engineer",
-      "company": "Preminum Sound Solution,Penang.",
-      "quote": "trainer-strong techical expertise,simplify complex topic & related with actual manufcaturing challange.\n\nModule & delivery-Highly informative & valuable.Im highly recommended this training.",
-      "photo": "https://assets.scientificmoldings.com/images/testimonials/1793290060672-488835.png",
-      "moduleSlug": "m3-fundamental-pd",
-      "published": true,
-      "order": 0
-    },
-    {
       "id": "testimonial-3",
       "name": "[Name]",
       "role": "[Role]",
@@ -21,6 +10,17 @@
       "photo": "/images/testimonial-3.jpg",
       "moduleSlug": null,
       "published": false,
+      "order": 0
+    },
+    {
+      "id": "testimonial-1",
+      "name": "Hafiz",
+      "role": "Snr Engineer",
+      "company": "Preminum Sound Solution,Penang.",
+      "quote": "trainer-strong techical expertise,simplify complex topic & related with actual manufcaturing challange.\n\nModule & delivery-Highly informative & valuable.Im highly recommended this training.",
+      "photo": "https://assets.scientificmoldings.com/images/testimonials/1793290060672-488835.png",
+      "moduleSlug": "m3-fundamental-pd",
+      "published": true,
       "order": 1
     },
     {
@@ -143,12 +143,7 @@
       "photo": "",
       "screenshot": "https://assets.scientificmoldings.com/images/testimonials/screenshots/1793292931821-489168.jpg",
       "caption": "",
-      "crop": {
-        "x": 0,
-        "y": 0,
-        "w": 1,
-        "h": 1
-      },
+      "crop": null,
       "moduleSlug": null,
       "published": false,
       "order": 11
