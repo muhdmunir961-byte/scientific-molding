@@ -1,5 +1,14 @@
 {
   "$comment": "Testimonials. Written by the admin panel and committed through the GitHub API. The public site renders only entries with published: true.",
+  "settings": {
+    "layout": "slider",
+    "autoplay": true,
+    "autoplaySeconds": 3,
+    "arrows": true,
+    "dots": true,
+    "lightbox": true,
+    "cardWidth": 590
+  },
   "testimonials": [
     {
       "id": "testimonial-1",
@@ -145,8 +154,8 @@
       "caption": "",
       "crop": null,
       "moduleSlug": null,
-      "published": true,
-      "order": 10
+      "published": false,
+      "order": 11
     }
   ]
 }
