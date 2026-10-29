@@ -3356,25 +3356,27 @@ group(
   (needle) => htmlText.includes(needle),
 );
 
-/* --- The mobile sticky bar. --- */
+/* --- The mobile sticky bar is gone. --- */
 
+/*
+ * It was removed on request: a fixed strip of Call / Email / WhatsApp pinned to
+ * the bottom of the viewport duplicated what the hamburger panel already offers
+ * and covered the last lines of every section while scrolling.
+ *
+ * The assertion is inverted rather than deleted, so a future change cannot
+ * quietly reintroduce it — that is exactly the kind of regression a checker is
+ * for.
+ */
 report(
-  declarationsOf('.mobile-sticky-bar').get('z-index') === '40',
-  'the sticky bar sits below the header and the nav panel',
-  `expected z-index:40 — served: ${declarationsOf('.mobile-sticky-bar').get('z-index') ?? '(absent)'}; above the panel would cover the mobile nav`,
+  !htmlText.includes('mobile-sticky-bar'),
+  'the bottom action bar is not rendered',
+  'it was removed as a duplicate of the hamburger menu; if it is wanted again, remove this assertion and restore the component deliberately',
 );
 
 report(
-  declarationsOf('.mobile-sticky-bar').get('background-color') === 'var(--ds-orange-500)',
-  'the sticky bar is brand orange',
-  `expected --ds-orange-500 — served: ${declarationsOf('.mobile-sticky-bar').get('background-color') ?? '(absent)'}`,
-);
-
-report(
-  declarationsOf('.mobile-sticky-bar').get('height')?.includes('64px') &&
-    declarationsOf('.mobile-sticky-bar').get('height')?.includes('env(safe-area-inset-bottom)'),
-  'the sticky bar clears the home indicator',
-  `expected height:calc(64px + env(safe-area-inset-bottom)) — served: ${declarationsOf('.mobile-sticky-bar').get('height') ?? '(absent)'}`,
+  !htmlText.includes('mobile-sticky-link'),
+  'no bottom-bar links remain in the markup',
+  'the links are in the hamburger panel; a second copy at the bottom was the complaint',
 );
 
 /*
@@ -3385,9 +3387,9 @@ report(
  * the message goes nowhere.
  */
 report(
-  countOccurrences(htmlText, 'tel:+60124885247') >= 2,
-  'the phone route renders in the hero and the sticky bar',
-  `expected at least 2 (hero CTA + sticky bar) — served: ${countOccurrences(htmlText, 'tel:+60124885247')}`,
+  countOccurrences(htmlText, 'tel:+60124885247') >= 1,
+  'the phone route renders',
+  `expected at least 1 — served: ${countOccurrences(htmlText, 'tel:+60124885247')}`,
 );
 
 report(
@@ -3397,16 +3399,9 @@ report(
 );
 
 report(
-  countOccurrences(htmlText, 'mailto:hafiedzzul@gmail.com') >= 2,
-  'the email route renders in the hero and the sticky bar',
-  `expected at least 2 — served: ${countOccurrences(htmlText, 'mailto:hafiedzzul@gmail.com')}`,
-);
-
-report(
-  declarationsOf('.mobile-sticky-link:focus-visible').get('box-shadow') ===
-    'var(--ds-ring-orange)',
-  'the sticky bar links carry the shared focus ring',
-  `the ring is not expressible inline, which is why these links had no keyboard focus indicator before — served: ${declarationsOf('.mobile-sticky-link:focus-visible').get('box-shadow') ?? '(absent)'}`,
+  countOccurrences(htmlText, 'mailto:hafiedzzul@gmail.com') >= 1,
+  'the email route renders',
+  `expected at least 1 — served: ${countOccurrences(htmlText, 'mailto:hafiedzzul@gmail.com')}`,
 );
 
 /*
@@ -3505,12 +3500,6 @@ for (const [label, selector, prop] of TAP_TARGETS) {
     `expected >=44px on ${selector} — served: ${served || '(absent)'}. A sub-44px target is a mis-tap on a phone, and stacked links make it a wrong-navigation.`,
   );
 }
-
-report(
-  declarationsOf('.mobile-sticky-bar').get('height')?.includes('64px') === true,
-  'the sticky bar row clears the minimum in one piece',
-  `64px for three buttons side by side — served: ${declarationsOf('.mobile-sticky-bar').get('height') ?? '(absent)'}`,
-);
 
 /* --- Responsive: the base rules are single-column, the queries add columns. --- */
 

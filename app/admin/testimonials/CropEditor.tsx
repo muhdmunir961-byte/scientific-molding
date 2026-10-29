@@ -45,16 +45,46 @@ export default function CropEditor({
   crop,
   onChange,
   disabled,
+  onCommit,
 }: {
   src: string;
   crop: TestimonialCrop | null;
   onChange: (next: TestimonialCrop | null) => void;
   disabled?: boolean;
+  /**
+   * Called once the drag or preset has settled, with the final value.
+   *
+   * ── Why there are two callbacks ─────────────────────────────────────────
+   * `onChange` fires on every pointer move — that is what makes the box follow
+   * the cursor. `onCommit` fires once, after the movement stops.
+   *
+   * The panel used to persist from `onChange`, which meant a request per pixel
+   * of drag. Worse, the save set `busy`, `busy` set `disabled`, and the editor
+   * disabled itself mid-drag — so the box moved once and then froze. That is the
+   * "crop cannot be used to set the frame" the operator reported.
+   */
+  onCommit?: (next: TestimonialCrop | null) => void;
 }) {
   const boxRef = useRef<HTMLDivElement | null>(null);
   const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
   const [dragging, setDragging] = useState<'move' | 'se' | null>(null);
   const startRef = useRef<{ x: number; y: number; crop: TestimonialCrop } | null>(null);
+
+  /*
+   * The newest value, and the newest commit callback.
+   *
+   * Both are read inside a `pointerup` listener that was registered when the
+   * drag began, so it closes over the props from that render. A ref is the only
+   * way to reach the current values from there.
+   */
+  const latestRef = useRef<TestimonialCrop | null>(crop);
+  const onCommitRef = useRef(onCommit);
+  onCommitRef.current = onCommit;
+
+  /* Follow the stored value when it changes from outside (a save, a reload). */
+  useEffect(() => {
+    latestRef.current = crop;
+  }, [crop]);
 
   const region = crop ?? { x: 0, y: 0, w: 1, h: 1 };
 
@@ -85,25 +115,35 @@ export default function CropEditor({
       const dy = point.y - start.y;
 
       if (dragging === 'move') {
-        onChange({
+        const next = {
           ...start.crop,
           x: clamp(start.crop.x + dx, 0, 1 - start.crop.w),
           y: clamp(start.crop.y + dy, 0, 1 - start.crop.h),
-        });
+        };
+        latestRef.current = next;
+        onChange(next);
         return;
       }
 
       // Bottom-right handle: grow or shrink, never past the image edge.
-      onChange({
+      const resized = {
         ...start.crop,
         w: clamp(start.crop.w + dx, 0.05, 1 - start.crop.x),
         h: clamp(start.crop.h + dy, 0.05, 1 - start.crop.y),
-      });
+      };
+      latestRef.current = resized;
+      onChange(resized);
     }
 
     function onUp() {
       setDragging(null);
       startRef.current = null;
+      /*
+       * Persist once, here — not on every move. The value committed is read from
+       * the DOM box rather than from state, because state may still be one frame
+       * behind the last pointermove.
+       */
+      onCommitRef.current?.(latestRef.current);
     }
 
     window.addEventListener('pointermove', onMove);
@@ -134,7 +174,9 @@ export default function CropEditor({
    */
   function applyPreset(ratio: number | null) {
     if (ratio === null) {
+      latestRef.current = null;
       onChange(null);
+      onCommitRef.current?.(null);
       return;
     }
 
@@ -148,7 +190,10 @@ export default function CropEditor({
       w = ratio / imageRatio;
     }
 
-    onChange({ x: (1 - w) / 2, y: (1 - h) / 2, w, h });
+    const next = { x: (1 - w) / 2, y: (1 - h) / 2, w, h };
+    latestRef.current = next;
+    onChange(next);
+    onCommitRef.current?.(next);
   }
 
   return (

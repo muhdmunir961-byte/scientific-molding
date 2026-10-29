@@ -299,8 +299,18 @@ function PhotoRow({
             <CropEditor
               src={image.url}
               crop={image.crop ?? null}
-              disabled={busy}
-              onChange={(next) => onSaveCaption(image.key, { crop: next })}
+              /*
+               * Not disabled while saving.
+               *
+               * The save sets `busy`, and disabling the editor on `busy` locked
+               * it mid-drag: the box moved once, the request started, and the
+               * pointer was ignored for the rest of the gesture. The crop then
+               * saved whatever the first pixel of movement produced.
+               */
+              onChange={() => {
+                /* The visual state is local; only the commit persists. */
+              }}
+              onCommit={(next) => onSaveCaption(image.key, { crop: next })}
             />
             {image.crop ? (
               <button

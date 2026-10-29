@@ -777,8 +777,11 @@ function ImageRow({
             <CropEditor
               src={image.src}
               crop={image.crop}
-              disabled={busy}
-              onChange={(next) => onSave({ ...image, crop: next })}
+              /* Not disabled while saving — see the note in CategorySection. */
+              onChange={() => {
+                /* Visual state is local; only the commit persists. */
+              }}
+              onCommit={(next) => onSave({ ...image, crop: next })}
             />
             {image.crop !== null && (
               <button

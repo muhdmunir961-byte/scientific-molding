@@ -91,5 +91,18 @@ export function galleryKey({
     throw new Error(`Unknown category "${category}".`);
   }
 
-  return `images/${moduleSlug}/${category}/${timestamp}-${slugify(filename)}`;
+  /*
+   * The extension is appended from the filename.
+   *
+   * `slugify` strips it on purpose (the key is built from a name, and the caller
+   * knows the MIME type), but nothing was putting it back — every uploaded photo
+   * was stored as `.../1793308312435-shot` with no extension. R2 serves those
+   * correctly because the PUT carries `Content-Type`, which is why the bucket
+   * looked fine. The problem is downstream: `next/image` and most CDNs decide how
+   * to treat a response partly by extension, and an extensionless URL is a
+   * frequent cause of an image that "uploaded fine" but does not appear.
+   */
+  const extension = filename.match(/\.([A-Za-z0-9]+)$/)?.[1]?.toLowerCase() ?? 'jpg';
+
+  return `images/${moduleSlug}/${category}/${timestamp}-${slugify(filename)}.${extension}`;
 }

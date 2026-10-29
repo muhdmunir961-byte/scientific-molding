@@ -157,7 +157,24 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const merged = [...existing, ...uploaded];
-  const result = await saveGallery(moduleSlug, category as PhotoCategory, merged);
+
+  /*
+   * The save is wrapped because a GitHub commit failure throws, and an uncaught
+   * throw in a route handler becomes a bare 500 with no body — the panel showed
+   * only "Request failed (500)", which says nothing about what went wrong. The
+   * bytes are already in R2 at this point, so the honest report is "uploaded but
+   * not published", with the reason.
+   */
+  let result;
+  try {
+    result = await saveGallery(moduleSlug, category as PhotoCategory, merged);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : 'unknown error';
+    return fail(
+      `${uploaded.length} photo(s) uploaded to storage but the gallery could not be saved, so they are not on the site yet. ${detail}`,
+      502,
+    );
+  }
 
   return NextResponse.json({
     ok: true,
@@ -255,7 +272,13 @@ export async function PATCH(request: Request): Promise<NextResponse> {
     return fail('Send either `keys` to reorder or `key` to edit.');
   }
 
-  const result = await saveGallery(moduleSlug, category as PhotoCategory, next);
+  let result;
+  try {
+    result = await saveGallery(moduleSlug, category as PhotoCategory, next);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : 'unknown error';
+    return fail(`The change could not be saved. ${detail}`, 502);
+  }
 
   return NextResponse.json({
     ok: true,
@@ -302,7 +325,13 @@ export async function DELETE(request: Request): Promise<NextResponse> {
    * land before the bytes are removed, or the live site could reference a URL
    * that no longer resolves.
    */
-  const result = await saveGallery(moduleSlug, category as PhotoCategory, remaining);
+  let result;
+  try {
+    result = await saveGallery(moduleSlug, category as PhotoCategory, remaining);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : 'unknown error';
+    return fail(`The photo could not be removed from the gallery. ${detail}`, 502);
+  }
   const removed = await deleteAtUrl(target.url);
 
   return NextResponse.json({

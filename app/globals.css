@@ -4733,86 +4733,20 @@ textarea.field-input {
    the 44px minimum tap target for each of the three buttons.
    ================================================================== */
 
-.mobile-sticky-bar {
-  position: fixed;
-  inset-inline: 0;
-  bottom: 0;
-  z-index: 40;
-  display: flex;
-  align-items: stretch;
-  gap: var(--ds-space-6);
-  height: calc(64px + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
-  background-color: var(--ds-orange-500);
-  /* The `lg` stack carries upward: each layer's y-offset is positive and
-     box-shadow's blur is symmetric, so a shadow on a bottom-pinned bar sits
-     above it rather than falling off-screen. */
-  box-shadow: var(--ds-shadow-lg);
-}
-
-/* Hidden at `lg`, where the header carries the same routes and the bar would be
-   a second competing action row. */
-@media (min-width: 1024px) {
-  .mobile-sticky-bar {
-    display: none;
-  }
-}
-
-.mobile-sticky-link {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--ds-space-1);
-  color: var(--ds-neutral-0);
-  transition: opacity var(--ds-duration-fast) var(--ds-ease-out);
-}
-
-.mobile-sticky-link:hover,
-.mobile-sticky-link:active {
-  opacity: 0.9;
-}
-
 /*
- * One focus signal, and it is the shared ring.
+ * §6.5 — the mobile sticky bar was REMOVED.
  *
- * `outline: none` before the shadow is load-bearing — the UA outline paints on
- * top of a box-shadow, so leaving it set would hide the ring. The radius is
- * inset so the ring hugs the link's own box rather than the bar's edge.
+ * It was a fixed strip of Call / Email / WhatsApp pinned to the bottom of the
+ * viewport under `lg`. Removed on request: it duplicated the three routes the
+ * hamburger panel already carries, and it covered the last lines of every
+ * section while scrolling — the operator described it as getting in the way.
+ *
+ * The rules and the 64px bottom pad that compensated for its height are gone
+ * with it, so no section reserves space for something that is not rendered.
+ * `components/nav/MobileStickyBar.tsx` is deleted, and `check-entrance.mjs`
+ * asserts the bar does NOT appear in the served markup — a regression here would
+ * otherwise be invisible until someone scrolled to the bottom of a phone page.
  */
-.mobile-sticky-link:focus-visible {
-  outline: none;
-  box-shadow: var(--ds-ring-orange);
-  border-radius: var(--ds-radius-sm);
-}
-
-.mobile-sticky-label {
-  font-size: var(--ds-text-caption);
-  font-weight: 600;
-  letter-spacing: var(--ds-tracking-wide);
-  line-height: 1.4;
-  text-transform: uppercase;
-}
-
-/*
- * The bar must not obscure content at the foot of the page.
- *
- * On phones the Contact section and the Footer are the two places a visitor
- * ends up, and the bar overlays 64px of each. A bottom pad equal to the bar's
- * height guarantees the last control — the submit button, then the legal line —
- * clears it rather than being covered or made unreachable by a tap.
- *
- * It is applied under `lg` only, matching the bar's own breakpoint, so desktop
- * does not gain 64px of dead space for a bar that is not rendered.
- */
-@media (max-width: 1023px) {
-  .contact-section,
-  .footer {
-    padding-bottom: calc(64px + env(safe-area-inset-bottom));
-  }
-}
-
 
 /* ==================================================================
    Module gallery — photographs uploaded per module and category
