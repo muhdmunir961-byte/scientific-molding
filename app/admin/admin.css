@@ -119,6 +119,42 @@
   padding: clamp(1.5rem, 3vw, 2.75rem) 0 5rem;
 }
 
+/*
+ * ── Why the panel is wider than the public site's measure ───────────────
+ * The public measure is set for reading prose. This panel is a work surface of
+ * side-by-side controls: a thumbnail, a caption field, a frame select and three
+ * icon buttons in one row. At 1280px those columns squeezed until labels wrapped
+ * one word per line — "Descr iption for scr een rea ders" down the side — which
+ * is what made the panel look broken.
+ *
+ * So the panel gets its own measure, and the row grids get explicit minimum
+ * column widths rather than fractions that can collapse.
+ */
+.admin-main {
+  width: min(100% - 2rem, 1600px);
+}
+
+/* Labels must not wrap mid-word. `break-word` would hyphenate the word itself,
+   which is what produced the vertical text; `nowrap` on short labels and a
+   sensible minimum width on their fields is the fix. */
+.admin-label {
+  display: block;
+  white-space: normal;
+  overflow-wrap: break-word;
+  hyphens: none;
+}
+
+.admin-hint {
+  max-width: 68ch;
+  text-wrap: pretty;
+}
+
+/* Buttons keep their label on one line: a button whose text wraps to two lines
+   is the clearest sign of a column that is too narrow. */
+.admin-button {
+  white-space: nowrap;
+}
+
 .admin-title {
   margin: 0 0 0.5rem;
   font-size: clamp(1.65rem, 2.5vw, 2.125rem);
@@ -802,7 +838,10 @@
    — a column of ragged thumbnails is hard to scan. */
 .gallery-item {
   display: grid;
-  grid-template-columns: 96px 1fr auto;
+  /* Explicit minimums rather than fractions: `1fr` collapsed to nothing once the
+     row held a thumbnail, two fields and three buttons, which is what wrapped the
+     labels into vertical text. */
+  grid-template-columns: 96px minmax(260px, 1fr) auto;
   gap: var(--ds-space-4);
   align-items: start;
   padding: var(--ds-space-4);
@@ -1038,7 +1077,9 @@ label.admin-button:focus-within {
 
 .admin-image-row {
   display: grid;
-  grid-template-columns: auto 96px 1fr;
+  /* Same reasoning as `.gallery-item`: a `1fr` field column collapsed and made
+     every label wrap to one word per line. */
+  grid-template-columns: auto 96px minmax(260px, 1fr);
   gap: var(--ds-space-4);
   align-items: start;
   padding: var(--ds-space-4);
@@ -1089,8 +1130,45 @@ label.admin-button:focus-within {
   margin-top: 0;
 }
 
+/* --- Inventory totals --- */
+
+.admin-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--ds-space-3);
+  margin: var(--ds-space-4) 0 0;
+}
+
+.admin-totals > div {
+  padding: var(--ds-space-3) var(--ds-space-4);
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: var(--ds-radius-md);
+  background-color: var(--ds-neutral-0);
+}
+
+.admin-totals dt {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: var(--ds-tracking-wide);
+  text-transform: uppercase;
+  color: var(--ds-neutral-500);
+}
+
+.admin-totals dd {
+  margin: 0.15rem 0 0;
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--ds-neutral-900);
+}
+
 .gallery-tools {
   display: flex;
+  /* Vertical on purpose: three 32px controls stacked keep the field column as
+     wide as possible. Laid out horizontally they took ~110px and squeezed the
+     caption input until its label wrapped. */
+  flex-direction: column;
   gap: var(--ds-space-2);
 }
 

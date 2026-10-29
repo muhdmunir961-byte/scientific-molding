@@ -30,6 +30,7 @@
 import { galleryFor } from '@/lib/gallery';
 import { PHOTO_CATEGORIES } from '@/lib/modules';
 import { imageAvailable } from '@/lib/gallery-availability';
+import { frameStyle } from '@/lib/image-crop';
 
 export interface ModuleGalleryProps {
   /** Canonical module slug. */
@@ -61,27 +62,45 @@ export default function ModuleGallery({ moduleSlug, moduleTitle }: ModuleGallery
         <section className="module-gallery-category" key={category.slug}>
           <h3 className="module-gallery-category-title">{category.label}</h3>
 
-          <ul className="module-gallery-list">
-            {category.images.map((image) => (
-              <li className="module-gallery-item" key={image.key}>
-                <figure className="module-gallery-figure">
-                  {/* A plain <img>: these come from an operator's camera at
-                      unknown dimensions, and the frame adapts to each file
-                      rather than reserving a ratio from declared numbers. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={image.url}
-                    alt={image.alt || `${category.label} at ${moduleTitle}`}
-                    loading="lazy"
-                  />
-                  {image.caption && (
-                    <figcaption className="module-gallery-caption">
-                      {image.caption}
-                    </figcaption>
-                  )}
-                </figure>
-              </li>
-            ))}
+          {/*
+            * A sideways strip rather than a wrapping grid.
+            *
+            * A module can hold any number of photographs, and a grid pushed the
+            * rest of the page down by several screens once a category passed
+            * about six. The strip keeps the section height bounded, and swipe /
+            * trackpad / shift-wheel work because it is a native scroll container.
+            */}
+          <ul className="module-gallery-strip">
+            {category.images.map((image) => {
+              const frame = frameStyle(image.crop ?? null, image.aspect ?? 'auto');
+
+              return (
+                <li className="module-gallery-slide" key={image.key}>
+                  <figure className="module-gallery-figure">
+                    <div
+                      className={`module-gallery-frame${frame.fitted ? ' is-fitted' : ''}`}
+                      style={{ aspectRatio: frame.ratio }}
+                    >
+                      {/* A plain <img>: these come from an operator's camera at
+                          unknown dimensions, and the frame adapts to each file
+                          rather than reserving a ratio from declared numbers. */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={image.url}
+                        alt={image.alt || `${category.label} at ${moduleTitle}`}
+                        loading="lazy"
+                        style={frame.imageStyle}
+                      />
+                    </div>
+                    {image.caption && (
+                      <figcaption className="module-gallery-caption">
+                        {image.caption}
+                      </figcaption>
+                    )}
+                  </figure>
+                </li>
+              );
+            })}
           </ul>
         </section>
       ))}

@@ -25,6 +25,7 @@
 
 import raw from '@/content/module-photos.json';
 import { MODULES, PHOTO_CATEGORIES, type PhotoCategory } from '@/lib/modules';
+import { isAspect, type ImageAspect, type ImageCrop } from '@/lib/image-crop';
 
 /** One photograph in a module's gallery. */
 export interface GalleryImage {
@@ -47,6 +48,15 @@ export interface GalleryImage {
   readonly order: number;
   /** ISO timestamp of upload, for the admin's own ordering sanity. */
   readonly uploadedAt: string;
+  /**
+   * A hand-drawn crop, or null for "fit automatically".
+   *
+   * Optional in the stored file because galleries were written before cropping
+   * existed; `galleryFor()` fills it in so the renderer has one shape.
+   */
+  readonly crop?: ImageCrop | null;
+  /** The frame shape used when there is no hand-drawn crop. */
+  readonly aspect?: ImageAspect;
 }
 
 /** A module's four categories. */
@@ -94,7 +104,13 @@ export function galleryFor(moduleSlug: string): ModuleGallery {
     if (Array.isArray(images)) {
       // A saved order may have gaps after a delete; sorting here means the
       // renderer never has to care.
-      gallery[category.slug] = [...images].sort((a, b) => a.order - b.order);
+      gallery[category.slug] = [...images]
+        .sort((a, b) => a.order - b.order)
+        .map((image) => ({
+          ...image,
+          crop: image.crop ?? null,
+          aspect: isAspect(image.aspect) ? image.aspect : 'auto',
+        }));
     }
   }
 

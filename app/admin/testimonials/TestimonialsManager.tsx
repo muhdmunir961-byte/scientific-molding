@@ -66,6 +66,7 @@ export default function TestimonialsManager() {
   }, [load]);
 
   const publishedCount = entries.filter((e) => e.published).length;
+  const imageCount = entries.reduce((total, entry) => total + entry.images.length, 0);
 
   async function move(index: number, delta: number) {
     const target = index + delta;
@@ -301,6 +302,18 @@ export default function TestimonialsManager() {
         saved={settingsSaved}
         busy={busy}
         onSave={saveSettings}
+        /*
+         * Bytes are not known client-side: the panel holds paths, not file
+         * sizes, and asking the browser to fetch every image just to size the
+         * page would be a lot of traffic for a number. The count is reported and
+         * the byte total is left to the storage provider.
+         */
+        totals={{
+          entries: entries.length,
+          published: publishedCount,
+          images: imageCount,
+          bytes: 0,
+        }}
       />
 
       <div className="admin-actions" style={{ marginBottom: 'var(--ds-space-6)' }}>

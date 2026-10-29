@@ -4839,25 +4839,52 @@ textarea.field-input {
   color: var(--ds-orange-500);
 }
 
-.module-gallery-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+/* A sideways strip, not a wrapping grid.
+
+   A module can hold any number of photographs, and a grid pushed the rest of the
+   page down by several screens once a category passed about six. The strip keeps
+   the section height bounded, and swipe / trackpad / shift-wheel work because it
+   is a native scroll container — no carousel library, no index to drift. */
+.module-gallery-strip {
+  display: flex;
   gap: var(--ds-space-4);
   margin: 0;
-  padding: 0;
+  padding: 0 0 var(--ds-space-3);
+  overflow-x: auto;
   list-style: none;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.module-gallery-slide {
+  flex: 0 0 clamp(220px, 30vw, 340px);
+  max-width: 85vw;
+  scroll-snap-align: start;
 }
 
 .module-gallery-figure {
   margin: 0;
 }
 
-.module-gallery-figure img {
-  display: block;
+/* The frame is the crop. The image inside is oversized and offset by the saved
+   fractions, so the frame clips exactly the chosen region. */
+.module-gallery-frame {
+  position: relative;
   width: 100%;
-  height: auto;
+  overflow: hidden;
   border-radius: var(--ds-radius-md);
+  background-color: var(--ds-neutral-50);
   box-shadow: var(--ds-shadow-sm);
+}
+
+.module-gallery-frame img {
+  display: block;
+}
+
+/* A preset frame: the image fills it and is centre-cropped. */
+.module-gallery-frame.is-fitted img {
+  object-fit: cover;
 }
 
 .module-gallery-caption {

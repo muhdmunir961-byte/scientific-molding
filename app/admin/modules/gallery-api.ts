@@ -16,6 +16,7 @@
  */
 
 import type { GalleryImage, ModuleGallery } from '@/lib/gallery';
+import type { ImageAspect, ImageCrop } from '@/lib/image-crop';
 
 export interface ApiResult<T> {
   ok: boolean;
@@ -103,7 +104,7 @@ export function editPhoto(
   moduleSlug: string,
   category: string,
   key: string,
-  fields: { caption?: string; alt?: string },
+  fields: { caption?: string; alt?: string; crop?: ImageCrop | null; aspect?: ImageAspect },
 ): Promise<ApiResult<{ images: GalleryImage[]; message: string }>> {
   return request('/api/admin/module-photos', {
     method: 'PATCH',

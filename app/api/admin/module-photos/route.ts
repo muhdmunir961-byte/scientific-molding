@@ -26,6 +26,7 @@ import { requireSession, fail } from '@/lib/admin/guard';
 import { galleryKey } from '@/lib/admin/r2-keys';
 import { deleteAtUrl, storeAtKey, validateImage } from '@/lib/admin/store';
 import type { GalleryImage } from '@/lib/gallery';
+import { isAspect, toCrop } from '@/lib/image-crop';
 import { PHOTO_CATEGORIES, isValidCategory, isValidModuleSlug, type PhotoCategory } from '@/lib/modules';
 
 export const runtime = 'nodejs';
@@ -235,6 +236,18 @@ export async function PATCH(request: Request): Promise<NextResponse> {
             ...img,
             caption: typeof payload.caption === 'string' ? payload.caption : img.caption,
             alt: typeof payload.alt === 'string' ? payload.alt : img.alt,
+            /*
+             * Crop and frame are edited from the same row as the caption, so
+             * they travel on the same request. `undefined` keeps the stored
+             * value; an explicit `null` clears the crop back to automatic.
+             */
+            crop:
+              payload.crop === undefined
+                ? img.crop
+                : payload.crop === null
+                  ? null
+                  : toCrop(payload.crop),
+            aspect: isAspect(payload.aspect) ? payload.aspect : img.aspect,
           }
         : img,
     );

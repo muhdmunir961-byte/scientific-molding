@@ -14,8 +14,10 @@ import { useRef, useState } from 'react';
 
 import type { GalleryImage } from '@/lib/gallery';
 import type { PhotoCategory } from '@/lib/modules';
+import type { ImageAspect, ImageCrop } from '@/lib/image-crop';
 
 import { deletePhoto, editPhoto, reorderPhotos, uploadPhotos } from '../gallery-api';
+import CropEditor from '../../testimonials/CropEditor';
 
 export interface CategorySectionProps {
   moduleSlug: string;
@@ -118,7 +120,15 @@ export function CategorySection({
     );
   }
 
-  async function saveCaption(key: string, fields: { caption?: string; alt?: string }) {
+  async function saveCaption(
+    key: string,
+    fields: {
+      caption?: string;
+      alt?: string;
+      crop?: ImageCrop | null;
+      aspect?: ImageAspect;
+    },
+  ) {
     const result = await editPhoto(moduleSlug, category, key, fields);
     if (!result.ok || !result.data) {
       onNotice({ tone: 'error', text: result.error ?? 'Could not save that field.' });
@@ -202,10 +212,14 @@ function PhotoRow({
   busy: boolean;
   onMove: (index: number, delta: number) => void;
   onRemove: (key: string) => void;
-  onSaveCaption: (key: string, fields: { caption?: string; alt?: string }) => void;
+  onSaveCaption: (
+    key: string,
+    fields: { caption?: string; alt?: string; crop?: ImageCrop | null; aspect?: ImageAspect },
+  ) => void;
 }) {
   const [caption, setCaption] = useState(image.caption);
   const [alt, setAlt] = useState(image.alt);
+  const [editingCrop, setEditingCrop] = useState(false);
 
   return (
     <li className="gallery-item">
@@ -246,7 +260,67 @@ function PhotoRow({
           }}
         />
 
-        <p className="admin-image-path">Position {index + 1}</p>
+        <label className="admin-label" htmlFor={`asp-${image.key}`}>
+          Frame
+        </label>
+        <select
+          id={`asp-${image.key}`}
+          className="admin-input"
+          value={image.crop ? 'cropped' : (image.aspect ?? 'auto')}
+          disabled={busy}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (value === 'cropped') {
+              setEditingCrop(true);
+              return;
+            }
+            onSaveCaption(image.key, { aspect: value as ImageAspect, crop: null });
+          }}
+        >
+          <option value="auto">Auto — the photo&apos;s own shape</option>
+          <option value="portrait">Portrait (4:5)</option>
+          <option value="square">Square (1:1)</option>
+          <option value="landscape">Landscape (16:9)</option>
+          {image.crop ? <option value="cropped">Hand-drawn crop</option> : null}
+        </select>
+
+        <button
+          type="button"
+          className="admin-button admin-button-secondary"
+          disabled={busy}
+          style={{ marginTop: 'var(--ds-space-3)' }}
+          onClick={() => setEditingCrop((v) => !v)}
+        >
+          {editingCrop ? 'Close crop editor' : image.crop ? 'Edit crop' : 'Crop by hand'}
+        </button>
+
+        {editingCrop && (
+          <>
+            <CropEditor
+              src={image.url}
+              crop={image.crop ?? null}
+              disabled={busy}
+              onChange={(next) => onSaveCaption(image.key, { crop: next })}
+            />
+            {image.crop ? (
+              <button
+                type="button"
+                className="admin-button admin-button-secondary"
+                disabled={busy}
+                onClick={() => onSaveCaption(image.key, { crop: null })}
+              >
+                Clear crop
+              </button>
+            ) : null}
+          </>
+        )}
+
+        <p className="admin-image-path">
+          Position {index + 1} ·{' '}
+          <a href={image.url} target="_blank" rel="noreferrer">
+            open full size
+          </a>
+        </p>
       </div>
 
       <div className="gallery-tools">

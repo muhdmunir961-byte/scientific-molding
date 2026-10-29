@@ -26,11 +26,13 @@ export default function SectionSettings({
   saved,
   busy,
   onSave,
+  totals,
 }: {
   settings: TestimonialsSettings;
   saved: boolean;
   busy: boolean;
   onSave: (next: TestimonialsSettings) => void;
+  totals: { entries: number; published: number; images: number; bytes: number };
 }) {
   const [draft, setDraft] = useState(settings);
 
@@ -54,6 +56,33 @@ export default function SectionSettings({
         These change the section on the live site. Entries above are unaffected.
         {!saved && ' This file has no saved settings yet — these are the defaults.'}
       </p>
+
+      {/*
+        * The inventory line.
+        *
+        * An operator adding screenshots needs to know the running total without
+        * counting cards: how many entries, how many are live, how many images in
+        * total, and how much storage that is. It is read-only — it reports, it
+        * does not change anything.
+        */}
+      <dl className="admin-totals" aria-label="Testimonial inventory">
+        <div>
+          <dt>Entries</dt>
+          <dd>{totals.entries}</dd>
+        </div>
+        <div>
+          <dt>Published</dt>
+          <dd>{totals.published}</dd>
+        </div>
+        <div>
+          <dt>Images</dt>
+          <dd>{totals.images}</dd>
+        </div>
+        <div>
+          <dt>Stored</dt>
+          <dd>{formatBytes(totals.bytes)}</dd>
+        </div>
+      </dl>
 
       <div className="settings-grid">
         <label className="settings-field">
@@ -179,6 +208,20 @@ export default function SectionSettings({
       </div>
     </section>
   );
+}
+
+/**
+ * Human-readable size.
+ *
+ * Reported in MB above a megabyte because "1,234,567 bytes" tells an operator
+ * nothing about whether they are near a limit.
+ * @param {number} bytes
+ * @returns {string}
+ */
+function formatBytes(bytes: number): string {
+  if (bytes <= 0) return '0 B';
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
 /** A labelled checkbox with an explanation underneath. */

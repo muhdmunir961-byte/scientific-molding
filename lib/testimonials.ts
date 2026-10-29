@@ -25,54 +25,21 @@
 
 import raw from '@/content/testimonials.json';
 import { isValidModuleSlug } from '@/lib/modules';
+import {
+  ASPECT_RATIOS,
+  FULL_CROP,
+  isAspect,
+  validateCrop,
+  type ImageAspect,
+  type ImageCrop,
+} from '@/lib/image-crop';
 
 /**
- * A crop of a screenshot, as fractions of the ORIGINAL image.
- *
- * ── Why fractions rather than pixels ────────────────────────────────────
- * The stored screenshot is never re-encoded: the original bytes are uploaded and
- * served as-is. A crop in pixels would therefore be tied to one exact file, and
- * re-uploading a screenshot at a different size would move the crop onto the
- * wrong part of the image. Fractions survive any resize, and they are what the
- * renderer needs anyway — it scales the image inside the frame.
- *
- * `x + w` and `y + h` must stay within 0..1. A full image is `0, 0, 1, 1`.
+ * The crop type is shared with the module galleries — see `lib/image-crop.ts`
+ * for why there is one definition rather than two.
  */
-export interface TestimonialCrop {
-  /** Left edge, 0..1. */
-  readonly x: number;
-  /** Top edge, 0..1. */
-  readonly y: number;
-  /** Width, > 0..1. */
-  readonly w: number;
-  /** Height, > 0..1. */
-  readonly h: number;
-}
-
-/** The whole image — no cropping. */
-export const FULL_CROP: TestimonialCrop = { x: 0, y: 0, w: 1, h: 1 };
-
-/**
- * How a screenshot is fitted into its frame when nobody has cropped it by hand.
- *
- * ── What "auto" actually does ───────────────────────────────────────────
- * `auto` keeps the image's own shape, so nothing is ever hidden by default —
- * the right choice for evidence, where a cropped-off timestamp is the difference
- * between believable and not.
- *
- * The other three force a consistent frame across the row, which is what makes a
- * mixed set (a phone capture next to an email capture) look deliberate. The
- * image is centred and its overflow clipped — a centre crop, chosen because the
- * subject of a feedback screenshot is almost always the middle of the message.
- */
-export type ImageAspect = 'auto' | 'square' | 'portrait' | 'landscape';
-
-/** The ratio each non-auto aspect resolves to. */
-export const ASPECT_RATIOS: Record<Exclude<ImageAspect, 'auto'>, number> = {
-  square: 1,
-  portrait: 4 / 5,
-  landscape: 16 / 9,
-};
+export type TestimonialCrop = ImageCrop;
+export { FULL_CROP, ASPECT_RATIOS, type ImageAspect };
 
 /** One image attached to a testimonial. */
 export interface TestimonialImage {
@@ -260,11 +227,6 @@ export function testimonialsSettings(): TestimonialsSettings {
   };
 }
 
-/** Whether a value is one of the four frame shapes. */
-function isAspect(value: unknown): value is ImageAspect {
-  return value === 'auto' || value === 'square' || value === 'portrait' || value === 'landscape';
-}
-
 /**
  * Upgrade one stored entry to the current shape.
  *
@@ -411,13 +373,8 @@ export function validateTestimonial(entry: Testimonial): string {
 
     if (image.crop === null) continue;
 
-    const { x, y, w, h } = image.crop;
-    const finite = [x, y, w, h].every((v) => typeof v === 'number' && Number.isFinite(v));
-    if (!finite) return `Image ${index + 1}: the crop values must be numbers.`;
-    if (w <= 0 || h <= 0) return `Image ${index + 1}: the crop needs a width and a height.`;
-    if (x < 0 || y < 0 || x + w > 1.0001 || y + h > 1.0001) {
-      return `Image ${index + 1}: the crop must stay inside the image.`;
-    }
+    const problem = validateCrop(image.crop, `Image ${index + 1}`);
+    if (problem) return problem;
   }
 
   return '';

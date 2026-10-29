@@ -45,8 +45,21 @@ export const ALLOWED_IMAGE_TYPES = [
   'image/svg+xml',
 ] as const;
 
-/** Maximum upload size in bytes. 8 MB covers a full-resolution camera JPEG. */
-export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+/**
+ * Maximum upload size in bytes.
+ *
+ * ── Why this is 25 MB and not 8 ─────────────────────────────────────────
+ * Nothing here re-encodes an upload: the original bytes are stored and served,
+ * because `next/image` already produces every display size from the original and
+ * a resize-on-upload would bake one size in permanently.
+ *
+ * The cost of that decision is that an upload is stored in full, so the ceiling
+ * has to cover a real file. A modern phone screenshot is 2–6 MB and a
+ * full-resolution camera photo is 8–20 MB; the old 8 MB limit rejected the
+ * second kind outright, which read as "upload is broken" rather than "this file
+ * is too big". 25 MB covers both without inviting a 200 MB TIFF.
+ */
+export const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
 
 /**
  * Extension for a MIME type.
