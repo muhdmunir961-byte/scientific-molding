@@ -3,7 +3,7 @@
   "testimonials": [
     {
       "id": "testimonial-1",
-      "name": "[Name]",
+      "name": "Hafiz",
       "role": "[Role]",
       "company": "[Company]",
       "quote": "[Testimonial text — 2-3 sentences]",
@@ -77,17 +77,6 @@
       "moduleSlug": null,
       "published": false,
       "order": 6
-    },
-    {
-      "id": "testimonial-mvsvmips",
-      "name": "New testimonial",
-      "role": "",
-      "company": "",
-      "quote": "Replace this with the quote the person actually gave.",
-      "photo": "",
-      "moduleSlug": null,
-      "published": false,
-      "order": 7
     }
   ]
 }
