@@ -18,11 +18,9 @@
       "role": "[Role]",
       "company": "[Company]",
       "quote": "[Testimonial text — 2-3 sentences]",
-      "photo": "",
-      "screenshot": "https://assets.scientificmoldings.com/images/testimonials/screenshots/1793291655535-489165.jpg",
-      "crop": null,
+      "photo": "/images/testimonial-2.jpg",
       "moduleSlug": null,
-      "published": true,
+      "published": false,
       "order": 1
     },
     {
@@ -31,7 +29,9 @@
       "role": "[Role]",
       "company": "[Company]",
       "quote": "[Testimonial text — 2-3 sentences]",
-      "photo": "/images/testimonial-3.jpg",
+      "photo": "",
+      "screenshot": "",
+      "crop": null,
       "moduleSlug": null,
       "published": false,
       "order": 2
