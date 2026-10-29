@@ -873,6 +873,72 @@
   border: 1px solid var(--ds-neutral-200);
 }
 
+/* --- Screenshot crop editor --- */
+
+.crop-editor {
+  margin-top: var(--ds-space-4);
+}
+
+.crop-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+  margin-bottom: var(--ds-space-3);
+}
+
+.crop-presets .admin-button {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.75rem;
+}
+
+/* The stage is the anchor for both the image and the selection box, so their
+   percentage offsets resolve against exactly the same rectangle. */
+.crop-stage {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  line-height: 0;
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: var(--ds-radius-md);
+  overflow: hidden;
+  background-color: var(--ds-neutral-100);
+}
+
+.crop-source {
+  display: block;
+  max-width: 100%;
+  max-height: 420px;
+  width: auto;
+  height: auto;
+}
+
+/* The selection: a clear outline over a dimmed surround, so the chosen region
+   reads as "kept" without hiding what is being excluded. */
+.crop-box {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid var(--ds-orange-500);
+  background-color: rgb(255 255 255 / 12%);
+  box-shadow: 0 0 0 9999px rgb(15 23 42 / 45%);
+  cursor: move;
+  touch-action: none;
+}
+
+/* The resize handle. 16px is the smallest that is comfortably grabbable on a
+   trackpad while still reading as a corner rather than a blob. */
+.crop-handle {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: var(--ds-orange-500);
+  border: 2px solid var(--ds-neutral-0);
+  cursor: nwse-resize;
+  touch-action: none;
+}
+
 .gallery-tools {
   display: flex;
   gap: var(--ds-space-2);

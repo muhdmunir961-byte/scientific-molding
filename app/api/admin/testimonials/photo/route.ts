@@ -77,13 +77,22 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   /*
-   * The slot is passed as '' rather than 'logo', so an SVG is refused here.
-   * A headshot is a photograph; the SVG exception exists for the wordmark only.
+   * `kind` separates the two images a testimonial can carry, so the bucket stays
+   * navigable and a screenshot is never mistaken for a headshot. Anything other
+   * than 'screenshot' is treated as a headshot, which is the original behaviour.
    */
-  const problem = validateImage({ type: file.type, size: file.size });
+  const kind = String(form.get('kind') ?? '') === 'screenshot' ? 'screenshots' : 'headshots';
+
+  /*
+   * The slot is named explicitly and is NOT 'logo', which is what makes
+   * `validateImage` refuse an SVG: it accepts vector only for the wordmark, the
+   * one position where it is genuinely needed. A screenshot is a raster image,
+   * and an SVG served from the site's own domain could carry script.
+   */
+  const problem = validateImage({ type: file.type, size: file.size }, 'testimonial');
   if (problem) return fail(problem);
 
-  const key = `images/testimonials/${Date.now()}-${slugify(file.name)}.${extensionFor(file.type)}`;
+  const key = `images/testimonials/${kind}/${Date.now()}-${slugify(file.name)}.${extensionFor(file.type)}`;
 
   try {
     const stored = await storeAtKey({

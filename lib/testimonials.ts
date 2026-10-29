@@ -26,6 +26,32 @@
 import raw from '@/content/testimonials.json';
 import { isValidModuleSlug } from '@/lib/modules';
 
+/**
+ * A crop of a screenshot, as fractions of the ORIGINAL image.
+ *
+ * ── Why fractions rather than pixels ────────────────────────────────────
+ * The stored screenshot is never re-encoded: the original bytes are uploaded and
+ * served as-is. A crop in pixels would therefore be tied to one exact file, and
+ * re-uploading a screenshot at a different size would move the crop onto the
+ * wrong part of the image. Fractions survive any resize, and they are what the
+ * renderer needs anyway — it scales the image inside the frame.
+ *
+ * `x + w` and `y + h` must stay within 0..1. A full image is `0, 0, 1, 1`.
+ */
+export interface TestimonialCrop {
+  /** Left edge, 0..1. */
+  readonly x: number;
+  /** Top edge, 0..1. */
+  readonly y: number;
+  /** Width, > 0..1. */
+  readonly w: number;
+  /** Height, > 0..1. */
+  readonly h: number;
+}
+
+/** The whole image — no cropping. */
+export const FULL_CROP: TestimonialCrop = { x: 0, y: 0, w: 1, h: 1 };
+
 /** One testimonial. */
 export interface Testimonial {
   /** Stable identity. Reordering depends on it; see `lib/gallery.ts` for why. */
@@ -39,6 +65,14 @@ export interface Testimonial {
   readonly quote: string;
   /** Optional headshot path. Empty string renders an initial-letter tile. */
   readonly photo: string;
+  /**
+   * Optional screenshot of the feedback as the person actually gave it — a
+   * WhatsApp or email capture. Shown at its own aspect ratio, never forced into
+   * a square, because the point of it is that it is unedited evidence.
+   */
+  readonly screenshot: string;
+  /** Crop applied to `screenshot`. `null` means show the whole image. */
+  readonly crop: TestimonialCrop | null;
   /** Which module this relates to, or null. Must be a real module slug. */
   readonly moduleSlug: string | null;
   /** Rendered on the public site only when true. */
@@ -47,11 +81,36 @@ export interface Testimonial {
   readonly order: number;
 }
 
-const FILE = raw as { testimonials: Testimonial[] };
+/**
+ * The file's shape as it may exist on disk.
+ *
+ * `screenshot` and `crop` are optional here on purpose: entries written before
+ * those fields existed do not have them, and the committed JSON is edited by the
+ * panel rather than migrated. `allTestimonials()` fills the gaps.
+ */
+type StoredTestimonial = Omit<Testimonial, 'screenshot' | 'crop'> & {
+  screenshot?: string;
+  crop?: TestimonialCrop | null;
+};
 
-/** Every testimonial, in order — published or not. For the admin panel. */
+const FILE = raw as { testimonials: StoredTestimonial[] };
+
+/**
+ * Every testimonial, in order — published or not. For the admin panel.
+ *
+ * Defaults are filled here rather than at every call site: `screenshot` and
+ * `crop` were added after the first entries were written, so an older file has
+ * neither key. Reading them as `undefined` would make every consumer guard
+ * against a shape the type says cannot happen.
+ */
 export function allTestimonials(): Testimonial[] {
-  return [...FILE.testimonials].sort((a, b) => a.order - b.order);
+  return [...FILE.testimonials]
+    .sort((a, b) => a.order - b.order)
+    .map((entry) => ({
+      ...entry,
+      screenshot: entry.screenshot ?? '',
+      crop: entry.crop ?? null,
+    }));
 }
 
 /**
@@ -88,6 +147,8 @@ export function blankTestimonial(order: number): Testimonial {
     company: '',
     quote: '',
     photo: '',
+    screenshot: '',
+    crop: null,
     moduleSlug: null,
     published: false,
     order,
@@ -114,6 +175,21 @@ export function validateTestimonial(entry: Testimonial): string {
 
   if (!Number.isInteger(entry.order) || entry.order < 0) {
     return 'The order must be a whole number from 0.';
+  }
+
+  /*
+   * A crop that runs past the image edge would render as blank space in the
+   * frame, and one with zero width or height would make the frame collapse.
+   * Rejected here so the public page can trust the values it reads.
+   */
+  if (entry.crop !== null) {
+    const { x, y, w, h } = entry.crop;
+    const finite = [x, y, w, h].every((v) => typeof v === 'number' && Number.isFinite(v));
+    if (!finite) return 'The crop values must be numbers.';
+    if (w <= 0 || h <= 0) return 'The crop must have a width and a height.';
+    if (x < 0 || y < 0 || x + w > 1.0001 || y + h > 1.0001) {
+      return 'The crop must stay inside the image.';
+    }
   }
 
   return '';

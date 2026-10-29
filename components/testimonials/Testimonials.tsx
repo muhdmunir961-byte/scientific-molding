@@ -146,6 +146,14 @@ function TestimonialCard({
 }) {
   return (
     <figure className="testimonial-card">
+      {testimonial.screenshot && (
+        <FeedbackScreenshot
+          src={testimonial.screenshot}
+          crop={testimonial.crop}
+          name={testimonial.name}
+        />
+      )}
+
       <blockquote className="testimonial-quote">{testimonial.quote}</blockquote>
 
       <figcaption className="testimonial-attribution">
@@ -169,6 +177,68 @@ function TestimonialCard({
         * the publish gate exists to prevent.
         */}
     </figure>
+  );
+}
+
+/**
+ * The feedback exactly as the person sent it — a WhatsApp or email capture.
+ *
+ * ── Why this is not a square thumbnail ──────────────────────────────────
+ * The whole point of a screenshot is that it is unedited evidence. Cropping it
+ * into a card-shaped frame would remove the name, the timestamp or the message
+ * bubble, which is precisely what makes it believable. So it keeps its own
+ * aspect ratio and the frame grows to fit.
+ *
+ * ── How the crop is applied without re-encoding ─────────────────────────
+ * The stored file is the original upload, untouched. The crop is a set of
+ * fractions of the original, so it is applied with CSS: the image is scaled to
+ * `1/w` of the frame's width and shifted by `-x/w`, which shows exactly the
+ * selected region. No server-side image library, and changing the crop later
+ * never degrades the file.
+ *
+ * The `padding-top` on the frame reserves the cropped region's aspect ratio
+ * before the image loads, so the card does not jump as bytes arrive.
+ */
+function FeedbackScreenshot({
+  src,
+  crop,
+  name,
+}: {
+  src: string;
+  crop: Testimonial['crop'];
+  name: string;
+}) {
+  const region = crop ?? { x: 0, y: 0, w: 1, h: 1 };
+
+  /*
+   * Guard against a crop saved before validation existed. A zero dimension
+   * would divide by zero and collapse the frame.
+   */
+  const width = region.w > 0 ? region.w : 1;
+  const height = region.h > 0 ? region.h : 1;
+
+  return (
+    <div
+      className="testimonial-screenshot"
+      /* The cropped region's ratio, so the frame is the right shape pre-load. */
+      style={{ aspectRatio: `${width} / ${height}` }}
+    >
+      <Image
+        src={src}
+        alt={`Feedback as submitted by ${name}`}
+        width={1200}
+        height={Math.round(1200 * (height / width))}
+        sizes="(min-width: 768px) 33vw, 100vw"
+        style={{
+          position: 'absolute',
+          width: `${100 / width}%`,
+          height: `${100 / height}%`,
+          left: `${(-region.x * 100) / width}%`,
+          top: `${(-region.y * 100) / height}%`,
+          maxWidth: 'none',
+        }}
+      />
+    </div>
   );
 }
 

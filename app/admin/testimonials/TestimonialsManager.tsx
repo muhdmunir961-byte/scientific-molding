@@ -19,8 +19,9 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { MODULES } from '@/lib/modules';
-import type { Testimonial } from '@/lib/testimonials';
+import type { Testimonial, TestimonialCrop } from '@/lib/testimonials';
 
+import CropEditor from './CropEditor';
 import {
   addTestimonial,
   deleteTestimonial,
@@ -145,6 +146,42 @@ export default function TestimonialsManager() {
     setNotice({ tone: 'ok', text: uploaded.data.message || 'Photo uploaded and saved.' });
   }
 
+  /**
+   * Upload a feedback screenshot and store it on the entry.
+   *
+   * A new screenshot resets the crop: the old fractions describe the previous
+   * image, and carrying them over would show an arbitrary corner of the new one.
+   */
+  async function uploadScreenshot(entry: Testimonial, file: File) {
+    setBusy(true);
+    setNotice(null);
+
+    const uploaded = await uploadTestimonialPhoto(file, 'screenshot');
+    if (!uploaded.ok || !uploaded.data) {
+      setBusy(false);
+      setNotice({ tone: 'error', text: uploaded.error ?? 'Screenshot upload failed.' });
+      return;
+    }
+
+    const saved = await editTestimonial({
+      ...entry,
+      screenshot: uploaded.data.path,
+      crop: null,
+    });
+    setBusy(false);
+
+    if (!saved.ok || !saved.data) {
+      setNotice({
+        tone: 'error',
+        text: `Screenshot uploaded to ${uploaded.data.path} but the entry was not saved: ${saved.error ?? 'unknown error'}.`,
+      });
+      return;
+    }
+
+    setEntries(saved.data.testimonials);
+    setNotice({ tone: 'ok', text: 'Screenshot uploaded. Set the crop below if needed.' });
+  }
+
   return (
     <>
       <h1 className="admin-title">Testimonials</h1>
@@ -188,6 +225,7 @@ export default function TestimonialsManager() {
               onRemove={remove}
               onSave={save}
               onUploadPhoto={uploadPhoto}
+              onUploadScreenshot={uploadScreenshot}
             />
           ))}
         </ul>
@@ -213,6 +251,7 @@ function TestimonialRow({
   onRemove,
   onSave,
   onUploadPhoto,
+  onUploadScreenshot,
 }: {
   entry: Testimonial;
   index: number;
@@ -222,12 +261,15 @@ function TestimonialRow({
   onRemove: (id: string) => void;
   onSave: (entry: Testimonial, fields: Partial<Testimonial>) => void;
   onUploadPhoto: (entry: Testimonial, file: File) => void;
+  onUploadScreenshot: (entry: Testimonial, file: File) => void;
 }) {
   const [name, setName] = useState(entry.name);
   const [role, setRole] = useState(entry.role);
   const [company, setCompany] = useState(entry.company);
   const [quote, setQuote] = useState(entry.quote);
   const [photo, setPhoto] = useState(entry.photo);
+  const [screenshot, setScreenshot] = useState(entry.screenshot);
+  const [crop, setCrop] = useState<TestimonialCrop | null>(entry.crop);
 
   /*
    * Follow the saved entry when it changes underneath us.
@@ -240,6 +282,11 @@ function TestimonialRow({
   useEffect(() => {
     setPhoto(entry.photo);
   }, [entry.photo]);
+
+  useEffect(() => {
+    setScreenshot(entry.screenshot);
+    setCrop(entry.crop);
+  }, [entry.screenshot, entry.crop]);
 
   return (
     <li className={`gallery-item ${entry.published ? '' : 'testimonial-unpublished'}`}>
@@ -354,6 +401,56 @@ function TestimonialRow({
           hint="Diisi automatik selepas upload. Boleh juga tampal URL atau path sendiri."
           onSave={() => photo !== entry.photo && onSave(entry, { photo })}
         />
+
+        {/* ── Feedback screenshot ─────────────────────────────────────── */}
+        <label className="admin-label" htmlFor={`shot-upload-${entry.id}`}>
+          Feedback screenshot
+        </label>
+        <p className="admin-hint">
+          Screenshot asal daripada WhatsApp, email atau platform lain. Dipaparkan
+          pada nisbah asal — tidak dipaksa jadi segi empat sama.
+        </p>
+        <input
+          id={`shot-upload-${entry.id}`}
+          className="admin-input"
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/avif"
+          disabled={busy}
+          onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            if (file) onUploadScreenshot(entry, file);
+            event.currentTarget.value = '';
+          }}
+        />
+
+        {screenshot && (
+          <>
+            <CropEditor
+              src={screenshot}
+              crop={crop}
+              disabled={busy}
+              onChange={(next) => {
+                setCrop(next);
+                onSave(entry, { crop: next });
+              }}
+            />
+
+            <div className="admin-photo-preview">
+              <button
+                type="button"
+                className="admin-button admin-button-secondary"
+                disabled={busy}
+                onClick={() => {
+                  setScreenshot('');
+                  setCrop(null);
+                  onSave(entry, { screenshot: '', crop: null });
+                }}
+              >
+                Remove screenshot
+              </button>
+            </div>
+          </>
+        )}
 
         <label className="admin-label" htmlFor={`module-${entry.id}`}>
           Module (optional)

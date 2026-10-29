@@ -109,9 +109,13 @@ export interface UploadedPhoto {
  * @param {File} file
  * @returns {Promise<ApiResult<UploadedPhoto>>}
  */
-export function uploadTestimonialPhoto(file: File): Promise<ApiResult<UploadedPhoto>> {
+export function uploadTestimonialPhoto(
+  file: File,
+  kind: 'headshot' | 'screenshot' = 'headshot',
+): Promise<ApiResult<UploadedPhoto>> {
   const form = new FormData();
   form.set('file', file);
+  form.set('kind', kind);
 
   return request('/api/admin/testimonials/photo', { method: 'POST', body: form });
 }

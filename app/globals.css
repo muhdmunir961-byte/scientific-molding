@@ -3647,6 +3647,24 @@ body {
   border-top: 1px solid var(--ds-neutral-100);
 }
 
+/* The feedback screenshot, at the aspect ratio of the region that was kept.
+   `position: relative` is the anchor for the absolutely positioned image, which
+   is oversized and offset so only the chosen region of the original shows. The
+   frame clips it — that clip IS the crop. */
+.testimonial-screenshot {
+  position: relative;
+  width: 100%;
+  margin-bottom: var(--ds-space-4);
+  overflow: hidden;
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: var(--ds-radius-md);
+  background-color: var(--ds-neutral-50);
+}
+
+.testimonial-screenshot img {
+  object-fit: fill;
+}
+
 .testimonial-avatar {
   display: flex;
   height: 60px;

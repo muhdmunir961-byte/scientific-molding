@@ -21,9 +21,44 @@ import { NextResponse } from 'next/server';
 
 import { requireSession, fail } from '@/lib/admin/guard';
 import { readTestimonials, saveTestimonials } from '@/lib/admin/testimonials-store';
-import { blankTestimonial, validateTestimonial, type Testimonial } from '@/lib/testimonials';
+import {
+  blankTestimonial,
+  validateTestimonial,
+  type Testimonial,
+  type TestimonialCrop,
+} from '@/lib/testimonials';
 
 export const runtime = 'nodejs';
+
+/**
+ * Coerce an unknown value into a crop, or null.
+ *
+ * Only the four known numeric keys are taken, so a caller cannot smuggle extra
+ * properties into the committed file. `null` and a missing value both mean "no
+ * crop" — the whole image.
+ * @param {unknown} raw
+ * @returns {TestimonialCrop|null}
+ */
+function toCrop(raw: unknown): TestimonialCrop | null {
+  if (raw === null || raw === undefined) return null;
+  if (typeof raw !== 'object' || Array.isArray(raw)) return null;
+
+  const source = raw as Record<string, unknown>;
+  const num = (v: unknown) => (typeof v === 'number' ? v : Number(v));
+
+  const crop = {
+    x: num(source.x),
+    y: num(source.y),
+    w: num(source.w),
+    h: num(source.h),
+  };
+
+  // A crop made only of NaN is not a crop; treat it as absent rather than
+  // failing every save for an entry whose screenshot was never set.
+  if (Object.values(crop).some((v) => !Number.isFinite(v))) return null;
+
+  return crop;
+}
 
 /**
  * Coerce an unknown payload into a Testimonial, taking only known fields.
@@ -46,6 +81,8 @@ function toTestimonial(raw: Record<string, unknown>, fallbackOrder: number): Tes
     company: str(raw.company),
     quote: str(raw.quote),
     photo: str(raw.photo),
+    screenshot: str(raw.screenshot),
+    crop: toCrop(raw.crop),
     moduleSlug: moduleSlug === '' ? null : moduleSlug,
     published: raw.published === true,
     order: Number.isInteger(raw.order) ? (raw.order as number) : fallbackOrder,
