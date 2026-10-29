@@ -103,7 +103,7 @@
       "caption": "",
       "crop": null,
       "moduleSlug": null,
-      "published": false,
+      "published": true,
       "order": 8
     },
     {
@@ -117,7 +117,7 @@
       "caption": "",
       "crop": null,
       "moduleSlug": null,
-      "published": true,
+      "published": false,
       "order": 9
     },
     {
