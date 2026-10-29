@@ -144,6 +144,35 @@
   hyphens: none;
 }
 
+/*
+ * ── Why the inputs and buttons get a floor, not just a percentage ───────
+ * A `width: 100%` input inside a grid column the grid shrank to ~150px was the
+ * exact defect in the client's screenshot — every field a narrow vertical sliver
+ * with the text wrapping letter by letter. The floor guarantees a usable width
+ * even if a grid calculation goes wrong; at worst the row scrolls slightly
+ * rather than the fields becoming unreadable.
+ */
+.admin-input,
+.admin-textarea,
+.admin-button {
+  min-width: 0;
+}
+
+.gallery-fields .admin-input,
+.gallery-fields .admin-textarea,
+.gallery-fields .admin-button {
+  min-width: 220px;
+}
+
+@media (max-width: 720px) {
+  .gallery-fields .admin-input,
+  .gallery-fields .admin-textarea,
+  .gallery-fields .admin-button {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
 .admin-hint {
   max-width: 68ch;
   text-wrap: pretty;
@@ -851,9 +880,23 @@
   background-color: var(--ds-neutral-50);
 }
 
-@media (max-width: 640px) {
+/* Single column under 720px.
+
+   The old breakpoint was 640px, and a phone in landscape or a small tablet sat
+   just above it: the three-column grid applied with its 96px + 260px + auto
+   minimums, which squeezed the field column to a sliver and made every input
+   about 150px wide — the screenshot the client sent. 720px matches the image-row
+   breakpoint, so both photo layouts collapse together. */
+@media (max-width: 720px) {
   .gallery-item {
     grid-template-columns: 1fr;
+  }
+
+  /* The move/remove controls were stacked to save width in the three-column
+     layout. In a single column they have the whole row, so horizontal reads
+     faster and stops the card becoming four screens tall. */
+  .gallery-tools {
+    flex-direction: row;
   }
 }
 
@@ -1091,6 +1134,10 @@ label.admin-button:focus-within {
 @media (max-width: 720px) {
   .admin-image-row {
     grid-template-columns: 1fr;
+  }
+
+  .admin-image-row-head {
+    flex-direction: row;
   }
 }
 
