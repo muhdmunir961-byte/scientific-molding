@@ -16,18 +16,24 @@ export const CONTACT_HERO = {
 } as const;
 
 /**
- * The five programmes offered as checkboxes.
- *
- * `slug` matches the anchor of each program section, so `?program=fundamentals`
- * pre-checks the matching box. The label is what the enquirer sees.
+ * Canonical list of programme identifiers and labels comes from the CTA
+ * registry, so form choices and request links cannot drift apart. The legacy
+ * keys keep the existing public links/bookmarks and email validation stable.
  */
-export const CONTACT_PROGRAMS = [
-  { slug: 'fundamentals', label: 'Fundamentals' },
-  { slug: 'materials', label: 'Materials' },
-  { slug: 'process-development', label: 'Process Development' },
-  { slug: 'defect-troubleshooting', label: 'Defect Troubleshooting' },
-  { slug: 'pathway', label: 'Full Pathway' },
-] as const;
+import { PROGRAM_CTA_FOOTERS } from '../programs/program-cta-content';
+
+export const CONTACT_PROGRAMS = PROGRAM_CTA_FOOTERS.map(({ slug, label }) => ({
+  slug,
+  label,
+}));
+
+export const CONTACT_PROGRAM_ALIASES: Readonly<Record<string, string>> = {
+  'm1-fundamental': 'fundamentals',
+  'm2-processability': 'materials',
+  'm4-process-development': 'process-development',
+  'm6-defects-troubleshooting': 'defect-troubleshooting',
+  'm7-process-portability': 'pathway',
+};
 
 /** Consent checkbox text. Required — PDPA depends on it being explicit. */
 export const CONTACT_CONSENT =

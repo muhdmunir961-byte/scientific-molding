@@ -98,7 +98,7 @@ export function Field({
 }
 
 /**
- * The five programme checkboxes.
+ * The programme checkboxes.
  *
  * A `<fieldset>` with a `<legend>`: the five boxes are one grouped question, and
  * a screen reader announces "Programme(s) of Interest, group" before reading

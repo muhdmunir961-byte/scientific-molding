@@ -63,14 +63,11 @@ const TESTIMONIALS_HERO = withOverrides('testimonials.TESTIMONIALS_HERO', TESTIM
 /**
  * The quotes the public site may render, in order, with their uploaded photos.
  *
- * The avatar override lives in the Images group (a file upload) while the entry
- * itself lives in `content/testimonials.json`. Pairing them here is what lets the
- * operator upload a headshot on one page and edit the quote on another without
- * either clobbering the other.
- *
- * The pairing is by INDEX, which only holds while the upload slots stay named
- * `testimonial1..3` and the entries stay in that order. A fourth testimonial has
- * no slot and falls back to its own `photo` field, which is correct.
+ * The photo comes from the entry's own `photo` field, which the Testimonials page
+ * uploads directly onto the entry. It is deliberately NOT a position-based image
+ * slot: a slot pairs by index, so inserting a testimonial above another would
+ * silently move every headshot down one place — the wrong person's face on the
+ * wrong quote.
  */
 function publishedWithPhotos(): (Testimonial & { resolvedPhoto: string })[] {
   return publishedTestimonials().map((testimonial, index) => ({

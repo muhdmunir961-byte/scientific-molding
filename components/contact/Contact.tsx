@@ -29,6 +29,7 @@ import { ConsentField, Field, ProgramCheckboxes } from './FormFields';
 import { withOverrides } from '@/lib/admin/overrides';
 import {
   CONTACT_CONSENT as CONTACT_CONSENT_RAW,
+  CONTACT_PROGRAM_ALIASES,
   CONTACT_HERO as CONTACT_HERO_RAW,
   CONTACT_ID,
   CONTACT_LABELS as CONTACT_LABELS_RAW,
@@ -112,7 +113,12 @@ export default function Contact() {
         new URLSearchParams(hashQuery).get('program') ??
         new URLSearchParams(window.location.search).get('program');
 
-      if (slug && CONTACT_PROGRAMS.some((p) => p.slug === slug)) setSelected([slug]);
+      if (slug) {
+        const canonicalSlug = CONTACT_PROGRAM_ALIASES[slug] ?? slug;
+        if (CONTACT_PROGRAMS.some((program) => program.slug === canonicalSlug)) {
+          setSelected([canonicalSlug]);
+        }
+      }
     };
 
     read();

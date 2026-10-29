@@ -29,9 +29,6 @@ interface ImageOverrides {
   readonly session2?: string;
   readonly session3?: string;
   readonly session4?: string;
-  readonly testimonial1?: string;
-  readonly testimonial2?: string;
-  readonly testimonial3?: string;
   readonly logo?: string;
 }
 
@@ -88,16 +85,19 @@ export const SESSION_IMAGES: readonly SessionImage[] = TRAINER_SESSIONS.map(
 );
 
 /**
- * Testimonial avatars, with any panel override applied per slot.
+ * Testimonial avatars.
  *
- * Unlike the other slots, the avatar default comes from the testimonial itself
- * (each entry names its own `avatar` path), so the override only wins when the
- * admin has actually uploaded a replacement.
+ * ── Why this is not an override slot ────────────────────────────────────
+ * Every other image on the page is a fixed position, so a fixed key is the right
+ * identity for it. A testimonial headshot is not: the list can grow, shrink and
+ * be reordered, and the photo belongs to the person, not to a position on the
+ * page. Pairing by index — which the old `testimonial1..3` slots did — re-pairs
+ * a photo with the wrong person the moment an entry is added above it.
+ *
+ * So the avatar comes from the entry's own `photo` field, which travels with it
+ * through a reorder and has no limit on how many entries exist.
  */
-export const TESTIMONIAL_AVATARS = allTestimonials().map((testimonial, index) => {
-  const key = `testimonial${index + 1}` as keyof ImageOverrides;
-  return overrides[key] || testimonial.photo;
-});
+export const TESTIMONIAL_AVATARS = allTestimonials().map((testimonial) => testimonial.photo);
 
 /**
  * The logo image.

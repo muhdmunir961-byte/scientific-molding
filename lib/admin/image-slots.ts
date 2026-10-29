@@ -12,8 +12,16 @@
  * display metadata only; it does not affect storage.
  */
 
-/** Where an image slot lives on the page, for grouping in the panel. */
-export type SlotGroup = 'Hero' | 'About the trainer' | 'Testimonials' | 'Branding';
+/**
+ * Where an image slot lives on the page, for grouping in the panel.
+ *
+ * `Testimonials` is intentionally absent. Testimonial headshots used to be three
+ * fixed slots here (`testimonial-1..3`), which only worked while there were
+ * exactly three entries and nobody reordered them. The panel's Testimonials page
+ * now uploads a photo onto the entry itself, so a slot here would be a second
+ * way to set the same value — and the one that loses would fail silently.
+ */
+export type SlotGroup = 'Hero' | 'About the trainer' | 'Branding';
 
 /**
  * The image slots the upload API accepts.
@@ -71,30 +79,6 @@ export const IMAGE_SLOTS = {
     group: 'About the trainer' as SlotGroup,
     hint: 'Landscape. Gallery, bottom right.',
   },
-  'testimonial-1': {
-    key: 'testimonial1',
-    width: 240,
-    height: 240,
-    label: 'Testimonial photo 1',
-    group: 'Testimonials' as SlotGroup,
-    hint: 'Square headshot. Paste the path into the first testimonial on the Content page.',
-  },
-  'testimonial-2': {
-    key: 'testimonial2',
-    width: 240,
-    height: 240,
-    label: 'Testimonial photo 2',
-    group: 'Testimonials' as SlotGroup,
-    hint: 'Square headshot. Paste the path into the second testimonial on the Content page.',
-  },
-  'testimonial-3': {
-    key: 'testimonial3',
-    width: 240,
-    height: 240,
-    label: 'Testimonial photo 3',
-    group: 'Testimonials' as SlotGroup,
-    hint: 'Square headshot. Paste the path into the third testimonial on the Content page.',
-  },
   'logo': {
     key: 'logo',
     width: 320,
@@ -110,7 +94,7 @@ export type ImageSlotName = keyof typeof IMAGE_SLOTS;
 
 /** The slots, grouped for display. */
 export function slotsByGroup(): { group: SlotGroup; slots: ImageSlotName[] }[] {
-  const groups: SlotGroup[] = ['Branding', 'Hero', 'About the trainer', 'Testimonials'];
+  const groups: SlotGroup[] = ['Branding', 'Hero', 'About the trainer'];
   return groups
     .map((group) => ({
       group,

@@ -28,8 +28,6 @@
  * ════════════════════════════════════════════════════════════════════════
  */
 
-import { allTestimonials } from '@/lib/testimonials';
-
 import { HERO_MEDIA } from '@/components/hero/hero-content';
 import { TRAINER_PHOTO, TRAINER_SESSIONS } from '@/components/about/about-content';
 
@@ -66,9 +64,6 @@ export function imageDefaults(): Record<string, string> {
     session2: sessions[1] ?? '',
     session3: sessions[2] ?? '',
     session4: sessions[3] ?? '',
-    testimonial1: allTestimonials()[0]?.photo ?? '',
-    testimonial2: allTestimonials()[1]?.photo ?? '',
-    testimonial3: allTestimonials()[2]?.photo ?? '',
     logo: '',
   };
 }

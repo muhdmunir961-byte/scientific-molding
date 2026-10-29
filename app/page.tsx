@@ -19,6 +19,25 @@ import Footer from '@/components/footer/Footer';
 import NavChrome from '@/components/nav/NavChrome';
 
 /**
+ * ── Why the home page is not cached indefinitely ────────────────────────
+ * Without a `revalidate` value Next.js prerenders this route once at build time
+ * and serves it with `cache-control: s-maxage=31536000` — one year. That is
+ * correct for a page whose content only changes with a deploy, and wrong for
+ * this one: the panel commits content changes to the repository, so the page
+ * changes without anyone touching the code.
+ *
+ * The symptom that produced this setting was exactly the one the client
+ * reported — "deploy succeeded, the site did not change". A shared cache (or a
+ * browser) holding the old HTML for a year will keep serving the previous build
+ * long after the new one is live, and nothing in the panel can see that.
+ *
+ * 60 seconds bounds that staleness while keeping the route prerendered: the
+ * generated HTML is still served from cache, it just cannot be kept for longer
+ * than a minute, so a fresh deploy becomes visible almost immediately.
+ */
+export const revalidate = 60;
+
+/**
  * Home page.
  *
  * Composition, in scroll order — matching PRD Section 4 (Information

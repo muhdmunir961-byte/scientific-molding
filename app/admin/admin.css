@@ -849,6 +849,30 @@
   margin-top: 0;
 }
 
+/*
+ * Testimonial photo preview.
+ *
+ * A circular thumbnail beside a Remove control, matching the 60px avatar the
+ * public card renders so the operator sees the crop that will actually appear
+ * rather than a rectangle that implies a different one.
+ */
+.admin-photo-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  margin-top: var(--ds-space-3);
+}
+
+.admin-photo-preview img {
+  width: 60px;
+  height: 60px;
+  flex: none;
+  object-fit: cover;
+  border-radius: 50%;
+  background-color: var(--ds-neutral-100);
+  border: 1px solid var(--ds-neutral-200);
+}
+
 .gallery-tools {
   display: flex;
   gap: var(--ds-space-2);

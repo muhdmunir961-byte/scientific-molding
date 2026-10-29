@@ -91,3 +91,27 @@ export function deleteTestimonial(id: string): Promise<ApiResult<TestimonialsPay
     body: JSON.stringify({ id }),
   });
 }
+
+export interface UploadedPhoto {
+  key: string;
+  path: string;
+  storage: 'r2' | 'local';
+  message: string;
+}
+
+/**
+ * Upload one headshot and get back the path to write into the entry.
+ *
+ * The bytes are stored here; writing the path into the entry is a separate
+ * `editTestimonial` call, because an upload can succeed while the save fails and
+ * the operator needs to be told which of the two happened.
+ *
+ * @param {File} file
+ * @returns {Promise<ApiResult<UploadedPhoto>>}
+ */
+export function uploadTestimonialPhoto(file: File): Promise<ApiResult<UploadedPhoto>> {
+  const form = new FormData();
+  form.set('file', file);
+
+  return request('/api/admin/testimonials/photo', { method: 'POST', body: form });
+}

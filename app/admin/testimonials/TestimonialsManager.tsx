@@ -27,6 +27,7 @@ import {
   editTestimonial,
   fetchTestimonials,
   reorderTestimonials,
+  uploadTestimonialPhoto,
 } from './testimonials-api';
 
 export default function TestimonialsManager() {
@@ -113,6 +114,37 @@ export default function TestimonialsManager() {
     setNotice({ tone: 'ok', text: 'Saved.' });
   }
 
+  async function uploadPhoto(entry: Testimonial, file: File) {
+    setBusy(true);
+    setNotice(null);
+
+    const uploaded = await uploadTestimonialPhoto(file);
+    if (!uploaded.ok || !uploaded.data) {
+      setBusy(false);
+      setNotice({ tone: 'error', text: uploaded.error ?? 'Photo upload failed.' });
+      return;
+    }
+
+    /*
+     * The path is written into the entry as a second step, not folded into the
+     * upload. If the save fails the bytes still exist, so the message names the
+     * path and says what is left to do rather than reporting a bare failure.
+     */
+    const saved = await editTestimonial({ ...entry, photo: uploaded.data.path });
+    setBusy(false);
+
+    if (!saved.ok || !saved.data) {
+      setNotice({
+        tone: 'error',
+        text: `Photo uploaded to ${uploaded.data.path} but the entry was not saved: ${saved.error ?? 'unknown error'}. Paste the path into the Photo path field and save.`,
+      });
+      return;
+    }
+
+    setEntries(saved.data.testimonials);
+    setNotice({ tone: 'ok', text: uploaded.data.message || 'Photo uploaded and saved.' });
+  }
+
   return (
     <>
       <h1 className="admin-title">Testimonials</h1>
@@ -155,6 +187,7 @@ export default function TestimonialsManager() {
               onMove={move}
               onRemove={remove}
               onSave={save}
+              onUploadPhoto={uploadPhoto}
             />
           ))}
         </ul>
@@ -179,6 +212,7 @@ function TestimonialRow({
   onMove,
   onRemove,
   onSave,
+  onUploadPhoto,
 }: {
   entry: Testimonial;
   index: number;
@@ -187,12 +221,25 @@ function TestimonialRow({
   onMove: (index: number, delta: number) => void;
   onRemove: (id: string) => void;
   onSave: (entry: Testimonial, fields: Partial<Testimonial>) => void;
+  onUploadPhoto: (entry: Testimonial, file: File) => void;
 }) {
   const [name, setName] = useState(entry.name);
   const [role, setRole] = useState(entry.role);
   const [company, setCompany] = useState(entry.company);
   const [quote, setQuote] = useState(entry.quote);
   const [photo, setPhoto] = useState(entry.photo);
+
+  /*
+   * Follow the saved entry when it changes underneath us.
+   *
+   * The draft fields exist so typing does not fire a request per keystroke. The
+   * photo is different: it is written by an upload, not by typing, so the draft
+   * would otherwise keep the pre-upload path and the next blur on "Photo path"
+   * would save that stale value back — silently undoing the upload.
+   */
+  useEffect(() => {
+    setPhoto(entry.photo);
+  }, [entry.photo]);
 
   return (
     <li className={`gallery-item ${entry.published ? '' : 'testimonial-unpublished'}`}>
@@ -262,11 +309,49 @@ function TestimonialRow({
           onBlur={() => quote !== entry.quote && onSave(entry, { quote })}
         />
 
+        <label className="admin-label" htmlFor={`photo-upload-${entry.id}`}>
+          Photo
+        </label>
+        <p className="admin-hint">
+          Pilih gambar dari komputer. Square headshot, sekurang-kurangnya 240×240.
+          Kosongkan untuk guna huruf awal nama.
+        </p>
+        <input
+          id={`photo-upload-${entry.id}`}
+          className="admin-input"
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/avif"
+          disabled={busy}
+          onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            if (file) onUploadPhoto(entry, file);
+            // Cleared so picking the same file again still fires a change.
+            event.currentTarget.value = '';
+          }}
+        />
+        {photo && (
+          <div className="admin-photo-preview">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={photo} alt={`Current photo for ${name || 'this testimonial'}`} />
+            <button
+              type="button"
+              className="admin-button admin-button-secondary"
+              disabled={busy}
+              onClick={() => {
+                setPhoto('');
+                onSave(entry, { photo: '' });
+              }}
+            >
+              Remove photo
+            </button>
+          </div>
+        )}
+
         <TextField
           label="Photo path"
           value={photo}
           onChange={setPhoto}
-          hint="Upload on the Images page using a Testimonial slot, then paste the path here."
+          hint="Diisi automatik selepas upload. Boleh juga tampal URL atau path sendiri."
           onSave={() => photo !== entry.photo && onSave(entry, { photo })}
         />
 

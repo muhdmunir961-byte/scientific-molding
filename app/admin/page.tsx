@@ -122,7 +122,8 @@ export default async function AdminPage() {
         <h2 className="admin-card-title">Other images</h2>
         <p className="admin-card-desc">
           The fixed positions that are not part of a module: the logo, the hero
-          image, the trainer portrait and the testimonial headshots.
+          image and the trainer portrait. Testimonial headshots are uploaded on
+          each testimonial itself.
         </p>
         <Link className="admin-button admin-button-secondary" href="/admin/images">
           Manage other images

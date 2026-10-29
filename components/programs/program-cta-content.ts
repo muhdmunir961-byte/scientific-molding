@@ -80,7 +80,7 @@ export const PROGRAM_CTA_FOOTERS: readonly ProgramCtaEntry[] = [
     slug: PROGRAM_M3_HERO.id,
     headline: PROGRAM_M3_CTA.headline,
     body: PROGRAM_M3_CTA.body,
-    label: 'Request Fundamental Process Development',
+    label: 'Request M3 — Fundamental Process Development',
   },
   {
     slug: PROGRAM_D_HERO.id,
@@ -98,6 +98,6 @@ export const PROGRAM_CTA_FOOTERS: readonly ProgramCtaEntry[] = [
     slug: PROGRAM_M5_HERO.id,
     headline: PROGRAM_M5_CTA.headline,
     body: PROGRAM_M5_CTA.body,
-    label: 'Request Parameter Setting',
+    label: 'Request M5 — Parameter Setting',
   },
 ] as const;

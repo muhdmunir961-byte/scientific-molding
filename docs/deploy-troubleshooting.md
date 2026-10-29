@@ -1,5 +1,38 @@
 # Deploy troubleshooting — Coolify not rebuilding
 
+## Update — the second cause: the page was cached for a year
+
+The section below diagnoses a missing push webhook, and that was real. But a
+deploy can succeed and still leave the page unchanged for a second, independent
+reason that was found by inspecting the live response headers:
+
+```
+$ curl -sS -D - -o /dev/null https://scientificmoldings.com
+HTTP/2 200
+cache-control: s-maxage=31536000
+x-nextjs-cache: HIT
+x-nextjs-prerender: 1
+```
+
+`s-maxage=31536000` is one year. `/` was a fully static route with no
+`revalidate`, so Next.js prerendered it once and told every shared cache it could
+keep that HTML for twelve months. Even with a perfect webhook and a successful
+rebuild, a browser or CDN holding the old document keeps serving it.
+
+**Fix applied:** `app/page.tsx` now exports `revalidate = 60`. The route is still
+prerendered and served from cache, but the HTML can be at most a minute old, so a
+new deploy becomes visible without anyone purging a cache by hand.
+
+**Verify after deploying:**
+
+```bash
+curl -sS -D - -o /dev/null https://scientificmoldings.com | grep -i cache-control
+# Expect: cache-control: s-maxage=60
+```
+
+If it still says `31536000`, the container is running a build from before this
+change — see the webhook diagnosis below.
+
 ## The symptom
 
 The admin panel saves correctly and commits reach GitHub, but the live site
