@@ -143,7 +143,12 @@
       "photo": "",
       "screenshot": "https://assets.scientificmoldings.com/images/testimonials/screenshots/1793292931821-489168.jpg",
       "caption": "",
-      "crop": null,
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "w": 1,
+        "h": 1
+      },
       "moduleSlug": null,
       "published": false,
       "order": 11
