@@ -88,7 +88,16 @@
       "presentation": []
     },
     "m5-parameter-setting": {
-      "lecture": [],
+      "lecture": [
+        {
+          "key": "images/m5-parameter-setting/lecture/1793261472238-hld-2",
+          "url": "https://assets.scientificmoldings.com/images/m5-parameter-setting/lecture/1793261472238-hld-2",
+          "alt": "",
+          "caption": "",
+          "order": 0,
+          "uploadedAt": "2026-10-29T08:11:13.558Z"
+        }
+      ],
       "practical": [],
       "discussion": [],
       "presentation": []
