@@ -2,6 +2,17 @@
   "$comment": "Testimonials. Written by the admin panel and committed through the GitHub API. The public site renders only entries with published: true.",
   "testimonials": [
     {
+      "id": "testimonial-1",
+      "name": "Hafiz",
+      "role": "Snr Engineer",
+      "company": "Preminum Sound Solution,Penang.",
+      "quote": "trainer-strong techical expertise,simplify complex topic & related with actual manufcaturing challange.\n\nModule & delivery-Highly informative & valuable.Im highly recommended this training.",
+      "photo": "https://assets.scientificmoldings.com/images/testimonials/1793290060672-488835.png",
+      "moduleSlug": "m3-fundamental-pd",
+      "published": true,
+      "order": 0
+    },
+    {
       "id": "testimonial-2",
       "name": "[Name]",
       "role": "[Role]",
@@ -10,7 +21,7 @@
       "photo": "/images/testimonial-2.jpg",
       "moduleSlug": null,
       "published": false,
-      "order": 0
+      "order": 1
     },
     {
       "id": "testimonial-3",
@@ -21,21 +32,10 @@
       "photo": "/images/testimonial-3.jpg",
       "moduleSlug": null,
       "published": false,
-      "order": 1
-    },
-    {
-      "id": "testimonial-mv1v12i5",
-      "name": "New testimonial",
-      "role": "",
-      "company": "",
-      "quote": "Replace this with the quote the person actually gave.",
-      "photo": "",
-      "moduleSlug": null,
-      "published": false,
       "order": 2
     },
     {
-      "id": "testimonial-mv2f9fq6",
+      "id": "testimonial-mv1v12i5",
       "name": "New testimonial",
       "role": "",
       "company": "",
