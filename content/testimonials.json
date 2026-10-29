@@ -129,14 +129,9 @@
       "photo": "",
       "screenshot": "https://assets.scientificmoldings.com/images/testimonials/screenshots/1793292931417-489167.jpg",
       "caption": "",
-      "crop": {
-        "x": 0,
-        "y": 0,
-        "w": 1,
-        "h": 1
-      },
+      "crop": null,
       "moduleSlug": null,
-      "published": true,
+      "published": false,
       "order": 10
     },
     {
@@ -150,7 +145,7 @@
       "caption": "",
       "crop": null,
       "moduleSlug": null,
-      "published": false,
+      "published": true,
       "order": 11
     }
   ]
