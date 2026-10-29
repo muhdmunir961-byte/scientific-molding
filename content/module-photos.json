@@ -4,7 +4,16 @@
     "m1-fundamental": {
       "lecture": [],
       "practical": [],
-      "discussion": [],
+      "discussion": [
+        {
+          "key": "images/m1-fundamental/discussion/1793266347315-hld-1",
+          "url": "https://assets.scientificmoldings.com/images/m1-fundamental/discussion/1793266347315-hld-1",
+          "alt": "",
+          "caption": "",
+          "order": 0,
+          "uploadedAt": "2026-10-29T09:32:28.201Z"
+        }
+      ],
       "presentation": [
         {
           "key": "images/m1-fundamental/presentation/1791601815284-lesso-3",
