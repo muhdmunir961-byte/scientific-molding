@@ -94,18 +94,18 @@
       "presentation": []
     },
     "m6-defects-troubleshooting": {
-      "lecture": [
+      "lecture": [],
+      "practical": [],
+      "discussion": [
         {
-          "key": "images/m6-defects-troubleshooting/lecture/1793238640924-jst-0526-3",
-          "url": "https://assets.scientificmoldings.com/images/m6-defects-troubleshooting/lecture/1793238640924-jst-0526-3",
+          "key": "images/m6-defects-troubleshooting/discussion/1793238687677-nagoya-3",
+          "url": "https://assets.scientificmoldings.com/images/m6-defects-troubleshooting/discussion/1793238687677-nagoya-3",
           "alt": "",
           "caption": "",
           "order": 0,
-          "uploadedAt": "2026-10-29T01:50:41.581Z"
+          "uploadedAt": "2026-10-29T01:51:28.981Z"
         }
       ],
-      "practical": [],
-      "discussion": [],
       "presentation": []
     },
     "m7-process-portability": {
