@@ -18,7 +18,9 @@
       "role": "[Role]",
       "company": "[Company]",
       "quote": "[Testimonial text — 2-3 sentences]",
-      "photo": "/images/testimonial-2.jpg",
+      "photo": "",
+      "screenshot": "",
+      "crop": null,
       "moduleSlug": null,
       "published": false,
       "order": 1
@@ -66,6 +68,17 @@
       "moduleSlug": null,
       "published": false,
       "order": 5
+    },
+    {
+      "id": "testimonial-mv3tauh5",
+      "name": "New testimonial",
+      "role": "",
+      "company": "",
+      "quote": "Replace this with the quote the person actually gave.",
+      "photo": "",
+      "moduleSlug": null,
+      "published": false,
+      "order": 6
     }
   ]
 }
