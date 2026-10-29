@@ -2,17 +2,6 @@
   "$comment": "Testimonials. Written by the admin panel and committed through the GitHub API. The public site renders only entries with published: true.",
   "testimonials": [
     {
-      "id": "testimonial-2",
-      "name": "[Name]",
-      "role": "[Role]",
-      "company": "[Company]",
-      "quote": "[Testimonial text — 2-3 sentences]",
-      "photo": "/images/testimonial-2.jpg",
-      "moduleSlug": null,
-      "published": false,
-      "order": 0
-    },
-    {
       "id": "testimonial-1",
       "name": "Hafiz",
       "role": "Snr Engineer",
@@ -21,6 +10,17 @@
       "photo": "https://assets.scientificmoldings.com/images/testimonials/1793290060672-488835.png",
       "moduleSlug": "m3-fundamental-pd",
       "published": true,
+      "order": 0
+    },
+    {
+      "id": "testimonial-2",
+      "name": "[Name]",
+      "role": "[Role]",
+      "company": "[Company]",
+      "quote": "[Testimonial text — 2-3 sentences]",
+      "photo": "/images/testimonial-2.jpg",
+      "moduleSlug": null,
+      "published": false,
       "order": 1
     },
     {
@@ -29,7 +29,9 @@
       "role": "[Role]",
       "company": "[Company]",
       "quote": "[Testimonial text — 2-3 sentences]",
-      "photo": "/images/testimonial-3.jpg",
+      "photo": "",
+      "screenshot": "",
+      "crop": null,
       "moduleSlug": null,
       "published": false,
       "order": 2
