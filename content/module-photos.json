@@ -48,7 +48,13 @@
           "alt": "",
           "caption": "",
           "order": 0,
-          "uploadedAt": "2026-10-27T13:02:58.778Z"
+          "uploadedAt": "2026-10-27T13:02:58.778Z",
+          "crop": {
+            "x": 0,
+            "y": 0,
+            "w": 1,
+            "h": 1
+          }
         }
       ],
       "practical": [
