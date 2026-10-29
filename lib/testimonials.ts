@@ -236,7 +236,7 @@ export function testimonialsSettings(): TestimonialsSettings {
  * @param {StoredTestimonial} entry
  * @returns {Testimonial}
  */
-function upgrade(entry: StoredTestimonial): Testimonial {
+export function upgradeTestimonial(entry: StoredTestimonial): Testimonial {
   if (Array.isArray(entry.images)) {
     return {
       ...entry,
@@ -270,7 +270,7 @@ function upgrade(entry: StoredTestimonial): Testimonial {
 export function allTestimonials(): Testimonial[] {
   return [...FILE.testimonials]
     .sort((a, b) => a.order - b.order)
-    .map(upgrade);
+    .map(upgradeTestimonial);
 }
 
 /**

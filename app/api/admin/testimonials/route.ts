@@ -31,6 +31,7 @@ import {
   DEFAULT_TESTIMONIALS_SETTINGS,
   makeImage,
   SETTINGS_LIMITS,
+  upgradeTestimonial,
   validateTestimonial,
   type ImageAspect,
   type Testimonial,
@@ -200,11 +201,21 @@ export async function GET(): Promise<NextResponse> {
   if (denied) return denied;
 
   const stored = await readTestimonialsSettings();
+  /*
+   * `readTestimonials` returns the file's shape as written, which for an entry
+   * saved before the images array existed has no `images` key at all. The panel
+   * indexes `entry.images` directly, so sending the raw shape crashed the page.
+   *
+   * Upgrading here — at the boundary — means every response the panel can
+   * receive has the current shape, rather than every consumer defending against
+   * three generations of it.
+   */
+  const testimonials = (await readTestimonials()).map(upgradeTestimonial);
 
   return NextResponse.json({
     ok: true,
     data: {
-      testimonials: await readTestimonials(),
+      testimonials,
       settings: stored ?? DEFAULT_TESTIMONIALS_SETTINGS,
       /** Whether the file actually contains settings, or these are defaults. */
       settingsSaved: stored !== null,

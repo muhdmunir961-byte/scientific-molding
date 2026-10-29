@@ -40,6 +40,20 @@ import {
   uploadTestimonialPhoto,
 } from './testimonials-api';
 
+/**
+ * Guarantee an entry has an `images` array.
+ *
+ * The panel indexes `entry.images` in the render and in every handler. A response
+ * from an older build — or a browser replaying a cached one — has no such key,
+ * and `undefined.length` took the whole page down with a client-side error. This
+ * is the one place that decides what a missing array means.
+ * @param {Testimonial} entry
+ * @returns {Testimonial}
+ */
+function normaliseEntry(entry: Testimonial): Testimonial {
+  return Array.isArray(entry.images) ? entry : { ...entry, images: [] };
+}
+
 export default function TestimonialsManager() {
   const [entries, setEntries] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +66,16 @@ export default function TestimonialsManager() {
     setLoading(true);
     const result = await fetchTestimonials();
     if (result.ok && result.data) {
-      setEntries(result.data.testimonials);
+      /*
+       * Normalise on arrival, not at every use site.
+       *
+       * The API upgrades entries before sending them, but this panel is also
+       * reachable from a browser holding an older response, and a single entry
+       * without an `images` array used to crash the whole page — `entry.images
+       * .length` on undefined. One normalisation here means no call site has to
+       * defend against it.
+       */
+      setEntries(result.data.testimonials.map(normaliseEntry));
       setSettings(result.data.settings ?? DEFAULT_TESTIMONIALS_SETTINGS);
       setSettingsSaved(result.data.settingsSaved === true);
     } else {
@@ -98,7 +121,7 @@ export default function TestimonialsManager() {
       setNotice({ tone: 'error', text: result.error ?? 'Could not remove that entry.' });
       return;
     }
-    setEntries(result.data.testimonials);
+    setEntries(result.data.testimonials.map(normaliseEntry));
     setNotice({ tone: 'ok', text: 'Removed.' });
   }
 
@@ -119,7 +142,7 @@ export default function TestimonialsManager() {
       setNotice({ tone: 'error', text: result.error ?? 'Could not add an entry.' });
       return;
     }
-    setEntries(result.data.testimonials);
+    setEntries(result.data.testimonials.map(normaliseEntry));
     setNotice({ tone: 'ok', text: 'Added. It stays hidden until you switch it on.' });
   }
 
@@ -141,7 +164,7 @@ export default function TestimonialsManager() {
       return;
     }
 
-    setEntries(result.data.testimonials);
+    setEntries(result.data.testimonials.map(normaliseEntry));
     setNotice({
       tone: result.data.errors.length > 0 ? 'error' : 'ok',
       text: result.data.message ?? `${result.data.created} added.`,
@@ -155,7 +178,7 @@ export default function TestimonialsManager() {
       setNotice({ tone: 'error', text: result.error ?? 'Could not save that change.' });
       return;
     }
-    setEntries(result.data.testimonials);
+    setEntries(result.data.testimonials.map(normaliseEntry));
     setNotice({ tone: 'ok', text: 'Saved.' });
   }
 
@@ -204,7 +227,7 @@ export default function TestimonialsManager() {
       return;
     }
 
-    setEntries(saved.data.testimonials);
+    setEntries(saved.data.testimonials.map(normaliseEntry));
     setNotice({ tone: 'ok', text: uploaded.data.message || 'Photo uploaded and saved.' });
   }
 
@@ -257,7 +280,7 @@ export default function TestimonialsManager() {
       return;
     }
 
-    setEntries(saved.data.testimonials);
+    setEntries(saved.data.testimonials.map(normaliseEntry));
     setNotice({
       tone: failures.length > 0 ? 'error' : 'ok',
       text:
@@ -274,7 +297,7 @@ export default function TestimonialsManager() {
       setNotice({ tone: 'error', text: result.error ?? 'Could not save the images.' });
       return;
     }
-    setEntries(result.data.testimonials);
+    setEntries(result.data.testimonials.map(normaliseEntry));
   }
 
   return (
