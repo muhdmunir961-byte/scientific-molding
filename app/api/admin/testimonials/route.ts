@@ -29,10 +29,13 @@ import {
 import {
   blankTestimonial,
   DEFAULT_TESTIMONIALS_SETTINGS,
+  makeImage,
   SETTINGS_LIMITS,
   validateTestimonial,
+  type ImageAspect,
   type Testimonial,
   type TestimonialCrop,
+  type TestimonialImage,
   type TestimonialsSettings,
 } from '@/lib/testimonials';
 
@@ -68,6 +71,51 @@ function toCrop(raw: unknown): TestimonialCrop | null {
   return crop;
 }
 
+/** Whether a value is one of the four frame shapes. */
+function isAspect(value: unknown): value is ImageAspect {
+  return value === 'auto' || value === 'square' || value === 'portrait' || value === 'landscape';
+}
+
+/**
+ * Coerce an unknown value into an images array.
+ *
+ * Only the known keys of each image are taken, for the same reason the entry
+ * itself is built field by field: a caller must not be able to write arbitrary
+ * keys into the committed file. There is deliberately no length cap — the
+ * operator decides how many captures an entry needs.
+ * @param {unknown} raw
+ * @returns {TestimonialImage[]}
+ */
+function toImages(raw: unknown): TestimonialImage[] {
+  if (!Array.isArray(raw)) return [];
+
+  const images: TestimonialImage[] = [];
+  for (const item of raw) {
+    if (typeof item !== 'object' || item === null) continue;
+    const source = item as Record<string, unknown>;
+    const src = typeof source.src === 'string' ? source.src : '';
+
+    /*
+     * An entry with no file is dropped rather than kept as a blank frame. The
+     * panel adds an image by uploading, so a src-less record can only come from
+     * a hand-edited file or a failed request.
+     */
+    if (src.trim() === '') continue;
+
+    images.push(
+      makeImage({
+        id: typeof source.id === 'string' ? source.id : undefined,
+        src,
+        caption: typeof source.caption === 'string' ? source.caption : '',
+        crop: toCrop(source.crop),
+        aspect: isAspect(source.aspect) ? source.aspect : 'auto',
+      }),
+    );
+  }
+
+  return images;
+}
+
 /**
  * Coerce an unknown payload into a Testimonial, taking only known fields.
  *
@@ -89,9 +137,7 @@ function toTestimonial(raw: Record<string, unknown>, fallbackOrder: number): Tes
     company: str(raw.company),
     quote: str(raw.quote),
     photo: str(raw.photo),
-    screenshot: str(raw.screenshot),
-    caption: str(raw.caption),
-    crop: toCrop(raw.crop),
+    images: toImages(raw.images),
     moduleSlug: moduleSlug === '' ? null : moduleSlug,
     published: raw.published === true,
     order: Number.isInteger(raw.order) ? (raw.order as number) : fallbackOrder,
@@ -142,6 +188,9 @@ function toSettings(raw: Record<string, unknown>): TestimonialsSettings | string
     dots: bool(raw.dots, DEFAULT_TESTIMONIALS_SETTINGS.dots),
     lightbox: bool(raw.lightbox, DEFAULT_TESTIMONIALS_SETTINGS.lightbox),
     cardWidth,
+    imageAspect: isAspect(raw.imageAspect)
+      ? raw.imageAspect
+      : DEFAULT_TESTIMONIALS_SETTINGS.imageAspect,
   };
 }
 

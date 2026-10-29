@@ -53,7 +53,9 @@ import { TESTIMONIAL_AVATARS } from '../shared/image-content';
 import {
   publishedTestimonials,
   testimonialsSettings,
+  ASPECT_RATIOS,
   type Testimonial,
+  type TestimonialImage,
 } from '@/lib/testimonials';
 import {
   TESTIMONIALS_CAPTION,
@@ -156,6 +158,7 @@ function TestimonialCard({
   lightbox: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [openIndex, setOpenIndex] = useState(0);
 
   /*
    * Only render the attribution when there is something to attribute. A
@@ -165,30 +168,75 @@ function TestimonialCard({
    */
   const hasAttribution = testimonial.name.trim() !== '' || testimonial.role.trim() !== '';
   const roleLine = [testimonial.role, testimonial.company].filter((v) => v.trim() !== '').join(' · ');
+  const images = testimonial.images;
 
   return (
     <figure className="testimonial-card">
-      {testimonial.screenshot && (
-        <FeedbackScreenshot
-          src={testimonial.screenshot}
-          crop={testimonial.crop}
-          name={testimonial.name}
-          expandable={lightbox}
-          onExpand={() => setOpen(true)}
-        />
+      {/*
+        * The gallery.
+        *
+        * ── Why a scroll strip inside the card rather than a stack ──────────
+        * Entries can carry any number of captures. Stacking them made one card
+        * three times the height of its neighbours, which breaks the row and
+        * pushes the quote off-screen. A fixed-height strip keeps every card the
+        * same shape however many images it holds, and the count is visible at a
+        * glance from the dots.
+        *
+        * A single image renders plainly — no strip, no dots — because a
+        * one-item carousel is a control that does nothing.
+        */}
+      {images.length === 1 && images[0] && (
+        <figure className="testimonial-image">
+          <FeedbackScreenshot
+            image={images[0]}
+            name={testimonial.name}
+            expandable={lightbox}
+            onExpand={() => {
+              setOpenIndex(0);
+              setOpen(true);
+            }}
+          />
+          {images[0].caption.trim() !== '' && (
+            <figcaption className="testimonial-caption">{images[0].caption}</figcaption>
+          )}
+        </figure>
+      )}
+
+      {images.length > 1 && (
+        <div className="testimonial-gallery">
+          <ul className="testimonial-gallery-track">
+            {images.map((image, i) => (
+              <li key={image.id} className="testimonial-gallery-slide">
+                <figure className="testimonial-image">
+                  <FeedbackScreenshot
+                    image={image}
+                    name={testimonial.name}
+                    expandable={lightbox}
+                    onExpand={() => {
+                      setOpenIndex(i);
+                      setOpen(true);
+                    }}
+                  />
+                  {image.caption.trim() !== '' && (
+                    <figcaption className="testimonial-caption">{image.caption}</figcaption>
+                  )}
+                </figure>
+              </li>
+            ))}
+          </ul>
+          <p className="testimonial-gallery-count">
+            {images.length} images — swipe to see all
+          </p>
+        </div>
       )}
 
       {open && (
         <Lightbox
-          src={testimonial.screenshot}
-          alt={`Feedback as submitted by ${testimonial.name}`}
-          caption={testimonial.caption}
+          images={images}
+          startIndex={openIndex}
+          name={testimonial.name}
           onClose={() => setOpen(false)}
         />
-      )}
-
-      {testimonial.screenshot && testimonial.caption.trim() !== '' && (
-        <figcaption className="testimonial-caption">{testimonial.caption}</figcaption>
       )}
 
       {testimonial.quote.trim() !== '' && (
@@ -412,23 +460,34 @@ function TestimonialSlider({
  * dropped into the page behind an overlay.
  */
 function Lightbox({
-  src,
-  alt,
-  caption,
+  images,
+  startIndex,
+  name,
   onClose,
 }: {
-  src: string;
-  alt: string;
-  caption: string;
+  images: TestimonialImage[];
+  startIndex: number;
+  name: string;
   onClose: () => void;
 }) {
   const closeRef = useRef<HTMLButtonElement | null>(null);
+  const [index, setIndex] = useState(startIndex);
+  const current = images[index];
+
+  const go = useCallback(
+    (delta: 1 | -1) => {
+      setIndex((i) => Math.min(images.length - 1, Math.max(0, i + delta)));
+    },
+    [images.length],
+  );
 
   useEffect(() => {
     closeRef.current?.focus();
 
     function onKey(event: KeyboardEvent) {
       if (event.key === 'Escape') onClose();
+      if (event.key === 'ArrowRight') go(1);
+      if (event.key === 'ArrowLeft') go(-1);
     }
 
     // The page behind must not scroll while the overlay is open, or the visitor
@@ -441,14 +500,16 @@ function Lightbox({
       document.body.style.overflow = previous;
       window.removeEventListener('keydown', onKey);
     };
-  }, [onClose]);
+  }, [onClose, go]);
+
+  if (!current) return null;
 
   return (
     <div
       className="testimonial-lightbox"
       role="dialog"
       aria-modal="true"
-      aria-label={alt}
+      aria-label={`Feedback from ${name}, image ${index + 1} of ${images.length}`}
       onClick={onClose}
     >
       <button
@@ -464,9 +525,41 @@ function Lightbox({
       {/* Clicks inside the frame must not close it — only the backdrop does. */}
       <figure className="testimonial-lightbox-frame" onClick={(e) => e.stopPropagation()}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt={alt} />
-        {caption.trim() !== '' && <figcaption>{caption}</figcaption>}
+        <img src={current.src} alt={`Feedback from ${name}, image ${index + 1}`} />
+        {current.caption.trim() !== '' && <figcaption>{current.caption}</figcaption>}
       </figure>
+
+      {images.length > 1 && (
+        <>
+          <button
+            type="button"
+            className="testimonial-lightbox-nav is-prev"
+            onClick={(e) => {
+              e.stopPropagation();
+              go(-1);
+            }}
+            disabled={index === 0}
+            aria-label="Previous image"
+          >
+            <span aria-hidden="true">←</span>
+          </button>
+          <button
+            type="button"
+            className="testimonial-lightbox-nav is-next"
+            onClick={(e) => {
+              e.stopPropagation();
+              go(1);
+            }}
+            disabled={index === images.length - 1}
+            aria-label="Next image"
+          >
+            <span aria-hidden="true">→</span>
+          </button>
+          <p className="testimonial-lightbox-count">
+            {index + 1} / {images.length}
+          </p>
+        </>
+      )}
     </div>
   );
 }
@@ -491,19 +584,17 @@ function Lightbox({
  * before the image loads, so the card does not jump as bytes arrive.
  */
 function FeedbackScreenshot({
-  src,
-  crop,
+  image,
   name,
   expandable,
   onExpand,
 }: {
-  src: string;
-  crop: Testimonial['crop'];
+  image: TestimonialImage;
   name: string;
   expandable: boolean;
   onExpand: () => void;
 }) {
-  const region = crop ?? { x: 0, y: 0, w: 1, h: 1 };
+  const region = image.crop ?? { x: 0, y: 0, w: 1, h: 1 };
 
   /*
    * Guard against a crop saved before validation existed. A zero dimension
@@ -512,26 +603,38 @@ function FeedbackScreenshot({
   const width = region.w > 0 ? region.w : 1;
   const height = region.h > 0 ? region.h : 1;
 
+  /*
+   * A hand-drawn crop wins over the aspect preset: the operator has already said
+   * exactly what they want shown, and a preset that clipped more of it would
+   * silently undo that work.
+   */
+  const forced = image.crop === null && image.aspect !== 'auto' ? ASPECT_RATIOS[image.aspect] : null;
+
   const frame = (
     <div
-      className="testimonial-screenshot"
-      /* The cropped region's ratio, so the frame is the right shape pre-load. */
-      style={{ aspectRatio: `${width} / ${height}` }}
+      className={`testimonial-screenshot${forced !== null ? ' is-fitted' : ''}`}
+      /* The frame's ratio, reserved before the bytes arrive so nothing jumps. */
+      style={{ aspectRatio: forced !== null ? `${forced}` : `${width} / ${height}` }}
     >
       <Image
-        src={src}
+        src={image.src}
         alt={`Feedback as submitted by ${name}`}
         width={1200}
         height={Math.round(1200 * (height / width))}
         sizes="(min-width: 768px) 33vw, 100vw"
-        style={{
-          position: 'absolute',
-          width: `${100 / width}%`,
-          height: `${100 / height}%`,
-          left: `${(-region.x * 100) / width}%`,
-          top: `${(-region.y * 100) / height}%`,
-          maxWidth: 'none',
-        }}
+        style={
+          forced !== null
+            ? /* Fitted: fill the fixed frame, centred, overflow clipped. */
+              { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }
+            : {
+                position: 'absolute',
+                width: `${100 / width}%`,
+                height: `${100 / height}%`,
+                left: `${(-region.x * 100) / width}%`,
+                top: `${(-region.y * 100) / height}%`,
+                maxWidth: 'none',
+              }
+        }
       />
     </div>
   );

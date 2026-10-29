@@ -53,6 +53,57 @@ export interface TestimonialCrop {
 export const FULL_CROP: TestimonialCrop = { x: 0, y: 0, w: 1, h: 1 };
 
 /**
+ * How a screenshot is fitted into its frame when nobody has cropped it by hand.
+ *
+ * ── What "auto" actually does ───────────────────────────────────────────
+ * `auto` keeps the image's own shape, so nothing is ever hidden by default —
+ * the right choice for evidence, where a cropped-off timestamp is the difference
+ * between believable and not.
+ *
+ * The other three force a consistent frame across the row, which is what makes a
+ * mixed set (a phone capture next to an email capture) look deliberate. The
+ * image is centred and its overflow clipped — a centre crop, chosen because the
+ * subject of a feedback screenshot is almost always the middle of the message.
+ */
+export type ImageAspect = 'auto' | 'square' | 'portrait' | 'landscape';
+
+/** The ratio each non-auto aspect resolves to. */
+export const ASPECT_RATIOS: Record<Exclude<ImageAspect, 'auto'>, number> = {
+  square: 1,
+  portrait: 4 / 5,
+  landscape: 16 / 9,
+};
+
+/** One image attached to a testimonial. */
+export interface TestimonialImage {
+  /** Stable identity, so reordering cannot re-pair a crop with the wrong file. */
+  readonly id: string;
+  /** The stored path or URL. */
+  readonly src: string;
+  /** Printed under this image. */
+  readonly caption: string;
+  /** A hand-drawn crop. `null` means "fit automatically". */
+  readonly crop: TestimonialCrop | null;
+  /** The frame shape used when there is no hand-drawn crop. */
+  readonly aspect: ImageAspect;
+}
+
+/**
+ * Build an image record with every field defaulted.
+ * @param {Partial<TestimonialImage> & { src: string }} input
+ * @returns {TestimonialImage}
+ */
+export function makeImage(input: Partial<TestimonialImage> & { src: string }): TestimonialImage {
+  return {
+    id: input.id ?? `img-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+    src: input.src,
+    caption: input.caption ?? '',
+    crop: input.crop ?? null,
+    aspect: input.aspect ?? 'auto',
+  };
+}
+
+/**
  * How the section behaves, as opposed to what it contains.
  *
  * ── Why these live in the data file and not in a component constant ─────
@@ -77,6 +128,11 @@ export interface TestimonialsSettings {
   readonly lightbox: boolean;
   /** Card width on a wide screen, in pixels. */
   readonly cardWidth: number;
+  /**
+   * The default frame for an image that has no hand-drawn crop.
+   * `auto` keeps each image's own shape.
+   */
+  readonly imageAspect: ImageAspect;
 }
 
 /** The settings a fresh install behaves with. */
@@ -88,6 +144,7 @@ export const DEFAULT_TESTIMONIALS_SETTINGS: TestimonialsSettings = {
   dots: true,
   lightbox: true,
   cardWidth: 420,
+  imageAspect: 'auto',
 };
 
 /** Bounds the panel enforces, and the reader clamps to. */
@@ -110,15 +167,19 @@ export interface Testimonial {
   /** Optional headshot path. Empty string renders an initial-letter tile. */
   readonly photo: string;
   /**
-   * Optional screenshot of the feedback as the person actually gave it — a
-   * WhatsApp or email capture. Shown at its own aspect ratio, never forced into
-   * a square, because the point of it is that it is unedited evidence.
+   * Every screenshot attached to this entry — a WhatsApp or email capture.
+   *
+   * ── Why an array with no limit ──────────────────────────────────────────
+   * A real feedback thread is often several captures: the message, the reply, a
+   * follow-up. Capping it at one forced the operator to choose which part of the
+   * evidence to drop, and stacking them into one file loses the individual
+   * captions. Each image carries its own crop and caption and has a stable id,
+   * so reordering cannot pair a crop with the wrong file.
+   *
+   * There is no maximum. The panel warns past a point where the card becomes a
+   * scroll marathon, but it does not refuse the operator.
    */
-  readonly screenshot: string;
-  /** Optional caption printed under the screenshot. */
-  readonly caption: string;
-  /** Crop applied to `screenshot`. `null` means show the whole image. */
-  readonly crop: TestimonialCrop | null;
+  readonly images: TestimonialImage[];
   /** Which module this relates to, or null. Must be a real module slug. */
   readonly moduleSlug: string | null;
   /** Rendered on the public site only when true. */
@@ -130,11 +191,21 @@ export interface Testimonial {
 /**
  * The file's shape as it may exist on disk.
  *
- * `screenshot` and `crop` are optional here on purpose: entries written before
- * those fields existed do not have them, and the committed JSON is edited by the
- * panel rather than migrated. `allTestimonials()` fills the gaps.
+ * ── Why three generations of shape are accepted here ────────────────────
+ * This file is edited by the panel and committed to git, so old copies exist on
+ * every branch and in every deployment. Refusing an older shape would mean a
+ * migration step between deploys, and a failed migration takes the section down.
+ *
+ *   v1  `photo` only.
+ *   v2  one `screenshot` + one `caption` + one `crop`.
+ *   v3  an `images` array, any length, each with its own crop and caption.
+ *
+ * `allTestimonials()` upgrades v1 and v2 on read, so the rest of the codebase
+ * only ever sees v3.
  */
-type StoredTestimonial = Omit<Testimonial, 'screenshot' | 'caption' | 'crop'> & {
+type StoredTestimonial = Omit<Testimonial, 'images'> & {
+  images?: TestimonialImage[];
+  /** v2 fields, still read so nothing is lost on the way through. */
   screenshot?: string;
   caption?: string;
   crop?: TestimonialCrop | null;
@@ -183,6 +254,46 @@ export function testimonialsSettings(): TestimonialsSettings {
       limits.cardWidth.min,
       limits.cardWidth.max,
     ),
+    imageAspect: isAspect(stored.imageAspect)
+      ? stored.imageAspect
+      : DEFAULT_TESTIMONIALS_SETTINGS.imageAspect,
+  };
+}
+
+/** Whether a value is one of the four frame shapes. */
+function isAspect(value: unknown): value is ImageAspect {
+  return value === 'auto' || value === 'square' || value === 'portrait' || value === 'landscape';
+}
+
+/**
+ * Upgrade one stored entry to the current shape.
+ *
+ * A v2 entry had a single `screenshot`; it becomes a one-item `images` array so
+ * the renderer has one shape to handle. The old fields are read but never
+ * written back, so the file converges on v3 the next time the panel saves.
+ * @param {StoredTestimonial} entry
+ * @returns {Testimonial}
+ */
+function upgrade(entry: StoredTestimonial): Testimonial {
+  if (Array.isArray(entry.images)) {
+    return {
+      ...entry,
+      images: entry.images.map((image) => makeImage(image)),
+    };
+  }
+
+  const legacy = entry.screenshot?.trim() ?? '';
+  return {
+    ...entry,
+    images: legacy
+      ? [
+          makeImage({
+            src: legacy,
+            caption: entry.caption ?? '',
+            crop: entry.crop ?? null,
+          }),
+        ]
+      : [],
   };
 }
 
@@ -197,12 +308,7 @@ export function testimonialsSettings(): TestimonialsSettings {
 export function allTestimonials(): Testimonial[] {
   return [...FILE.testimonials]
     .sort((a, b) => a.order - b.order)
-    .map((entry) => ({
-      ...entry,
-      screenshot: entry.screenshot ?? '',
-      caption: entry.caption ?? '',
-      crop: entry.crop ?? null,
-    }));
+    .map(upgrade);
 }
 
 /**
@@ -239,9 +345,7 @@ export function blankTestimonial(order: number): Testimonial {
     company: '',
     quote: '',
     photo: '',
-    screenshot: '',
-    caption: '',
-    crop: null,
+    images: [],
     moduleSlug: null,
     published: false,
     order,
@@ -277,13 +381,12 @@ export function validateTestimonial(entry: Testimonial): string {
    */
   if (entry.published) {
     const hasSomething =
-      entry.screenshot.trim() !== '' ||
+      entry.images.length > 0 ||
       entry.quote.trim() !== '' ||
-      entry.name.trim() !== '' ||
-      entry.caption.trim() !== '';
+      entry.name.trim() !== '';
 
     if (!hasSomething) {
-      return 'A published entry needs at least a screenshot, a quote, a name or a caption.';
+      return 'A published entry needs at least a screenshot, a quote or a name.';
     }
   }
 
@@ -298,15 +401,22 @@ export function validateTestimonial(entry: Testimonial): string {
   /*
    * A crop that runs past the image edge would render as blank space in the
    * frame, and one with zero width or height would make the frame collapse.
-   * Rejected here so the public page can trust the values it reads.
+   * Rejected per image so the public page can trust the values it reads, and so
+   * the message names which image is wrong rather than the whole entry.
    */
-  if (entry.crop !== null) {
-    const { x, y, w, h } = entry.crop;
+  for (const [index, image] of entry.images.entries()) {
+    if (image.src.trim() === '') {
+      return `Image ${index + 1} has no file. Remove it or upload a file for it.`;
+    }
+
+    if (image.crop === null) continue;
+
+    const { x, y, w, h } = image.crop;
     const finite = [x, y, w, h].every((v) => typeof v === 'number' && Number.isFinite(v));
-    if (!finite) return 'The crop values must be numbers.';
-    if (w <= 0 || h <= 0) return 'The crop must have a width and a height.';
+    if (!finite) return `Image ${index + 1}: the crop values must be numbers.`;
+    if (w <= 0 || h <= 0) return `Image ${index + 1}: the crop needs a width and a height.`;
     if (x < 0 || y < 0 || x + w > 1.0001 || y + h > 1.0001) {
-      return 'The crop must stay inside the image.';
+      return `Image ${index + 1}: the crop must stay inside the image.`;
     }
   }
 

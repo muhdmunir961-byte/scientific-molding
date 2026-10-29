@@ -21,8 +21,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { MODULES } from '@/lib/modules';
 import {
   DEFAULT_TESTIMONIALS_SETTINGS,
+  makeImage,
   type Testimonial,
-  type TestimonialCrop,
+  type TestimonialImage,
   type TestimonialsSettings,
 } from '@/lib/testimonials';
 
@@ -207,39 +208,72 @@ export default function TestimonialsManager() {
   }
 
   /**
-   * Upload a feedback screenshot and store it on the entry.
+   * Upload one or more screenshots and append them to the entry.
    *
-   * A new screenshot resets the crop: the old fractions describe the previous
-   * image, and carrying them over would show an arbitrary corner of the new one.
+   * ── Why append and never replace ────────────────────────────────────────
+   * An entry can carry any number of captures, and a second upload is almost
+   * always "here is the rest of the thread" rather than "replace what I sent".
+   * Replacing would silently drop images the operator had already captioned and
+   * cropped.
+   *
+   * Each file is appended only after it stores successfully, so one bad file in
+   * a batch of five does not lose the other four. The whole list is written once
+   * at the end.
    */
-  async function uploadScreenshot(entry: Testimonial, file: File) {
+  async function uploadScreenshots(entry: Testimonial, files: File[]) {
     setBusy(true);
     setNotice(null);
 
-    const uploaded = await uploadTestimonialPhoto(file, 'screenshot');
-    if (!uploaded.ok || !uploaded.data) {
+    const added: TestimonialImage[] = [];
+    const failures: string[] = [];
+
+    for (const file of files) {
+      const uploaded = await uploadTestimonialPhoto(file, 'screenshot');
+      if (!uploaded.ok || !uploaded.data) {
+        failures.push(`${file.name}: ${uploaded.error ?? 'upload failed'}`);
+        continue;
+      }
+      added.push(makeImage({ src: uploaded.data.path }));
+    }
+
+    if (added.length === 0) {
       setBusy(false);
-      setNotice({ tone: 'error', text: uploaded.error ?? 'Screenshot upload failed.' });
+      setNotice({ tone: 'error', text: failures.join(' ') || 'Nothing was uploaded.' });
       return;
     }
 
     const saved = await editTestimonial({
       ...entry,
-      screenshot: uploaded.data.path,
-      crop: null,
+      images: [...entry.images, ...added],
     });
     setBusy(false);
 
     if (!saved.ok || !saved.data) {
       setNotice({
         tone: 'error',
-        text: `Screenshot uploaded to ${uploaded.data.path} but the entry was not saved: ${saved.error ?? 'unknown error'}.`,
+        text: `${added.length} uploaded but the entry was not saved: ${saved.error ?? 'unknown error'}.`,
       });
       return;
     }
 
     setEntries(saved.data.testimonials);
-    setNotice({ tone: 'ok', text: 'Screenshot uploaded. Set the crop below if needed.' });
+    setNotice({
+      tone: failures.length > 0 ? 'error' : 'ok',
+      text:
+        failures.length > 0
+          ? `${added.length} added, ${failures.length} failed. ${failures.join(' ')}`
+          : `${added.length} image${added.length === 1 ? '' : 's'} added.`,
+    });
+  }
+
+  /** Replace the whole image list for one entry — used by remove and reorder. */
+  async function saveImages(entry: Testimonial, images: TestimonialImage[]) {
+    const result = await editTestimonial({ ...entry, images });
+    if (!result.ok || !result.data) {
+      setNotice({ tone: 'error', text: result.error ?? 'Could not save the images.' });
+      return;
+    }
+    setEntries(result.data.testimonials);
   }
 
   return (
@@ -313,7 +347,8 @@ export default function TestimonialsManager() {
               onRemove={remove}
               onSave={save}
               onUploadPhoto={uploadPhoto}
-              onUploadScreenshot={uploadScreenshot}
+              onUploadScreenshots={uploadScreenshots}
+              onSaveImages={saveImages}
             />
           ))}
         </ul>
@@ -339,7 +374,8 @@ function TestimonialRow({
   onRemove,
   onSave,
   onUploadPhoto,
-  onUploadScreenshot,
+  onUploadScreenshots,
+  onSaveImages,
 }: {
   entry: Testimonial;
   index: number;
@@ -349,16 +385,14 @@ function TestimonialRow({
   onRemove: (id: string) => void;
   onSave: (entry: Testimonial, fields: Partial<Testimonial>) => void;
   onUploadPhoto: (entry: Testimonial, file: File) => void;
-  onUploadScreenshot: (entry: Testimonial, file: File) => void;
+  onUploadScreenshots: (entry: Testimonial, files: File[]) => void;
+  onSaveImages: (entry: Testimonial, images: TestimonialImage[]) => void;
 }) {
   const [name, setName] = useState(entry.name);
   const [role, setRole] = useState(entry.role);
   const [company, setCompany] = useState(entry.company);
   const [quote, setQuote] = useState(entry.quote);
   const [photo, setPhoto] = useState(entry.photo);
-  const [screenshot, setScreenshot] = useState(entry.screenshot);
-  const [caption, setCaption] = useState(entry.caption);
-  const [crop, setCrop] = useState<TestimonialCrop | null>(entry.crop);
 
   /*
    * Follow the saved entry when it changes underneath us.
@@ -372,11 +406,6 @@ function TestimonialRow({
     setPhoto(entry.photo);
   }, [entry.photo]);
 
-  useEffect(() => {
-    setScreenshot(entry.screenshot);
-    setCaption(entry.caption);
-    setCrop(entry.crop);
-  }, [entry.screenshot, entry.caption, entry.crop]);
 
   return (
     <li className={`gallery-item ${entry.published ? '' : 'testimonial-unpublished'}`}>
@@ -492,62 +521,62 @@ function TestimonialRow({
           onSave={() => photo !== entry.photo && onSave(entry, { photo })}
         />
 
-        {/* ── Feedback screenshot ─────────────────────────────────────── */}
+        {/* ── Feedback screenshots ────────────────────────────────────── */}
         <label className="admin-label" htmlFor={`shot-upload-${entry.id}`}>
-          Feedback screenshot (optional)
+          Feedback screenshots ({entry.images.length})
         </label>
         <p className="admin-hint">
-          Screenshot asal daripada WhatsApp, email atau platform lain. Dipaparkan
-          pada nisbah asal — tidak dipaksa jadi segi empat sama.
+          Screenshot asal daripada WhatsApp, email atau platform lain. Tiada had
+          bilangan — pilih banyak fail sekali gus. Setiap satu ada caption dan
+          crop sendiri.
         </p>
         <input
           id={`shot-upload-${entry.id}`}
           className="admin-input"
           type="file"
+          multiple
           accept="image/jpeg,image/png,image/webp,image/avif"
           disabled={busy}
           onChange={(event) => {
-            const file = event.currentTarget.files?.[0];
-            if (file) onUploadScreenshot(entry, file);
+            const files = Array.from(event.currentTarget.files ?? []);
+            if (files.length > 0) void onUploadScreenshots(entry, files);
             event.currentTarget.value = '';
           }}
         />
 
-        {screenshot && (
-          <>
-            <TextField
-              label="Caption (optional)"
-              value={caption}
-              onChange={setCaption}
-              hint="Printed under the screenshot — e.g. 'WhatsApp feedback, March 2026'."
-              onSave={() => caption !== entry.caption && onSave(entry, { caption })}
-            />
-
-            <CropEditor
-              src={screenshot}
-              crop={crop}
-              disabled={busy}
-              onChange={(next) => {
-                setCrop(next);
-                onSave(entry, { crop: next });
-              }}
-            />
-
-            <div className="admin-photo-preview">
-              <button
-                type="button"
-                className="admin-button admin-button-secondary"
-                disabled={busy}
-                onClick={() => {
-                  setScreenshot('');
-                  setCrop(null);
-                  onSave(entry, { screenshot: '', crop: null });
+        {entry.images.length > 0 && (
+          <ul className="admin-image-list">
+            {entry.images.map((image, imageIndex) => (
+              <ImageRow
+                key={image.id}
+                image={image}
+                index={imageIndex}
+                total={entry.images.length}
+                busy={busy}
+                onSave={(next) =>
+                  onSaveImages(
+                    entry,
+                    entry.images.map((item) => (item.id === image.id ? next : item)),
+                  )
+                }
+                onRemove={() =>
+                  onSaveImages(
+                    entry,
+                    entry.images.filter((item) => item.id !== image.id),
+                  )
+                }
+                onMove={(delta) => {
+                  const target = imageIndex + delta;
+                  if (target < 0 || target >= entry.images.length) return;
+                  const next = [...entry.images];
+                  const [moved] = next.splice(imageIndex, 1);
+                  if (!moved) return;
+                  next.splice(target, 0, moved);
+                  void onSaveImages(entry, next);
                 }}
-              >
-                Remove screenshot
-              </button>
-            </div>
-          </>
+              />
+            ))}
+          </ul>
         )}
 
         <label className="admin-label" htmlFor={`module-${entry.id}`}>
@@ -578,6 +607,155 @@ function TestimonialRow({
             {entry.published ? 'Shown on the site' : 'Hidden from the site'}
           </span>
         </label>
+      </div>
+    </li>
+  );
+}
+
+/**
+ * One image inside a testimonial: preview, caption, frame shape and crop.
+ *
+ * ── Why the crop editor is collapsed behind a toggle ────────────────────
+ * An entry can hold ten images. Ten always-open drag editors make the page
+ * several screens long and push the fields that matter (name, quote, publish)
+ * far apart. The preview shows what will appear; the editor is opened only for
+ * the image that needs adjusting.
+ */
+function ImageRow({
+  image,
+  index,
+  total,
+  busy,
+  onSave,
+  onRemove,
+  onMove,
+}: {
+  image: TestimonialImage;
+  index: number;
+  total: number;
+  busy: boolean;
+  onSave: (next: TestimonialImage) => void;
+  onRemove: () => void;
+  onMove: (delta: number) => void;
+}) {
+  const [caption, setCaption] = useState(image.caption);
+  const [editing, setEditing] = useState(false);
+
+  /* Follow the stored value after a save or a reload. */
+  useEffect(() => {
+    setCaption(image.caption);
+  }, [image.caption]);
+
+  return (
+    <li className="admin-image-row">
+      <div className="admin-image-row-head">
+        <span className="admin-image-row-index">{index + 1}</span>
+
+        <button
+          type="button"
+          className="admin-icon-button"
+          aria-label={`Move image ${index + 1} earlier`}
+          disabled={busy || index === 0}
+          onClick={() => onMove(-1)}
+        >
+          ↑
+        </button>
+        <button
+          type="button"
+          className="admin-icon-button"
+          aria-label={`Move image ${index + 1} later`}
+          disabled={busy || index === total - 1}
+          onClick={() => onMove(1)}
+        >
+          ↓
+        </button>
+
+        <button
+          type="button"
+          className="admin-icon-button admin-icon-danger"
+          aria-label={`Remove image ${index + 1}`}
+          disabled={busy}
+          onClick={onRemove}
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img className="admin-image-row-thumb" src={image.src} alt={`Image ${index + 1}`} />
+
+      <div className="admin-image-row-fields">
+        <label className="admin-label" htmlFor={`cap-${image.id}`}>
+          Caption (optional)
+        </label>
+        <input
+          id={`cap-${image.id}`}
+          className="admin-input"
+          type="text"
+          value={caption}
+          disabled={busy}
+          onChange={(e) => setCaption(e.target.value)}
+          onBlur={() => caption !== image.caption && onSave({ ...image, caption })}
+        />
+
+        <label className="admin-label" htmlFor={`asp-${image.id}`}>
+          Frame
+        </label>
+        <select
+          id={`asp-${image.id}`}
+          className="admin-input"
+          value={image.crop === null ? image.aspect : 'cropped'}
+          disabled={busy}
+          onChange={(e) => {
+            const value = e.target.value;
+            /*
+             * Choosing a preset clears a hand-drawn crop. Keeping both would mean
+             * the crop silently wins and the preset appears not to work.
+             */
+            if (value === 'cropped') {
+              setEditing(true);
+              return;
+            }
+            onSave({ ...image, aspect: value as TestimonialImage['aspect'], crop: null });
+          }}
+        >
+          <option value="auto">Auto — the image&apos;s own shape</option>
+          <option value="portrait">Portrait (4:5)</option>
+          <option value="square">Square (1:1)</option>
+          <option value="landscape">Landscape (16:9)</option>
+          {image.crop !== null && <option value="cropped">Hand-drawn crop</option>}
+        </select>
+
+        <button
+          type="button"
+          className="admin-button admin-button-secondary"
+          disabled={busy}
+          style={{ marginTop: 'var(--ds-space-3)' }}
+          onClick={() => setEditing((v) => !v)}
+        >
+          {editing ? 'Close crop editor' : image.crop ? 'Edit crop' : 'Crop by hand'}
+        </button>
+
+        {editing && (
+          <>
+            <CropEditor
+              src={image.src}
+              crop={image.crop}
+              disabled={busy}
+              onChange={(next) => onSave({ ...image, crop: next })}
+            />
+            {image.crop !== null && (
+              <button
+                type="button"
+                className="admin-button admin-button-secondary"
+                disabled={busy}
+                onClick={() => onSave({ ...image, crop: null })}
+              >
+                Clear crop
+              </button>
+            )}
+          </>
+        )}
       </div>
     </li>
   );

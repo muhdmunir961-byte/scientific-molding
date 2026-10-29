@@ -100,6 +100,24 @@ export default function SectionSettings({
             onChange={(e) => set('autoplaySeconds', Number(e.target.value))}
           />
         </label>
+
+        <label className="settings-field">
+          <span className="admin-label">Default image frame</span>
+          <select
+            className="admin-input"
+            value={draft.imageAspect}
+            disabled={busy}
+            onChange={(e) => set('imageAspect', e.target.value as TestimonialsSettings['imageAspect'])}
+          >
+            <option value="auto">Auto — each image&apos;s own shape</option>
+            <option value="portrait">Portrait (4:5)</option>
+            <option value="square">Square (1:1)</option>
+            <option value="landscape">Landscape (16:9)</option>
+          </select>
+          <p className="admin-hint">
+            Used only for images without a hand-drawn crop.
+          </p>
+        </label>
       </div>
 
       <div className="settings-toggles">

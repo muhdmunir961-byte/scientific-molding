@@ -26,7 +26,7 @@ import { requireSession, fail } from '@/lib/admin/guard';
 import { slugify } from '@/lib/admin/r2-keys';
 import { readTestimonials, saveTestimonials } from '@/lib/admin/testimonials-store';
 import { storeAtKey, validateImage } from '@/lib/admin/store';
-import { blankTestimonial, type Testimonial } from '@/lib/testimonials';
+import { blankTestimonial, makeImage, type Testimonial } from '@/lib/testimonials';
 
 export const runtime = 'nodejs';
 
@@ -99,7 +99,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
       created.push({
         ...blankTestimonial(existing.length + created.length),
-        screenshot: stored.path,
+        images: [makeImage({ src: stored.path })],
       });
     } catch (error) {
       const detail = error instanceof Error ? error.message : 'unknown error';

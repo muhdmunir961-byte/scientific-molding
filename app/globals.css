@@ -3807,6 +3807,56 @@ body {
   outline-offset: 2px;
 }
 
+/* Prev/next inside the lightbox. Sits at the screen edges, outside the frame, so
+   it never covers the evidence it is navigating. */
+.testimonial-lightbox-nav {
+  position: absolute;
+  top: 50%;
+  display: inline-flex;
+  height: 48px;
+  width: 48px;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-50%);
+  border: none;
+  border-radius: var(--ds-radius-full);
+  background-color: rgb(255 255 255 / 92%);
+  color: var(--ds-neutral-900);
+  font-size: 1.125rem;
+  cursor: pointer;
+}
+
+.testimonial-lightbox-nav.is-prev {
+  left: var(--ds-space-4);
+}
+
+.testimonial-lightbox-nav.is-next {
+  right: var(--ds-space-4);
+}
+
+.testimonial-lightbox-nav:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.testimonial-lightbox-nav:focus-visible {
+  outline: 2px solid var(--ds-orange-500);
+  outline-offset: 2px;
+}
+
+.testimonial-lightbox-count {
+  position: absolute;
+  bottom: var(--ds-space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--ds-radius-full);
+  background-color: rgb(15 23 42 / 70%);
+  color: var(--ds-neutral-0);
+  font-size: var(--ds-text-body-sm);
+}
+
 /* The card. `flex-column` with the quote taking the free space, so three cards
    with quotes of different lengths still align their attributions and their
    star rows. Without it the three star rows sit at three different heights and
@@ -3881,6 +3931,64 @@ body {
 
 .testimonial-screenshot img {
   object-fit: fill;
+}
+
+/* A fixed-shape frame: the image fills it and is centre-cropped. Used only when
+   the operator picked an aspect preset instead of drawing a crop. */
+.testimonial-screenshot.is-fitted img {
+  object-fit: cover;
+}
+
+/* --- Gallery: more than one image on one card ---
+   A fixed-height strip rather than a stack, so an entry with six captures is the
+   same height as one with a single capture. Without the cap, one card in the row
+   grows three times taller and the row loses its baseline. */
+.testimonial-gallery {
+  margin-bottom: var(--ds-space-4);
+}
+
+.testimonial-gallery-track {
+  display: flex;
+  gap: var(--ds-space-3);
+  margin: 0;
+  padding: 0 0 var(--ds-space-2);
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.testimonial-gallery-slide {
+  flex: 0 0 88%;
+  max-width: 88%;
+  scroll-snap-align: start;
+}
+
+.testimonial-gallery-slide .testimonial-screenshot {
+  margin-bottom: var(--ds-space-2);
+  max-height: 320px;
+}
+
+/* The caption inside a slide is clamped: a long caption would otherwise be the
+   tallest thing in the strip and drive the card height. */
+.testimonial-gallery-slide .testimonial-caption {
+  margin-bottom: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.testimonial-gallery-count {
+  margin: var(--ds-space-1) 0 0;
+  font-size: var(--ds-text-body-sm);
+  color: var(--ds-neutral-500);
+}
+
+.testimonial-image {
+  margin: 0;
 }
 
 /* The caption under a screenshot. Sits tight to the image it describes, and
