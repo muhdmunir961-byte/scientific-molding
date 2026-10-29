@@ -24,18 +24,18 @@
       "order": 1
     },
     {
-      "id": "testimonial-mv1v12i5",
-      "name": "New testimonial",
-      "role": "",
-      "company": "",
-      "quote": "Replace this with the quote the person actually gave.",
-      "photo": "",
+      "id": "testimonial-2",
+      "name": "[Name]",
+      "role": "[Role]",
+      "company": "[Company]",
+      "quote": "[Testimonial text — 2-3 sentences]",
+      "photo": "/images/testimonial-2.jpg",
       "moduleSlug": null,
       "published": false,
       "order": 2
     },
     {
-      "id": "testimonial-mv2f9fq6",
+      "id": "testimonial-mv1v12i5",
       "name": "New testimonial",
       "role": "",
       "company": "",
@@ -46,7 +46,7 @@
       "order": 3
     },
     {
-      "id": "testimonial-mv2fcr9n",
+      "id": "testimonial-mv2f9fq6",
       "name": "New testimonial",
       "role": "",
       "company": "",
@@ -57,7 +57,7 @@
       "order": 4
     },
     {
-      "id": "testimonial-mv3tauh5",
+      "id": "testimonial-mv2fcr9n",
       "name": "New testimonial",
       "role": "",
       "company": "",
@@ -66,6 +66,17 @@
       "moduleSlug": null,
       "published": false,
       "order": 5
+    },
+    {
+      "id": "testimonial-mv3tauh5",
+      "name": "New testimonial",
+      "role": "",
+      "company": "",
+      "quote": "Replace this with the quote the person actually gave.",
+      "photo": "",
+      "moduleSlug": null,
+      "published": false,
+      "order": 6
     },
     {
       "id": "testimonial-mvtsb4ru",
@@ -79,7 +90,7 @@
       "crop": null,
       "moduleSlug": null,
       "published": false,
-      "order": 6
+      "order": 7
     },
     {
       "id": "testimonial-mvtsb57w",
@@ -93,7 +104,7 @@
       "crop": null,
       "moduleSlug": null,
       "published": true,
-      "order": 7
+      "order": 8
     },
     {
       "id": "testimonial-mvtsb5na",
@@ -107,7 +118,7 @@
       "crop": null,
       "moduleSlug": null,
       "published": true,
-      "order": 8
+      "order": 9
     },
     {
       "id": "testimonial-mvtsb5yh",
@@ -121,7 +132,7 @@
       "crop": null,
       "moduleSlug": null,
       "published": true,
-      "order": 9
+      "order": 10
     },
     {
       "id": "testimonial-mvtsb6aj",
@@ -134,7 +145,7 @@
       "caption": "",
       "crop": null,
       "moduleSlug": null,
-      "published": false,
+      "published": true,
       "order": 10
     }
   ]
