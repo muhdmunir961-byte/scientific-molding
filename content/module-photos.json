@@ -2,24 +2,7 @@
   "$comment": "Module photo galleries. Written by the admin panel and committed through the GitHub API. Read by lib/gallery.ts.",
   "modules": {
     "m1-fundamental": {
-      "lecture": [
-        {
-          "key": "images/m1-fundamental/lecture/1793309984145-shot",
-          "url": "https://assets.scientificmoldings.com/images/m1-fundamental/lecture/1793309984145-shot",
-          "alt": "",
-          "caption": "",
-          "order": 0,
-          "uploadedAt": "2026-10-29T21:39:44.588Z"
-        },
-        {
-          "key": "images/m1-fundamental/lecture/1793310533578-shot.png",
-          "url": "https://assets.scientificmoldings.com/images/m1-fundamental/lecture/1793310533578-shot.png",
-          "alt": "",
-          "caption": "",
-          "order": 1,
-          "uploadedAt": "2026-10-29T21:48:53.963Z"
-        }
-      ],
+      "lecture": [],
       "practical": [],
       "discussion": [
         {
