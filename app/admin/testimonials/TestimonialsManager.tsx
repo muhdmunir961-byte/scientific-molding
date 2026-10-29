@@ -19,9 +19,15 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { MODULES } from '@/lib/modules';
-import type { Testimonial, TestimonialCrop } from '@/lib/testimonials';
+import {
+  DEFAULT_TESTIMONIALS_SETTINGS,
+  type Testimonial,
+  type TestimonialCrop,
+  type TestimonialsSettings,
+} from '@/lib/testimonials';
 
 import CropEditor from './CropEditor';
+import SectionSettings from './SectionSettings';
 import {
   addTestimonial,
   bulkUploadScreenshots,
@@ -29,6 +35,7 @@ import {
   editTestimonial,
   fetchTestimonials,
   reorderTestimonials,
+  saveTestimonialsSettings,
   uploadTestimonialPhoto,
 } from './testimonials-api';
 
@@ -37,12 +44,16 @@ export default function TestimonialsManager() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+  const [settings, setSettings] = useState<TestimonialsSettings>(DEFAULT_TESTIMONIALS_SETTINGS);
+  const [settingsSaved, setSettingsSaved] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     const result = await fetchTestimonials();
     if (result.ok && result.data) {
       setEntries(result.data.testimonials);
+      setSettings(result.data.settings ?? DEFAULT_TESTIMONIALS_SETTINGS);
+      setSettingsSaved(result.data.settingsSaved === true);
     } else {
       setNotice({ tone: 'error', text: result.error ?? 'Could not load testimonials.' });
     }
@@ -146,6 +157,24 @@ export default function TestimonialsManager() {
     setNotice({ tone: 'ok', text: 'Saved.' });
   }
 
+  /** Persist the whole settings form in one request. */
+  async function saveSettings(next: TestimonialsSettings) {
+    setBusy(true);
+    setNotice(null);
+
+    const result = await saveTestimonialsSettings(next);
+    setBusy(false);
+
+    if (!result.ok || !result.data) {
+      setNotice({ tone: 'error', text: result.error ?? 'Could not save the settings.' });
+      return;
+    }
+
+    setSettings(result.data.settings);
+    setSettingsSaved(true);
+    setNotice({ tone: 'ok', text: result.data.message ?? 'Settings saved.' });
+  }
+
   async function uploadPhoto(entry: Testimonial, file: File) {
     setBusy(true);
     setNotice(null);
@@ -232,6 +261,13 @@ export default function TestimonialsManager() {
           {notice.text}
         </div>
       )}
+
+      <SectionSettings
+        settings={settings}
+        saved={settingsSaved}
+        busy={busy}
+        onSave={saveSettings}
+      />
 
       <div className="admin-actions" style={{ marginBottom: 'var(--ds-space-6)' }}>
         <button type="button" className="admin-button" onClick={add} disabled={busy || loading}>

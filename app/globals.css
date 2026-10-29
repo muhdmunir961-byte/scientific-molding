@@ -1921,7 +1921,7 @@ figure:hover .trainer-halo {
 
 /* --- Statement blockquote --------------------------------------------------
  * The pull-quote treatment, as a CLASS rather than an inline style: the border,
- * the fill, the radius and the text colour are four coordinated palette values,
+ * the fill, the radius and the text colour are four coordinated palette values, 
  * and declaring them together at one specificity is what stops the fill and its
  * label drifting apart. See docs/design-system.md — a blockquote's left accent
  * is 4px `--ds-orange-500`, the same rule `.track-statement` follows.
@@ -3599,6 +3599,212 @@ body {
 
 .testimonial-cell {
   min-width: 0;
+}
+
+/* --- The horizontal slider ---
+   A native scroll container rather than a transformed track, so swipe,
+   trackpad and shift-wheel all work without extra code. `scroll-snap` makes a
+   card land flush with the left edge instead of stopping mid-card. */
+.testimonial-slider {
+  position: relative;
+  margin-top: var(--ds-space-12);
+}
+
+.testimonial-track {
+  display: flex;
+  gap: var(--ds-space-8);
+  margin: 0;
+  padding: 0 0 var(--ds-space-4);
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x mandatory;
+  scroll-padding-left: 0;
+  overscroll-behavior-x: contain;
+
+  /* A visible scrollbar under a row of cards looks like a mistake on desktop,
+     and hiding it entirely would remove the one affordance a mouse user has.
+     Thin + subtle keeps it discoverable without drawing the eye. */
+  scrollbar-width: thin;
+}
+
+.testimonial-track:focus-visible {
+  outline: 2px solid var(--ds-orange-500);
+  outline-offset: 4px;
+}
+
+.testimonial-track > .testimonial-cell {
+  flex: 0 0 var(--testimonial-card-width, 420px);
+  max-width: 100%;
+  scroll-snap-align: start;
+}
+
+.testimonial-arrows {
+  display: flex;
+  gap: var(--ds-space-2);
+  justify-content: flex-end;
+  margin-top: var(--ds-space-4);
+}
+
+.testimonial-arrow {
+  display: inline-flex;
+  height: 44px;
+  width: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: var(--ds-radius-full);
+  background-color: var(--ds-neutral-0);
+  color: var(--ds-neutral-800);
+  font-size: 1.125rem;
+  cursor: pointer;
+  transition:
+    background-color var(--ds-duration-fast) var(--ds-ease-out),
+    border-color var(--ds-duration-fast) var(--ds-ease-out);
+}
+
+.testimonial-arrow:hover:not(:disabled) {
+  background-color: var(--ds-neutral-50);
+  border-color: var(--ds-neutral-300);
+}
+
+.testimonial-arrow:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.testimonial-arrow:focus-visible {
+  outline: 2px solid var(--ds-orange-500);
+  outline-offset: 2px;
+}
+
+.testimonial-dots {
+  display: flex;
+  gap: var(--ds-space-2);
+  justify-content: center;
+  margin-top: var(--ds-space-2);
+}
+
+/* 10px visual, 24px touch target via padding on the button box. */
+.testimonial-dot {
+  height: 10px;
+  width: 10px;
+  padding: 0;
+  border: none;
+  border-radius: var(--ds-radius-full);
+  background-color: var(--ds-neutral-300);
+  cursor: pointer;
+  transition:
+    background-color var(--ds-duration-fast) var(--ds-ease-out),
+    transform var(--ds-duration-fast) var(--ds-ease-out);
+}
+
+.testimonial-dot[data-active='true'] {
+  background-color: var(--ds-orange-500);
+  transform: scale(1.25);
+}
+
+.testimonial-dot:focus-visible {
+  outline: 2px solid var(--ds-orange-500);
+  outline-offset: 3px;
+}
+
+/* --- Expandable screenshot --- */
+.testimonial-screenshot-button {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: zoom-in;
+  text-align: left;
+}
+
+.testimonial-screenshot-button:focus-visible {
+  outline: 2px solid var(--ds-orange-500);
+  outline-offset: 3px;
+  border-radius: var(--ds-radius-md);
+}
+
+.testimonial-expand-hint {
+  position: absolute;
+  right: var(--ds-space-2);
+  bottom: var(--ds-space-2);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--ds-radius-sm);
+  background-color: rgb(15 23 42 / 72%);
+  color: var(--ds-neutral-0);
+  font-size: 0.6875rem;
+  letter-spacing: var(--ds-tracking-wide);
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity var(--ds-duration-fast) var(--ds-ease-out);
+  pointer-events: none;
+}
+
+.testimonial-screenshot-button:hover .testimonial-expand-hint,
+.testimonial-screenshot-button:focus-visible .testimonial-expand-hint {
+  opacity: 1;
+}
+
+/* --- Lightbox ---
+   Fixed inset overlay above everything, including the sticky header. */
+.testimonial-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ds-space-6);
+  background-color: rgb(15 23 42 / 82%);
+  backdrop-filter: blur(2px);
+  cursor: zoom-out;
+}
+
+.testimonial-lightbox-frame {
+  max-width: min(1100px, 100%);
+  max-height: 100%;
+  margin: 0;
+  overflow: auto;
+  background-color: var(--ds-neutral-0);
+  border-radius: var(--ds-radius-lg);
+  cursor: default;
+}
+
+.testimonial-lightbox-frame img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.testimonial-lightbox-frame figcaption {
+  padding: var(--ds-space-3) var(--ds-space-4);
+  font-size: var(--ds-text-body-sm);
+  color: var(--ds-neutral-500);
+}
+
+.testimonial-lightbox-close {
+  position: absolute;
+  top: var(--ds-space-4);
+  right: var(--ds-space-4);
+  display: inline-flex;
+  height: 44px;
+  width: 44px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--ds-radius-full);
+  background-color: rgb(255 255 255 / 92%);
+  color: var(--ds-neutral-900);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.testimonial-lightbox-close:focus-visible {
+  outline: 2px solid var(--ds-orange-500);
+  outline-offset: 2px;
 }
 
 /* The card. `flex-column` with the quote taking the free space, so three cards

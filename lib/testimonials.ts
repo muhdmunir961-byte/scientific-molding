@@ -52,6 +52,50 @@ export interface TestimonialCrop {
 /** The whole image — no cropping. */
 export const FULL_CROP: TestimonialCrop = { x: 0, y: 0, w: 1, h: 1 };
 
+/**
+ * How the section behaves, as opposed to what it contains.
+ *
+ * ── Why these live in the data file and not in a component constant ─────
+ * Every one of them is a presentation decision the operator may want to change
+ * without a code edit: whether the row scrolls itself, how fast, whether there
+ * are arrows, whether clicking a screenshot opens it larger. Putting them in
+ * `testimonials-content.ts` would mean a deploy per toggle; here the panel can
+ * change them like any other content.
+ */
+export interface TestimonialsSettings {
+  /** `slider` scrolls sideways; `grid` wraps into rows. */
+  readonly layout: 'slider' | 'grid';
+  /** Whether the row advances on its own. */
+  readonly autoplay: boolean;
+  /** Seconds to rest on each card before advancing. */
+  readonly autoplaySeconds: number;
+  /** Show the previous/next buttons. */
+  readonly arrows: boolean;
+  /** Show the position dots under the row. */
+  readonly dots: boolean;
+  /** Clicking a screenshot opens it full size. */
+  readonly lightbox: boolean;
+  /** Card width on a wide screen, in pixels. */
+  readonly cardWidth: number;
+}
+
+/** The settings a fresh install behaves with. */
+export const DEFAULT_TESTIMONIALS_SETTINGS: TestimonialsSettings = {
+  layout: 'slider',
+  autoplay: true,
+  autoplaySeconds: 5,
+  arrows: true,
+  dots: true,
+  lightbox: true,
+  cardWidth: 420,
+};
+
+/** Bounds the panel enforces, and the reader clamps to. */
+export const SETTINGS_LIMITS = {
+  autoplaySeconds: { min: 2, max: 20 },
+  cardWidth: { min: 260, max: 720 },
+} as const;
+
 /** One testimonial. */
 export interface Testimonial {
   /** Stable identity. Reordering depends on it; see `lib/gallery.ts` for why. */
@@ -97,6 +141,50 @@ type StoredTestimonial = Omit<Testimonial, 'screenshot' | 'caption' | 'crop'> & 
 };
 
 const FILE = raw as { testimonials: StoredTestimonial[] };
+
+/**
+ * The section settings, clamped into their allowed ranges.
+ *
+ * ── Why the reader clamps and the writer validates ──────────────────────
+ * The writer rejects a bad value so the operator sees the error. The reader
+ * clamps anyway, because the committed JSON is also edited by hand and by older
+ * builds — a `autoplaySeconds: 0` there would produce a row that never rests,
+ * and a `cardWidth: 5000` would produce one card wider than the page.
+ * @returns {TestimonialsSettings}
+ */
+export function testimonialsSettings(): TestimonialsSettings {
+  const stored = (raw as { settings?: Partial<TestimonialsSettings> }).settings ?? {};
+  const limits = SETTINGS_LIMITS;
+
+  const clamp = (value: unknown, fallback: number, min: number, max: number): number => {
+    const n = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(max, Math.max(min, Math.round(n)));
+  };
+
+  const bool = (value: unknown, fallback: boolean): boolean =>
+    typeof value === 'boolean' ? value : fallback;
+
+  return {
+    layout: stored.layout === 'grid' ? 'grid' : 'slider',
+    autoplay: bool(stored.autoplay, DEFAULT_TESTIMONIALS_SETTINGS.autoplay),
+    autoplaySeconds: clamp(
+      stored.autoplaySeconds,
+      DEFAULT_TESTIMONIALS_SETTINGS.autoplaySeconds,
+      limits.autoplaySeconds.min,
+      limits.autoplaySeconds.max,
+    ),
+    arrows: bool(stored.arrows, DEFAULT_TESTIMONIALS_SETTINGS.arrows),
+    dots: bool(stored.dots, DEFAULT_TESTIMONIALS_SETTINGS.dots),
+    lightbox: bool(stored.lightbox, DEFAULT_TESTIMONIALS_SETTINGS.lightbox),
+    cardWidth: clamp(
+      stored.cardWidth,
+      DEFAULT_TESTIMONIALS_SETTINGS.cardWidth,
+      limits.cardWidth.min,
+      limits.cardWidth.max,
+    ),
+  };
+}
 
 /**
  * Every testimonial, in order — published or not. For the admin panel.

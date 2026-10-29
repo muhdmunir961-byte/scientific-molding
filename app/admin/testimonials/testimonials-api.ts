@@ -8,7 +8,7 @@
  * render rather than an exception it must guess at.
  */
 
-import type { Testimonial } from '@/lib/testimonials';
+import type { Testimonial, TestimonialsSettings } from '@/lib/testimonials';
 
 export interface ApiResult<T> {
   ok: boolean;
@@ -18,6 +18,8 @@ export interface ApiResult<T> {
 
 interface TestimonialsPayload {
   testimonials: Testimonial[];
+  settings?: TestimonialsSettings;
+  settingsSaved?: boolean;
   message?: string;
 }
 
@@ -141,4 +143,15 @@ export function bulkUploadScreenshots(files: File[]): Promise<ApiResult<BulkUplo
   for (const file of files) form.append('files', file);
 
   return request('/api/admin/testimonials/bulk', { method: 'POST', body: form });
+}
+
+/** Replace the section settings. */
+export function saveTestimonialsSettings(
+  settings: TestimonialsSettings,
+): Promise<ApiResult<{ settings: TestimonialsSettings; message?: string }>> {
+  return request('/api/admin/testimonials', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(settings),
+  });
 }

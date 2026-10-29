@@ -20,7 +20,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { gitConfig, isGitConfigured } from './config';
-import type { Testimonial } from '@/lib/testimonials';
+import type { Testimonial, TestimonialsSettings } from '@/lib/testimonials';
 
 /** Repo-relative path, for the GitHub API. */
 export const TESTIMONIALS_PATH = 'content/testimonials.json';
@@ -45,13 +45,17 @@ export interface SaveResult {
  * @param {Testimonial[]} entries
  * @returns {string}
  */
-export function renderTestimonialsFile(entries: Testimonial[]): string {
+export function renderTestimonialsFile(
+  entries: Testimonial[],
+  settings?: TestimonialsSettings,
+): string {
   const ordered = [...entries].sort((a, b) => a.order - b.order);
 
   return `${JSON.stringify(
     {
       $comment:
         'Testimonials. Written by the admin panel and committed through the GitHub API. The public site renders only entries with published: true.',
+      ...(settings ? { settings } : {}),
       testimonials: ordered,
     },
     null,
@@ -76,6 +80,24 @@ export async function readTestimonials(): Promise<Testimonial[]> {
     return [...entries].sort((a, b) => a.order - b.order);
   } catch {
     return [];
+  }
+}
+
+/**
+ * Read the section settings as they are stored — no defaults applied.
+ *
+ * `null` means the file has never been saved by this version of the panel, which
+ * the route reports as "using defaults" rather than pretending the operator
+ * chose them.
+ * @returns {Promise<Partial<TestimonialsSettings>|null>}
+ */
+export async function readTestimonialsSettings(): Promise<Partial<TestimonialsSettings> | null> {
+  try {
+    const raw = await readFile(FILE, 'utf8');
+    const parsed = JSON.parse(raw) as { settings?: Partial<TestimonialsSettings> };
+    return parsed.settings ?? null;
+  } catch {
+    return null;
   }
 }
 
@@ -140,8 +162,17 @@ async function commitToGitHub(
 export async function saveTestimonials(
   entries: Testimonial[],
   reason: string,
+  settings?: TestimonialsSettings,
 ): Promise<SaveResult> {
-  const source = renderTestimonialsFile(entries);
+  /*
+   * Settings are preserved when a caller does not pass them.
+   *
+   * Every existing save path — add, edit, reorder, delete — calls this without
+   * settings, and dropping them there would silently reset the operator's
+   * slider configuration on the next entry edit.
+   */
+  const preserved = settings ?? (await readTestimonialsSettings()) ?? undefined;
+  const source = renderTestimonialsFile(entries, preserved as TestimonialsSettings | undefined);
 
   if (isGitConfigured()) {
     const sha = await commitToGitHub(

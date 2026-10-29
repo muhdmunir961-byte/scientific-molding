@@ -962,6 +962,69 @@ label.admin-button:focus-within {
   outline-offset: 2px;
 }
 
+/* --- Section settings form --- */
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--ds-space-4);
+  margin-top: var(--ds-space-4);
+}
+
+.settings-field {
+  display: block;
+}
+
+.settings-field .admin-label {
+  display: block;
+  margin-bottom: var(--ds-space-2);
+}
+
+/* A range input has a fixed intrinsic width in some browsers, which breaks the
+   grid column it sits in. */
+.settings-field input[type='range'] {
+  width: 100%;
+  padding: 0;
+  accent-color: var(--ds-orange-500);
+}
+
+.settings-toggles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--ds-space-3);
+  margin-top: var(--ds-space-5);
+}
+
+.settings-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-3);
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: var(--ds-radius-md);
+  cursor: pointer;
+}
+
+.settings-toggle input {
+  margin-top: 0.2rem;
+  accent-color: var(--ds-orange-500);
+}
+
+.settings-toggle strong {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ds-neutral-900);
+}
+
+.settings-toggle small {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--ds-neutral-500);
+}
+
 .gallery-tools {
   display: flex;
   gap: var(--ds-space-2);

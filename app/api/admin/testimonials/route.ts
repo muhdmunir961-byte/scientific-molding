@@ -1,10 +1,11 @@
 /**
  * Testimonials admin API.
  *
- *   GET    /api/admin/testimonials    every entry, published or not
+ *   GET    /api/admin/testimonials    every entry, published or not, + settings
  *   POST   /api/admin/testimonials    add one
  *   PATCH  /api/admin/testimonials    edit one, reorder, or publish
  *   DELETE /api/admin/testimonials    remove one
+ *   PUT    /api/admin/testimonials    replace the section settings
  *
  * ── Why the whole list is saved on every change ─────────────────────────
  * Add, delete and reorder all shift positions. A partial write cannot express
@@ -20,12 +21,19 @@
 import { NextResponse } from 'next/server';
 
 import { requireSession, fail } from '@/lib/admin/guard';
-import { readTestimonials, saveTestimonials } from '@/lib/admin/testimonials-store';
+import {
+  readTestimonials,
+  readTestimonialsSettings,
+  saveTestimonials,
+} from '@/lib/admin/testimonials-store';
 import {
   blankTestimonial,
+  DEFAULT_TESTIMONIALS_SETTINGS,
+  SETTINGS_LIMITS,
   validateTestimonial,
   type Testimonial,
   type TestimonialCrop,
+  type TestimonialsSettings,
 } from '@/lib/testimonials';
 
 export const runtime = 'nodejs';
@@ -90,12 +98,69 @@ function toTestimonial(raw: Record<string, unknown>, fallbackOrder: number): Tes
   };
 }
 
-/** GET — every testimonial, for the panel. */
+/**
+ * Coerce an unknown payload into settings, rejecting anything out of range.
+ *
+ * Returns a message rather than a value on failure, so the route can name the
+ * field the operator has to fix. Silently clamping in the writer would let a
+ * typo look like it worked.
+ * @param {Record<string, unknown>} raw
+ * @returns {TestimonialsSettings|string}
+ */
+function toSettings(raw: Record<string, unknown>): TestimonialsSettings | string {
+  const bool = (value: unknown, fallback: boolean) =>
+    typeof value === 'boolean' ? value : fallback;
+
+  const number = (value: unknown, label: string, min: number, max: number): number | string => {
+    const n = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(n)) return `${label} must be a number.`;
+    if (n < min || n > max) return `${label} must be between ${min} and ${max}.`;
+    return Math.round(n);
+  };
+
+  const seconds = number(
+    raw.autoplaySeconds ?? DEFAULT_TESTIMONIALS_SETTINGS.autoplaySeconds,
+    'Autoplay seconds',
+    SETTINGS_LIMITS.autoplaySeconds.min,
+    SETTINGS_LIMITS.autoplaySeconds.max,
+  );
+  if (typeof seconds === 'string') return seconds;
+
+  const cardWidth = number(
+    raw.cardWidth ?? DEFAULT_TESTIMONIALS_SETTINGS.cardWidth,
+    'Card width',
+    SETTINGS_LIMITS.cardWidth.min,
+    SETTINGS_LIMITS.cardWidth.max,
+  );
+  if (typeof cardWidth === 'string') return cardWidth;
+
+  return {
+    layout: raw.layout === 'grid' ? 'grid' : 'slider',
+    autoplay: bool(raw.autoplay, DEFAULT_TESTIMONIALS_SETTINGS.autoplay),
+    autoplaySeconds: seconds,
+    arrows: bool(raw.arrows, DEFAULT_TESTIMONIALS_SETTINGS.arrows),
+    dots: bool(raw.dots, DEFAULT_TESTIMONIALS_SETTINGS.dots),
+    lightbox: bool(raw.lightbox, DEFAULT_TESTIMONIALS_SETTINGS.lightbox),
+    cardWidth,
+  };
+}
+
+/** GET — every testimonial and the section settings, for the panel. */
 export async function GET(): Promise<NextResponse> {
   const denied = await requireSession();
   if (denied) return denied;
 
-  return NextResponse.json({ ok: true, data: { testimonials: await readTestimonials() } });
+  const stored = await readTestimonialsSettings();
+
+  return NextResponse.json({
+    ok: true,
+    data: {
+      testimonials: await readTestimonials(),
+      settings: stored ?? DEFAULT_TESTIMONIALS_SETTINGS,
+      /** Whether the file actually contains settings, or these are defaults. */
+      settingsSaved: stored !== null,
+    },
+  });
 }
 
 /**
@@ -225,5 +290,35 @@ export async function DELETE(request: Request): Promise<NextResponse> {
   return NextResponse.json({
     ok: true,
     data: { testimonials: next, storage: result.storage, message: result.message },
+  });
+}
+
+/**
+ * PUT — replace the section settings.
+ *
+ * Settings are replaced rather than merged: the panel always sends the complete
+ * form, and a merge would leave a value the operator had just cleared in place.
+ * @param {Request} request JSON with the settings fields
+ */
+export async function PUT(request: Request): Promise<NextResponse> {
+  const denied = await requireSession();
+  if (denied) return denied;
+
+  let payload: Record<string, unknown>;
+  try {
+    payload = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return fail('Expected a JSON body.');
+  }
+
+  const settings = toSettings(payload);
+  if (typeof settings === 'string') return fail(settings);
+
+  const existing = await readTestimonials();
+  const result = await saveTestimonials(existing, 'update section settings', settings);
+
+  return NextResponse.json({
+    ok: true,
+    data: { settings, storage: result.storage, message: result.message },
   });
 }

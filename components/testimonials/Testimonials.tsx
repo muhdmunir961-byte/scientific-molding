@@ -45,12 +45,16 @@
 
 import Image from 'next/image';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import ScrollReveal from '../about/ScrollReveal';
 import { withOverrides } from '@/lib/admin/overrides';
 import { TESTIMONIAL_AVATARS } from '../shared/image-content';
-import { publishedTestimonials, type Testimonial } from '@/lib/testimonials';
+import {
+  publishedTestimonials,
+  testimonialsSettings,
+  type Testimonial,
+} from '@/lib/testimonials';
 import {
   TESTIMONIALS_CAPTION,
   TESTIMONIALS_HERO as TESTIMONIALS_HERO_RAW,
@@ -81,6 +85,7 @@ function publishedWithPhotos(): (Testimonial & { resolvedPhoto: string })[] {
 
 export default function Testimonials() {
   const entries = publishedWithPhotos();
+  const settings = testimonialsSettings();
 
   /*
    * Render nothing when there is nothing to show.
@@ -117,15 +122,19 @@ export default function Testimonials() {
           {TESTIMONIALS_CAPTION}
         </p>
 
-        <ul className="testimonial-grid">
-          {entries.map((testimonial, i) => (
-            <li key={testimonial.id} className="testimonial-cell">
-              <ScrollReveal delayMs={i * 80}>
-                <TestimonialCard testimonial={testimonial} />
-              </ScrollReveal>
-            </li>
-          ))}
-        </ul>
+        {settings.layout === 'slider' ? (
+          <TestimonialSlider entries={entries} settings={settings} />
+        ) : (
+          <ul className="testimonial-grid">
+            {entries.map((testimonial, i) => (
+              <li key={testimonial.id} className="testimonial-cell">
+                <ScrollReveal delayMs={i * 80}>
+                  <TestimonialCard testimonial={testimonial} lightbox={settings.lightbox} />
+                </ScrollReveal>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </section>
   );
@@ -141,9 +150,13 @@ export default function Testimonials() {
  */
 function TestimonialCard({
   testimonial,
+  lightbox,
 }: {
   testimonial: Testimonial & { resolvedPhoto: string };
+  lightbox: boolean;
 }) {
+  const [open, setOpen] = useState(false);
+
   /*
    * Only render the attribution when there is something to attribute. A
    * screenshot-only entry has no name yet, and an empty `<p>` with a stray "·"
@@ -160,6 +173,17 @@ function TestimonialCard({
           src={testimonial.screenshot}
           crop={testimonial.crop}
           name={testimonial.name}
+          expandable={lightbox}
+          onExpand={() => setOpen(true)}
+        />
+      )}
+
+      {open && (
+        <Lightbox
+          src={testimonial.screenshot}
+          alt={`Feedback as submitted by ${testimonial.name}`}
+          caption={testimonial.caption}
+          onClose={() => setOpen(false)}
         />
       )}
 
@@ -198,6 +222,256 @@ function TestimonialCard({
 }
 
 /**
+ * The horizontal row of cards.
+ *
+ * ════════════════════════════════════════════════════════════════════════
+ *  WHY A SCROLLER AND NOT A TRANSFORMED TRACK
+ *
+ *  A `translateX` track with an index is the usual carousel implementation, and
+ *  it breaks the two things a visitor actually does: swiping on a phone, and
+ *  scrolling with a trackpad. Both are native scroll gestures, and a transformed
+ *  track ignores them — the row looks scrollable and is not.
+ *
+ *  So the row IS a scroll container (`overflow-x: auto` with scroll snapping),
+ *  which makes swipe, trackpad and shift-wheel work for free. The arrows and the
+ *  autoplay drive it by calling `scrollBy`, so there is one source of truth for
+ *  the position and no index to drift out of sync with what is on screen.
+ * ════════════════════════════════════════════════════════════════════════
+ */
+function TestimonialSlider({
+  entries,
+  settings,
+}: {
+  entries: (Testimonial & { resolvedPhoto: string })[];
+  settings: ReturnType<typeof testimonialsSettings>;
+}) {
+  const trackRef = useRef<HTMLUListElement | null>(null);
+  const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
+
+  /** Move by one card width, measured from the DOM rather than assumed. */
+  const step = useCallback((direction: 1 | -1) => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    const card = track.querySelector<HTMLElement>('.testimonial-cell');
+    const gap = 32; // matches --ds-space-8 in the stylesheet
+    const distance = (card?.offsetWidth ?? track.clientWidth) + gap;
+
+    track.scrollBy({ left: direction * distance, behavior: 'smooth' });
+  }, []);
+
+  /*
+   * Read the position from scroll events rather than tracking it in state.
+   *
+   * The visitor can drag, swipe or scroll the row directly, so any index this
+   * component kept would be wrong the moment they did. Deriving it means the
+   * arrows, the dots and the edge state always describe what is actually shown.
+   */
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    function onScroll() {
+      if (!track) return;
+      const card = track.querySelector<HTMLElement>('.testimonial-cell');
+      const gap = 32;
+      const distance = (card?.offsetWidth ?? track.clientWidth) + gap;
+
+      setActive(Math.round(track.scrollLeft / distance));
+      setAtStart(track.scrollLeft <= 2);
+      // 2px of slack: sub-pixel layout means the exact end is rarely reached.
+      setAtEnd(track.scrollLeft + track.clientWidth >= track.scrollWidth - 2);
+    }
+
+    onScroll();
+    track.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+
+    return () => {
+      track.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, [entries.length]);
+
+  /*
+   * Autoplay.
+   *
+   * Paused on hover, on focus, when the tab is hidden, and — importantly — when
+   * the visitor has asked for reduced motion. A row that keeps moving while
+   * someone is reading it is the single most common complaint about carousels,
+   * and `prefers-reduced-motion` is the platform's way of saying so.
+   */
+  useEffect(() => {
+    if (!settings.autoplay || paused || entries.length < 2) return;
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+
+    const id = window.setInterval(() => {
+      const track = trackRef.current;
+      if (!track) return;
+
+      // Wrap to the start rather than stopping at the end: a row that halts
+      // silently reads as broken.
+      if (track.scrollLeft + track.clientWidth >= track.scrollWidth - 2) {
+        track.scrollTo({ left: 0, behavior: 'smooth' });
+        return;
+      }
+      step(1);
+    }, settings.autoplaySeconds * 1000);
+
+    return () => window.clearInterval(id);
+  }, [settings.autoplay, settings.autoplaySeconds, paused, entries.length, step]);
+
+  return (
+    <div
+      className="testimonial-slider"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={() => setPaused(false)}
+    >
+      <ul
+        ref={trackRef}
+        className="testimonial-track"
+        style={{ '--testimonial-card-width': `${settings.cardWidth}px` } as React.CSSProperties}
+        tabIndex={0}
+        role="region"
+        aria-label="Testimonials — scroll or use the arrow keys"
+      >
+        {entries.map((testimonial, i) => (
+          <li key={testimonial.id} className="testimonial-cell">
+            <ScrollReveal delayMs={Math.min(i, 4) * 80}>
+              <TestimonialCard testimonial={testimonial} lightbox={settings.lightbox} />
+            </ScrollReveal>
+          </li>
+        ))}
+      </ul>
+
+      {settings.arrows && (
+        <div className="testimonial-arrows">
+          <button
+            type="button"
+            className="testimonial-arrow"
+            onClick={() => step(-1)}
+            disabled={atStart}
+            aria-label="Previous testimonial"
+          >
+            <span aria-hidden="true">←</span>
+          </button>
+          <button
+            type="button"
+            className="testimonial-arrow"
+            onClick={() => step(1)}
+            disabled={atEnd}
+            aria-label="Next testimonial"
+          >
+            <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      )}
+
+      {settings.dots && entries.length > 1 && (
+        <div className="testimonial-dots" role="tablist" aria-label="Choose a testimonial">
+          {entries.map((entry, i) => (
+            <button
+              key={entry.id}
+              type="button"
+              role="tab"
+              aria-selected={i === active}
+              aria-label={`Testimonial ${i + 1} of ${entries.length}`}
+              className="testimonial-dot"
+              data-active={i === active}
+              onClick={() => {
+                const track = trackRef.current;
+                const card = track?.querySelector<HTMLElement>('.testimonial-cell');
+                if (!track) return;
+                track.scrollTo({
+                  left: i * ((card?.offsetWidth ?? track.clientWidth) + 32),
+                  behavior: 'smooth',
+                });
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * A screenshot that opens full size on click.
+ *
+ * ── Why a dialog and not a new tab ──────────────────────────────────────
+ * A new tab loses the page the visitor was reading, and on mobile it is a
+ * context switch they often do not come back from. The dialog keeps the section
+ * behind it, closes on Escape, and traps focus so keyboard users are not
+ * dropped into the page behind an overlay.
+ */
+function Lightbox({
+  src,
+  alt,
+  caption,
+  onClose,
+}: {
+  src: string;
+  alt: string;
+  caption: string;
+  onClose: () => void;
+}) {
+  const closeRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    closeRef.current?.focus();
+
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose();
+    }
+
+    // The page behind must not scroll while the overlay is open, or the visitor
+    // closes it and has lost their place.
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="testimonial-lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label={alt}
+      onClick={onClose}
+    >
+      <button
+        ref={closeRef}
+        type="button"
+        className="testimonial-lightbox-close"
+        onClick={onClose}
+        aria-label="Close"
+      >
+        <span aria-hidden="true">✕</span>
+      </button>
+
+      {/* Clicks inside the frame must not close it — only the backdrop does. */}
+      <figure className="testimonial-lightbox-frame" onClick={(e) => e.stopPropagation()}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={alt} />
+        {caption.trim() !== '' && <figcaption>{caption}</figcaption>}
+      </figure>
+    </div>
+  );
+}
+
+/**
  * The feedback exactly as the person sent it — a WhatsApp or email capture.
  *
  * ── Why this is not a square thumbnail ──────────────────────────────────
@@ -220,10 +494,14 @@ function FeedbackScreenshot({
   src,
   crop,
   name,
+  expandable,
+  onExpand,
 }: {
   src: string;
   crop: Testimonial['crop'];
   name: string;
+  expandable: boolean;
+  onExpand: () => void;
 }) {
   const region = crop ?? { x: 0, y: 0, w: 1, h: 1 };
 
@@ -234,7 +512,7 @@ function FeedbackScreenshot({
   const width = region.w > 0 ? region.w : 1;
   const height = region.h > 0 ? region.h : 1;
 
-  return (
+  const frame = (
     <div
       className="testimonial-screenshot"
       /* The cropped region's ratio, so the frame is the right shape pre-load. */
@@ -256,6 +534,29 @@ function FeedbackScreenshot({
         }}
       />
     </div>
+  );
+
+  /*
+   * A button wrapper only when the lightbox is enabled.
+   *
+   * Rendering a `<button>` around an image that does nothing would add a
+   * focus stop and a click target that lead nowhere, which is worse than the
+   * image not being clickable at all.
+   */
+  if (!expandable) return frame;
+
+  return (
+    <button
+      type="button"
+      className="testimonial-screenshot-button"
+      onClick={onExpand}
+      aria-label={`Open the feedback screenshot from ${name} at full size`}
+    >
+      {frame}
+      <span className="testimonial-expand-hint" aria-hidden="true">
+        Click to enlarge
+      </span>
+    </button>
   );
 }
 
