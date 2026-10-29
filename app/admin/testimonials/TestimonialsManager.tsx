@@ -24,6 +24,7 @@ import type { Testimonial, TestimonialCrop } from '@/lib/testimonials';
 import CropEditor from './CropEditor';
 import {
   addTestimonial,
+  bulkUploadScreenshots,
   deleteTestimonial,
   editTestimonial,
   fetchTestimonials,
@@ -90,10 +91,15 @@ export default function TestimonialsManager() {
 
   async function add() {
     setBusy(true);
-    const result = await addTestimonial({
-      name: 'New testimonial',
-      quote: 'Replace this with the quote the person actually gave.',
-    });
+    /*
+     * A genuinely blank entry.
+     *
+     * It used to be seeded with "New testimonial" and a placeholder quote, which
+     * the operator then had to delete before typing the real thing — and which
+     * would be published verbatim if they forgot. Every field is optional now,
+     * so there is nothing to seed.
+     */
+    const result = await addTestimonial({});
     setBusy(false);
 
     if (!result.ok || !result.data) {
@@ -102,6 +108,31 @@ export default function TestimonialsManager() {
     }
     setEntries(result.data.testimonials);
     setNotice({ tone: 'ok', text: 'Added. It stays hidden until you switch it on.' });
+  }
+
+  /**
+   * Add many entries at once, one per screenshot.
+   *
+   * Everything created here is unpublished, so a bulk upload cannot put a real
+   * person's screenshot on the live site before the operator has looked at it.
+   */
+  async function bulkAdd(files: File[]) {
+    setBusy(true);
+    setNotice(null);
+
+    const result = await bulkUploadScreenshots(files);
+    setBusy(false);
+
+    if (!result.ok || !result.data) {
+      setNotice({ tone: 'error', text: result.error ?? 'Could not add those screenshots.' });
+      return;
+    }
+
+    setEntries(result.data.testimonials);
+    setNotice({
+      tone: result.data.errors.length > 0 ? 'error' : 'ok',
+      text: result.data.message ?? `${result.data.created} added.`,
+    });
   }
 
   async function save(entry: Testimonial, fields: Partial<Testimonial>) {
@@ -206,6 +237,27 @@ export default function TestimonialsManager() {
         <button type="button" className="admin-button" onClick={add} disabled={busy || loading}>
           Add a testimonial
         </button>
+
+        {/*
+          * A labelled file input styled as a button. A bare `<input type=file>`
+          * next to the button above reads as a second, unrelated control; this
+          * makes clear that both add entries, one at a time or in bulk.
+          */}
+        <label className={`admin-button admin-button-secondary ${busy || loading ? 'is-disabled' : ''}`}>
+          Upload screenshots
+          <input
+            type="file"
+            multiple
+            accept="image/jpeg,image/png,image/webp,image/avif"
+            className="sr-only"
+            disabled={busy || loading}
+            onChange={(event) => {
+              const files = Array.from(event.currentTarget.files ?? []);
+              if (files.length > 0) void bulkAdd(files);
+              event.currentTarget.value = '';
+            }}
+          />
+        </label>
       </div>
 
       {loading ? (
@@ -269,6 +321,7 @@ function TestimonialRow({
   const [quote, setQuote] = useState(entry.quote);
   const [photo, setPhoto] = useState(entry.photo);
   const [screenshot, setScreenshot] = useState(entry.screenshot);
+  const [caption, setCaption] = useState(entry.caption);
   const [crop, setCrop] = useState<TestimonialCrop | null>(entry.crop);
 
   /*
@@ -285,8 +338,9 @@ function TestimonialRow({
 
   useEffect(() => {
     setScreenshot(entry.screenshot);
+    setCaption(entry.caption);
     setCrop(entry.crop);
-  }, [entry.screenshot, entry.crop]);
+  }, [entry.screenshot, entry.caption, entry.crop]);
 
   return (
     <li className={`gallery-item ${entry.published ? '' : 'testimonial-unpublished'}`}>
@@ -327,26 +381,26 @@ function TestimonialRow({
         </div>
 
         <TextField
-          label="Name"
+          label="Name (optional)"
           value={name}
           onChange={setName}
           onSave={() => name !== entry.name && onSave(entry, { name })}
         />
         <TextField
-          label="Job title"
+          label="Job title (optional)"
           value={role}
           onChange={setRole}
           onSave={() => role !== entry.role && onSave(entry, { role })}
         />
         <TextField
-          label="Company"
+          label="Company (optional)"
           value={company}
           onChange={setCompany}
           onSave={() => company !== entry.company && onSave(entry, { company })}
         />
 
         <label className="admin-label" htmlFor={`quote-${entry.id}`}>
-          What they said
+          What they said (optional)
         </label>
         <textarea
           id={`quote-${entry.id}`}
@@ -357,7 +411,7 @@ function TestimonialRow({
         />
 
         <label className="admin-label" htmlFor={`photo-upload-${entry.id}`}>
-          Photo
+          Photo (optional)
         </label>
         <p className="admin-hint">
           Pilih gambar dari komputer. Square headshot, sekurang-kurangnya 240×240.
@@ -395,7 +449,7 @@ function TestimonialRow({
         )}
 
         <TextField
-          label="Photo path"
+          label="Photo path (optional)"
           value={photo}
           onChange={setPhoto}
           hint="Diisi automatik selepas upload. Boleh juga tampal URL atau path sendiri."
@@ -404,7 +458,7 @@ function TestimonialRow({
 
         {/* ── Feedback screenshot ─────────────────────────────────────── */}
         <label className="admin-label" htmlFor={`shot-upload-${entry.id}`}>
-          Feedback screenshot
+          Feedback screenshot (optional)
         </label>
         <p className="admin-hint">
           Screenshot asal daripada WhatsApp, email atau platform lain. Dipaparkan
@@ -425,6 +479,14 @@ function TestimonialRow({
 
         {screenshot && (
           <>
+            <TextField
+              label="Caption (optional)"
+              value={caption}
+              onChange={setCaption}
+              hint="Printed under the screenshot — e.g. 'WhatsApp feedback, March 2026'."
+              onSave={() => caption !== entry.caption && onSave(entry, { caption })}
+            />
+
             <CropEditor
               src={screenshot}
               crop={crop}

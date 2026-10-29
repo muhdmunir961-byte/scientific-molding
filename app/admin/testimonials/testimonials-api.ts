@@ -119,3 +119,26 @@ export function uploadTestimonialPhoto(
 
   return request('/api/admin/testimonials/photo', { method: 'POST', body: form });
 }
+
+export interface BulkUploadResult extends TestimonialsPayload {
+  /** How many entries were created. */
+  created: number;
+  /** Per-file failures, so a partial success is never reported as a full one. */
+  errors: string[];
+}
+
+/**
+ * Upload many screenshots at once, creating one unpublished entry per file.
+ *
+ * One request rather than one per file: a batch of eleven captures would
+ * otherwise mean eleven commits and eleven deploys.
+ *
+ * @param {File[]} files
+ * @returns {Promise<ApiResult<BulkUploadResult>>}
+ */
+export function bulkUploadScreenshots(files: File[]): Promise<ApiResult<BulkUploadResult>> {
+  const form = new FormData();
+  for (const file of files) form.append('files', file);
+
+  return request('/api/admin/testimonials/bulk', { method: 'POST', body: form });
+}

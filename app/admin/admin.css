@@ -939,6 +939,29 @@
   touch-action: none;
 }
 
+/*
+ * A label that has to look like the button beside it.
+ *
+ * "Upload screenshots" is a `<label>` wrapping a hidden file input, because a
+ * file input cannot be styled and two different-looking controls that both add
+ * entries would read as unrelated. It needs the disabled and focus affordances
+ * of the real button to stay honest.
+ */
+label.admin-button {
+  cursor: pointer;
+}
+
+label.admin-button.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+label.admin-button:focus-within {
+  outline: 2px solid var(--ds-orange-500);
+  outline-offset: 2px;
+}
+
 .gallery-tools {
   display: flex;
   gap: var(--ds-space-2);

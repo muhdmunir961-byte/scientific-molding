@@ -144,6 +144,15 @@ function TestimonialCard({
 }: {
   testimonial: Testimonial & { resolvedPhoto: string };
 }) {
+  /*
+   * Only render the attribution when there is something to attribute. A
+   * screenshot-only entry has no name yet, and an empty `<p>` with a stray "·"
+   * between two blank strings reads as a rendering bug rather than as missing
+   * content.
+   */
+  const hasAttribution = testimonial.name.trim() !== '' || testimonial.role.trim() !== '';
+  const roleLine = [testimonial.role, testimonial.company].filter((v) => v.trim() !== '').join(' · ');
+
   return (
     <figure className="testimonial-card">
       {testimonial.screenshot && (
@@ -154,18 +163,26 @@ function TestimonialCard({
         />
       )}
 
-      <blockquote className="testimonial-quote">{testimonial.quote}</blockquote>
+      {testimonial.screenshot && testimonial.caption.trim() !== '' && (
+        <figcaption className="testimonial-caption">{testimonial.caption}</figcaption>
+      )}
 
-      <figcaption className="testimonial-attribution">
-        <Avatar src={testimonial.resolvedPhoto} name={testimonial.name} />
+      {testimonial.quote.trim() !== '' && (
+        <blockquote className="testimonial-quote">{testimonial.quote}</blockquote>
+      )}
 
-        <div className="min-w-0">
-          <p className="testimonial-name">{testimonial.name}</p>
-          <p className="testimonial-role">
-            {testimonial.role} · {testimonial.company}
-          </p>
-        </div>
-      </figcaption>
+      {hasAttribution && (
+        <figcaption className="testimonial-attribution">
+          <Avatar src={testimonial.resolvedPhoto} name={testimonial.name} />
+
+          <div className="min-w-0">
+            {testimonial.name.trim() !== '' && (
+              <p className="testimonial-name">{testimonial.name}</p>
+            )}
+            {roleLine !== '' && <p className="testimonial-role">{roleLine}</p>}
+          </div>
+        </figcaption>
+      )}
 
       {/*
         * No stars.
@@ -263,23 +280,32 @@ function Avatar({ src, name }: { src: string; name: string }) {
   const cleaned = name.replace(/[^A-Za-z0-9]/g, '');
   const initial = cleaned ? cleaned.charAt(0) : '\u00b7';
 
-  return (
-    <span className="testimonial-avatar">
-      {failed ? (
+  /*
+   * An empty `src` is a normal state now that the photo is optional: the panel
+   * lets an entry exist with only a screenshot. `next/image` would throw on an
+   * empty src, so the fallback tile is rendered directly.
+   */
+  if (src.trim() === '' || failed) {
+    return (
+      <span className="testimonial-avatar">
         <span className="testimonial-avatar-fallback" aria-hidden="true">
           {initial.toUpperCase()}
         </span>
-      ) : (
-        <Image
-          src={src}
-          alt=""
-          width={60}
-          height={60}
-          sizes="60px"
-          onError={() => setFailed(true)}
-          className="h-full w-full object-cover"
-        />
-      )}
+      </span>
+    );
+  }
+
+  return (
+    <span className="testimonial-avatar">
+      <Image
+        src={src}
+        alt=""
+        width={60}
+        height={60}
+        sizes="60px"
+        onError={() => setFailed(true)}
+        className="h-full w-full object-cover"
+      />
     </span>
   );
 }

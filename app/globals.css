@@ -3546,6 +3546,14 @@ body {
 
 .testimonials-inner {
   padding-block: var(--ds-section-padding-y-mobile);
+  /* Wider than the site's 1280px measure.
+
+     Every other section is text, and 1280px is already at the edge of a
+     comfortable line length. This one is mostly photographs of messages, where
+     the limiting factor is legibility of small type inside the image, not line
+     length — so it gets its own, wider measure. Capped at 100% so it still
+     respects the viewport. */
+  max-width: min(1600px, 100%);
 }
 
 @media (min-width: 768px) {
@@ -3568,21 +3576,25 @@ body {
   color: var(--ds-neutral-500);
 }
 
-/* --- The three-up card grid. --- */
+/* --- The card grid ---
+   `auto-fit` with a 380px floor rather than a fixed three-up.
 
+   The three-up rule was written when the section always had exactly three
+   entries. With one entry it produced a single card a third of the page wide,
+   and with five it left a ragged second row. `auto-fit` makes the column count
+   follow the content: one card fills the measure, three share it, and the
+   `minmax` floor stops a card ever becoming too narrow to read a screenshot in.
+
+   `1fr` columns cap at the container's 1280px, so a single card does not stretch
+   to an unreadable width on a wide monitor. */
 .testimonial-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--ds-space-6);
+  grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
+  gap: var(--ds-space-8);
   list-style: none;
   margin: var(--ds-space-12) 0 0;
   padding: 0;
-}
-
-@media (min-width: 768px) {
-  .testimonial-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+  align-items: start;
 }
 
 .testimonial-cell {
@@ -3663,6 +3675,16 @@ body {
 
 .testimonial-screenshot img {
   object-fit: fill;
+}
+
+/* The caption under a screenshot. Sits tight to the image it describes, and
+   deliberately quieter than the quote — it labels the evidence, it is not a
+   second claim. */
+.testimonial-caption {
+  margin: 0 0 var(--ds-space-4);
+  font-size: var(--ds-text-body-sm);
+  line-height: var(--ds-leading-normal);
+  color: var(--ds-neutral-500);
 }
 
 .testimonial-avatar {

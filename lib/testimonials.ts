@@ -71,6 +71,8 @@ export interface Testimonial {
    * a square, because the point of it is that it is unedited evidence.
    */
   readonly screenshot: string;
+  /** Optional caption printed under the screenshot. */
+  readonly caption: string;
   /** Crop applied to `screenshot`. `null` means show the whole image. */
   readonly crop: TestimonialCrop | null;
   /** Which module this relates to, or null. Must be a real module slug. */
@@ -88,8 +90,9 @@ export interface Testimonial {
  * those fields existed do not have them, and the committed JSON is edited by the
  * panel rather than migrated. `allTestimonials()` fills the gaps.
  */
-type StoredTestimonial = Omit<Testimonial, 'screenshot' | 'crop'> & {
+type StoredTestimonial = Omit<Testimonial, 'screenshot' | 'caption' | 'crop'> & {
   screenshot?: string;
+  caption?: string;
   crop?: TestimonialCrop | null;
 };
 
@@ -109,6 +112,7 @@ export function allTestimonials(): Testimonial[] {
     .map((entry) => ({
       ...entry,
       screenshot: entry.screenshot ?? '',
+      caption: entry.caption ?? '',
       crop: entry.crop ?? null,
     }));
 }
@@ -148,6 +152,7 @@ export function blankTestimonial(order: number): Testimonial {
     quote: '',
     photo: '',
     screenshot: '',
+    caption: '',
     crop: null,
     moduleSlug: null,
     published: false,
@@ -158,16 +163,41 @@ export function blankTestimonial(order: number): Testimonial {
 /**
  * Validate one testimonial before it is saved.
  *
- * `name` and `quote` are required; everything else may be empty. The module slug
- * is checked against the manifest rather than accepted as a free string, so a
- * typo cannot attach a quote to a module that does not exist.
+ * ── Why every content field is optional ─────────────────────────────────
+ * A testimonial can arrive as a screenshot with no typed quote, a quote with no
+ * name, or just a logo and a sentence. Requiring `name` and `quote` forced the
+ * operator to invent filler to satisfy the form, which is worse than an
+ * incomplete entry they can come back to.
+ *
+ * What is NOT optional is that a PUBLISHED entry has something to show. An
+ * empty card is a visible defect, so the gate moves from "the fields are filled"
+ * to "there is something on the card".
+ *
+ * The module slug is still checked against the manifest rather than accepted as
+ * a free string, so a typo cannot attach an entry to a module that does not
+ * exist.
  * @param {Testimonial} entry
  * @returns {string} '' when acceptable
  */
 export function validateTestimonial(entry: Testimonial): string {
   if (!entry.id.trim()) return 'The entry has no id.';
-  if (!entry.name.trim()) return 'A name is required.';
-  if (!entry.quote.trim()) return 'The quote is required.';
+
+  /*
+   * An unpublished entry may be completely blank — that is a draft being set up
+   * across several saves. Only publishing demands content, because only a
+   * published entry reaches the page.
+   */
+  if (entry.published) {
+    const hasSomething =
+      entry.screenshot.trim() !== '' ||
+      entry.quote.trim() !== '' ||
+      entry.name.trim() !== '' ||
+      entry.caption.trim() !== '';
+
+    if (!hasSomething) {
+      return 'A published entry needs at least a screenshot, a quote, a name or a caption.';
+    }
+  }
 
   if (entry.moduleSlug !== null && !isValidModuleSlug(entry.moduleSlug)) {
     return `"${entry.moduleSlug}" is not one of the training modules.`;

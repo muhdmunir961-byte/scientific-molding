@@ -82,6 +82,7 @@ function toTestimonial(raw: Record<string, unknown>, fallbackOrder: number): Tes
     quote: str(raw.quote),
     photo: str(raw.photo),
     screenshot: str(raw.screenshot),
+    caption: str(raw.caption),
     crop: toCrop(raw.crop),
     moduleSlug: moduleSlug === '' ? null : moduleSlug,
     published: raw.published === true,
