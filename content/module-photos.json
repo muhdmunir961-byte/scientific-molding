@@ -151,17 +151,17 @@
       "presentation": []
     },
     "m7-process-portability": {
-      "lecture": [
+      "lecture": [],
+      "practical": [
         {
-          "key": "images/m7-process-portability/lecture/1793629119067-unikl-1.jpg",
-          "url": "https://assets.scientificmoldings.com/images/m7-process-portability/lecture/1793629119067-unikl-1.jpg",
+          "key": "images/m7-process-portability/practical/1793629140840-pss-1.jpg",
+          "url": "https://assets.scientificmoldings.com/images/m7-process-portability/practical/1793629140840-pss-1.jpg",
           "alt": "",
           "caption": "",
           "order": 0,
-          "uploadedAt": "2026-11-02T14:18:40.769Z"
+          "uploadedAt": "2026-11-02T14:19:03.552Z"
         }
       ],
-      "practical": [],
       "discussion": [],
       "presentation": []
     }
