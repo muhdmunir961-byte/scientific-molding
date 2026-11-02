@@ -26,7 +26,16 @@
       ]
     },
     "m2-processability": {
-      "lecture": [],
+      "lecture": [
+        {
+          "key": "images/m2-processability/lecture/1793627804868-jhp-4.jpg",
+          "url": "https://assets.scientificmoldings.com/images/m2-processability/lecture/1793627804868-jhp-4.jpg",
+          "alt": "",
+          "caption": "",
+          "order": 0,
+          "uploadedAt": "2026-11-02T13:56:46.316Z"
+        }
+      ],
       "practical": [],
       "discussion": [],
       "presentation": [
