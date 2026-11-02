@@ -28,7 +28,16 @@
     "m2-processability": {
       "lecture": [],
       "practical": [],
-      "discussion": [],
+      "discussion": [
+        {
+          "key": "images/m2-processability/discussion/1793628925425-ah-2.jpeg",
+          "url": "https://assets.scientificmoldings.com/images/m2-processability/discussion/1793628925425-ah-2.jpeg",
+          "alt": "",
+          "caption": "",
+          "order": 0,
+          "uploadedAt": "2026-11-02T14:15:26.944Z"
+        }
+      ],
       "presentation": [
         {
           "key": "images/m2-processability/presentation/1793194900473-simmo-3",
