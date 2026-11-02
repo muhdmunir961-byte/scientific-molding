@@ -28,7 +28,16 @@
     "m2-processability": {
       "lecture": [],
       "practical": [],
-      "discussion": [],
+      "discussion": [
+        {
+          "key": "images/m2-processability/discussion/1793627858320-jhp-2.jpeg",
+          "url": "https://assets.scientificmoldings.com/images/m2-processability/discussion/1793627858320-jhp-2.jpeg",
+          "alt": "",
+          "caption": "",
+          "order": 0,
+          "uploadedAt": "2026-11-02T13:57:40.206Z"
+        }
+      ],
       "presentation": [
         {
           "key": "images/m2-processability/presentation/1793194900473-simmo-3",
@@ -91,16 +100,7 @@
       "lecture": [],
       "practical": [],
       "discussion": [],
-      "presentation": [
-        {
-          "key": "images/m4-process-development/presentation/1793628118543-nagoya-1.jfif",
-          "url": "https://assets.scientificmoldings.com/images/m4-process-development/presentation/1793628118543-nagoya-1.jfif",
-          "alt": "",
-          "caption": "",
-          "order": 0,
-          "uploadedAt": "2026-11-02T14:02:00.938Z"
-        }
-      ]
+      "presentation": []
     },
     "m5-parameter-setting": {
       "lecture": [],
@@ -129,7 +129,16 @@
         }
       ],
       "practical": [],
-      "discussion": [],
+      "discussion": [
+        {
+          "key": "images/m6-defects-troubleshooting/discussion/1793628347364-ah-2.jpeg",
+          "url": "https://assets.scientificmoldings.com/images/m6-defects-troubleshooting/discussion/1793628347364-ah-2.jpeg",
+          "alt": "",
+          "caption": "",
+          "order": 0,
+          "uploadedAt": "2026-11-02T14:05:49.177Z"
+        }
+      ],
       "presentation": []
     },
     "m7-process-portability": {
