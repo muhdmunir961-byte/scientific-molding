@@ -28,7 +28,16 @@
     "m2-processability": {
       "lecture": [],
       "practical": [],
-      "discussion": [],
+      "discussion": [
+        {
+          "key": "images/m2-processability/discussion/1793627858320-jhp-2.jpeg",
+          "url": "https://assets.scientificmoldings.com/images/m2-processability/discussion/1793627858320-jhp-2.jpeg",
+          "alt": "",
+          "caption": "",
+          "order": 0,
+          "uploadedAt": "2026-11-02T13:57:40.206Z"
+        }
+      ],
       "presentation": [
         {
           "key": "images/m2-processability/presentation/1793194900473-simmo-3",
@@ -37,14 +46,6 @@
           "caption": "",
           "order": 0,
           "uploadedAt": "2026-10-28T13:41:42.508Z"
-        },
-        {
-          "key": "images/m2-processability/presentation/1793627831514-ah-2-1.jpeg",
-          "url": "https://assets.scientificmoldings.com/images/m2-processability/presentation/1793627831514-ah-2-1.jpeg",
-          "alt": "",
-          "caption": "",
-          "order": 1,
-          "uploadedAt": "2026-11-02T13:57:12.652Z"
         }
       ]
     },
