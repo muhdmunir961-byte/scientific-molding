@@ -90,17 +90,17 @@
     "m4-process-development": {
       "lecture": [],
       "practical": [],
-      "discussion": [
+      "discussion": [],
+      "presentation": [
         {
-          "key": "images/m4-process-development/discussion/1793628102253-lesso-2.jpg",
-          "url": "https://assets.scientificmoldings.com/images/m4-process-development/discussion/1793628102253-lesso-2.jpg",
+          "key": "images/m4-process-development/presentation/1793628118543-nagoya-1.jfif",
+          "url": "https://assets.scientificmoldings.com/images/m4-process-development/presentation/1793628118543-nagoya-1.jfif",
           "alt": "",
           "caption": "",
           "order": 0,
-          "uploadedAt": "2026-11-02T14:01:45.425Z"
+          "uploadedAt": "2026-11-02T14:02:00.938Z"
         }
-      ],
-      "presentation": []
+      ]
     },
     "m5-parameter-setting": {
       "lecture": [],
