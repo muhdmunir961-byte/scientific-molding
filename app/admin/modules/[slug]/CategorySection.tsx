@@ -3,14 +3,27 @@
 /**
  * One photo category: its photos, and the controls for them.
  *
- * ── Why the caption field saves on blur, not per keystroke ──────────────
- * A save per keystroke would commit to git on every character. On blur is the
- * point at which the operator has finished thinking about that field, and it is
- * what the `dirty` flag below tracks — an untouched field never posts, so
- * clicking through a gallery produces no commits at all.
+ * ════════════════════════════════════════════════════════════════════════
+ *  WHY THIS IS A THUMBNAIL GRID AND NOT A LIST OF ROWS
+ *
+ *  The first revision gave every photo a full row: a 96px preview, two text
+ *  fields, a frame select and a crop editor. At 11 photos that is several screens
+ *  of form, and the one thing an operator actually does most often — LOOK at
+ *  what they uploaded — was a 96px square cropped to `object-fit: cover`.
+ *
+ *  So the list is now a grid of thumbnails. Each one opens full size on click,
+ *  and its caption/frame/crop fields live behind a toggle that is closed by
+ *  default. The common case (check the photos, add more, reorder) needs no form
+ *  at all; the rare case (write a caption) is one click away.
+ *
+ *  ── Why the caption still saves on blur ─────────────────────────────────
+ *  A save per keystroke would commit to git on every character. On blur is the
+ *  point at which the operator has finished thinking about that field, and an
+ *  untouched field never posts, so clicking through a gallery produces no commits.
+ * ════════════════════════════════════════════════════════════════════════
  */
 
-import { useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { GalleryImage } from '@/lib/gallery';
 import type { PhotoCategory } from '@/lib/modules';
@@ -18,6 +31,8 @@ import type { ImageAspect, ImageCrop } from '@/lib/image-crop';
 
 import { deletePhoto, editPhoto, reorderPhotos, uploadPhotos } from '../gallery-api';
 import CropEditor from '../../testimonials/CropEditor';
+import PhotoLightbox from '../../PhotoLightbox';
+import PhotoUploader from '../../PhotoUploader';
 
 export interface CategorySectionProps {
   moduleSlug: string;
@@ -37,33 +52,42 @@ export function CategorySection({
   onNotice,
 }: CategorySectionProps) {
   const [busy, setBusy] = useState(false);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [lightbox, setLightbox] = useState<number | null>(null);
+  /** Which photo has its detail panel open. One at a time keeps the grid short. */
+  const [openKey, setOpenKey] = useState<string | null>(null);
 
-  async function onPick(files: FileList | null) {
-    if (!files || files.length === 0) return;
-
+  /**
+   * Upload one batch.
+   *
+   * Returns the envelope `PhotoUploader` needs so it can mark each file. The
+   * caller's `onImages` is fed the merged list the server returns, which is the
+   * authoritative order.
+   */
+  async function upload(files: File[]) {
     setBusy(true);
-    const result = await uploadPhotos(moduleSlug, category, Array.from(files));
+    const result = await uploadPhotos(moduleSlug, category, files);
+    setBusy(false);
 
     if (!result.ok || !result.data) {
-      onNotice({ tone: 'error', text: result.error ?? 'Upload failed.' });
-    } else {
-      onImages(result.data.images);
-      /*
-       * A partial upload reports the per-file failures and says so in the
-       * message, rather than claiming everything worked.
-       */
-      onNotice({
-        tone: result.data.errors.length > 0 ? 'error' : 'ok',
-        text:
-          result.data.errors.length > 0
-            ? result.data.errors.join(' ')
-            : `${result.data.uploaded} photo${result.data.uploaded === 1 ? '' : 's'} uploaded.`,
-      });
+      return { ok: false, error: result.error ?? 'Upload failed.' };
     }
 
-    setBusy(false);
-    if (inputRef.current) inputRef.current.value = '';
+    onImages(result.data.images);
+
+    /*
+     * A partial upload is reported as a partial upload. The uploader already
+     * shows the per-file failures beside each name, so this banner is only the
+     * summary — it must not claim everything worked.
+     */
+    onNotice({
+      tone: result.data.errors.length > 0 ? 'error' : 'ok',
+      text:
+        result.data.errors.length > 0
+          ? `${result.data.uploaded} added, ${result.data.errors.length} failed. ${result.data.errors.join(' ')}`
+          : `${result.data.uploaded} photo${result.data.uploaded === 1 ? '' : 's'} uploaded.`,
+    });
+
+    return { ok: true, errors: result.data.errors };
   }
 
   /**
@@ -105,6 +129,8 @@ export function CategorySection({
     }
 
     onImages(result.data.images);
+    if (openKey === key) setOpenKey(null);
+
     /*
      * Whether the R2 object was removed is surfaced. It does not fail the
      * action — the site is already correct once the manifest is written — but an
@@ -122,14 +148,12 @@ export function CategorySection({
 
   async function saveCaption(
     key: string,
-    fields: {
-      caption?: string;
-      alt?: string;
-      crop?: ImageCrop | null;
-      aspect?: ImageAspect;
-    },
+    fields: { caption?: string; alt?: string; crop?: ImageCrop | null; aspect?: ImageAspect },
   ) {
+    setBusy(true);
     const result = await editPhoto(moduleSlug, category, key, fields);
+    setBusy(false);
+
     if (!result.ok || !result.data) {
       onNotice({ tone: 'error', text: result.error ?? 'Could not save that field.' });
       return;
@@ -138,46 +162,59 @@ export function CategorySection({
     onNotice({ tone: 'ok', text: 'Saved.' });
   }
 
+  const described = images.filter((image) => image.alt.trim() !== '').length;
+
   return (
     <section className="admin-card gallery-category">
       <header className="gallery-category-head">
-        <h2 className="admin-card-title">{label}</h2>
-        <span className="admin-muted">
-          {images.length === 0
-            ? 'No photos yet'
-            : `${images.length} photo${images.length === 1 ? '' : 's'}`}
-        </span>
+        <div>
+          <h2 className="admin-card-title">{label}</h2>
+          {/*
+           * The status line answers "is this category finished" at a glance:
+           * how many photos, and how many of them have a description. An
+           * undescribed photo is not an error, but it is the thing that makes a
+           * gallery inaccessible, so the count is shown rather than hidden.
+           */}
+          <p className="gallery-category-status">
+            {images.length === 0 ? (
+              <span className="admin-muted">No photos yet.</span>
+            ) : (
+              <>
+                <span className="gallery-status-pill">
+                  {images.length} photo{images.length === 1 ? '' : 's'}
+                </span>
+                <span
+                  className={`gallery-status-pill ${
+                    described === images.length ? 'is-complete' : 'is-partial'
+                  }`}
+                >
+                  {described} of {images.length} described
+                </span>
+              </>
+            )}
+          </p>
+        </div>
       </header>
 
-      <input
-        ref={inputRef}
-        className="admin-omit"
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/avif"
-        multiple
-        onChange={(e) => void onPick(e.target.files)}
+      <PhotoUploader
+        onUpload={upload}
+        disabled={busy}
+        label={images.length > 0 ? 'Add more photos' : 'Add photos'}
+        hint={`Drops into ${label}. Click any thumbnail to check it full size.`}
       />
 
-      <div className="admin-actions">
-        <button
-          type="button"
-          className="admin-button admin-button-secondary"
-          disabled={busy}
-          onClick={() => inputRef.current?.click()}
-        >
-          {busy ? 'Working…' : images.length > 0 ? 'Add more photos' : 'Add photos'}
-        </button>
-      </div>
-
       {images.length > 0 && (
-        <ul className="gallery-list">
+        <ul className="photo-grid">
           {images.map((image, index) => (
-            <PhotoRow
+            <PhotoTile
               key={image.key}
               image={image}
               index={index}
               total={images.length}
               busy={busy}
+              open={openKey === image.key}
+              onToggle={() => setOpenKey(openKey === image.key ? null : image.key)}
+              onZoom={() => setLightbox(index)}
               onMove={move}
               onRemove={remove}
               onSaveCaption={saveCaption}
@@ -185,23 +222,44 @@ export function CategorySection({
           ))}
         </ul>
       )}
+
+      <PhotoLightbox
+        context={label}
+        index={lightbox}
+        onIndex={setLightbox}
+        items={images.map((image) => ({
+          key: image.key,
+          src: image.url,
+          caption: image.caption,
+          alt: image.alt || `${label} photo ${image.order + 1}`,
+        }))}
+      />
     </section>
   );
 }
 
 /**
- * One photo row: preview, caption/alt fields, and the move/remove controls.
+ * One photo in the grid: a thumbnail you can open, and a detail panel.
  *
- * Separate from `CategorySection` so the list markup does not nest four levels
- * deep, and because the caption fields hold their own draft state — a single
- * component owning eleven draft pairs would re-render all of them on any
- * keystroke.
+ * ── Why the thumbnail is a button ───────────────────────────────────────
+ * Clicking the picture is the whole point of the grid, so it has to be a real
+ * control: a `<div onClick>` cannot be reached with the keyboard and announces
+ * nothing to a screen reader. The label names the action and the position.
+ *
+ * ── Why the fields are collapsed ────────────────────────────────────────
+ * Caption, description, frame and crop are all edits, not checks. Eleven
+ * always-open forms is what made this page several screens long. One panel at a
+ * time keeps the grid scannable, and the thumbnail already shows the frame the
+ * site will use.
  */
-function PhotoRow({
+function PhotoTile({
   image,
   index,
   total,
   busy,
+  open,
+  onToggle,
+  onZoom,
   onMove,
   onRemove,
   onSaveCaption,
@@ -210,6 +268,9 @@ function PhotoRow({
   index: number;
   total: number;
   busy: boolean;
+  open: boolean;
+  onToggle: () => void;
+  onZoom: () => void;
   onMove: (index: number, delta: number) => void;
   onRemove: (key: string) => void;
   onSaveCaption: (
@@ -221,123 +282,49 @@ function PhotoRow({
   const [alt, setAlt] = useState(image.alt);
   const [editingCrop, setEditingCrop] = useState(false);
 
+  /* Follow the stored value after a save or a reload. */
+  useEffect(() => {
+    setCaption(image.caption);
+    setAlt(image.alt);
+  }, [image.caption, image.alt]);
+
   return (
-    <li className="gallery-item">
-      <div className="gallery-thumb">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={image.url} alt="" />
-      </div>
-
-      <div className="gallery-fields">
-        <label className="admin-label" htmlFor={`cap-${image.key}`}>
-          Caption
-        </label>
-        <input
-          id={`cap-${image.key}`}
-          className="admin-input"
-          type="text"
-          value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-          onBlur={() => {
-            // Only post when it actually changed — clicking through a gallery
-            // must not produce a commit per field.
-            if (caption !== image.caption) onSaveCaption(image.key, { caption });
-          }}
-        />
-
-        <label className="admin-label" htmlFor={`alt-${image.key}`}>
-          Description for screen readers
-        </label>
-        <input
-          id={`alt-${image.key}`}
-          className="admin-input"
-          type="text"
-          value={alt}
-          placeholder="e.g. Engineers reviewing a mould setup"
-          onChange={(e) => setAlt(e.target.value)}
-          onBlur={() => {
-            if (alt !== image.alt) onSaveCaption(image.key, { alt });
-          }}
-        />
-
-        <label className="admin-label" htmlFor={`asp-${image.key}`}>
-          Frame
-        </label>
-        <select
-          id={`asp-${image.key}`}
-          className="admin-input"
-          value={image.crop ? 'cropped' : (image.aspect ?? 'auto')}
-          disabled={busy}
-          onChange={(e) => {
-            const value = e.target.value;
-            if (value === 'cropped') {
-              setEditingCrop(true);
-              return;
-            }
-            onSaveCaption(image.key, { aspect: value as ImageAspect, crop: null });
-          }}
-        >
-          <option value="auto">Auto — the photo&apos;s own shape</option>
-          <option value="portrait">Portrait (4:5)</option>
-          <option value="square">Square (1:1)</option>
-          <option value="landscape">Landscape (16:9)</option>
-          {image.crop ? <option value="cropped">Hand-drawn crop</option> : null}
-        </select>
-
+    <li className={`photo-tile${open ? ' is-open' : ''}`}>
+      <div className="photo-tile-frame">
         <button
           type="button"
-          className="admin-button admin-button-secondary"
-          disabled={busy}
-          style={{ marginTop: 'var(--ds-space-3)' }}
-          onClick={() => setEditingCrop((v) => !v)}
+          className="photo-tile-open"
+          onClick={onZoom}
+          aria-label={`View photo ${index + 1} of ${total} full size`}
+          title="Click to view full size"
         >
-          {editingCrop ? 'Close crop editor' : image.crop ? 'Edit crop' : 'Crop by hand'}
+          {/* A plain <img>: the original bytes, at the shape the operator chose. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={image.url} alt={image.alt || `${image.caption || 'Photo'} ${index + 1}`} />
         </button>
 
-        {editingCrop && (
-          <>
-            <CropEditor
-              src={image.url}
-              crop={image.crop ?? null}
-              /*
-               * Not disabled while saving.
-               *
-               * The save sets `busy`, and disabling the editor on `busy` locked
-               * it mid-drag: the box moved once, the request started, and the
-               * pointer was ignored for the rest of the gesture. The crop then
-               * saved whatever the first pixel of movement produced.
-               */
-              onChange={() => {
-                /* The visual state is local; only the commit persists. */
-              }}
-              onCommit={(next) => onSaveCaption(image.key, { crop: next })}
-            />
-            {image.crop ? (
-              <button
-                type="button"
-                className="admin-button admin-button-secondary"
-                disabled={busy}
-                onClick={() => onSaveCaption(image.key, { crop: null })}
-              >
-                Clear crop
-              </button>
-            ) : null}
-          </>
-        )}
+        <span className="photo-tile-index">{index + 1}</span>
 
-        <p className="admin-image-path">
-          Position {index + 1} ·{' '}
-          <a href={image.url} target="_blank" rel="noreferrer">
-            open full size
-          </a>
-        </p>
+        {/*
+         * A photo with no description is flagged on the thumbnail rather than
+         * only in the status line above, so it is obvious WHICH one needs one.
+         */}
+        {image.alt.trim() === '' && (
+          <span className="photo-tile-flag" title="No description for screen readers">
+            no alt
+          </span>
+        )}
       </div>
 
-      <div className="gallery-tools">
+      <p className="photo-tile-caption">
+        {image.caption || <span className="admin-muted">No caption</span>}
+      </p>
+
+      <div className="photo-tile-tools">
         <button
           type="button"
           className="admin-icon-button"
-          aria-label={`Move photo ${index + 1} up`}
+          aria-label={`Move photo ${index + 1} earlier`}
           disabled={busy || index === 0}
           onClick={() => onMove(index, -1)}
         >
@@ -346,11 +333,19 @@ function PhotoRow({
         <button
           type="button"
           className="admin-icon-button"
-          aria-label={`Move photo ${index + 1} down`}
+          aria-label={`Move photo ${index + 1} later`}
           disabled={busy || index === total - 1}
           onClick={() => onMove(index, 1)}
         >
           ↓
+        </button>
+        <button
+          type="button"
+          className="admin-button admin-button-secondary admin-button-small photo-tile-edit"
+          aria-expanded={open}
+          onClick={onToggle}
+        >
+          {open ? 'Close' : 'Caption & frame'}
         </button>
         <button
           type="button"
@@ -362,6 +357,122 @@ function PhotoRow({
           ✕
         </button>
       </div>
+
+      {open && (
+        <div className="photo-tile-detail">
+          <label className="admin-label" htmlFor={`cap-${image.key}`}>
+            Caption
+          </label>
+          <input
+            id={`cap-${image.key}`}
+            className="admin-input"
+            type="text"
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            onBlur={() => {
+              // Only post when it actually changed — clicking through a gallery
+              // must not produce a commit per field.
+              if (caption !== image.caption) onSaveCaption(image.key, { caption });
+            }}
+          />
+
+          <label className="admin-label" htmlFor={`alt-${image.key}`}>
+            Description for screen readers
+          </label>
+          <input
+            id={`alt-${image.key}`}
+            className="admin-input"
+            type="text"
+            value={alt}
+            placeholder="e.g. Engineers reviewing a mould setup"
+            onChange={(e) => setAlt(e.target.value)}
+            onBlur={() => {
+              if (alt !== image.alt) onSaveCaption(image.key, { alt });
+            }}
+          />
+
+          <label className="admin-label" htmlFor={`asp-${image.key}`}>
+            Frame
+          </label>
+          <select
+            id={`asp-${image.key}`}
+            className="admin-input"
+            value={image.crop ? 'cropped' : (image.aspect ?? 'auto')}
+            disabled={busy}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === 'cropped') {
+                setEditingCrop(true);
+                return;
+              }
+              onSaveCaption(image.key, { aspect: value as ImageAspect, crop: null });
+            }}
+          >
+            <option value="auto">Auto — the photo&apos;s own shape</option>
+            <option value="portrait">Portrait (4:5)</option>
+            <option value="square">Square (1:1)</option>
+            <option value="landscape">Landscape (16:9)</option>
+            {image.crop ? <option value="cropped">Hand-drawn crop</option> : null}
+          </select>
+
+          <div className="admin-actions photo-tile-detail-actions">
+            <button
+              type="button"
+              className="admin-button admin-button-secondary admin-button-small"
+              disabled={busy}
+              onClick={() => setEditingCrop((v) => !v)}
+            >
+              {editingCrop ? 'Close crop editor' : image.crop ? 'Edit crop' : 'Crop by hand'}
+            </button>
+            <a
+              className="admin-button admin-button-secondary admin-button-small"
+              href={image.url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open original
+            </a>
+          </div>
+
+          {editingCrop && (
+            <>
+              <CropEditor
+                src={image.url}
+                crop={image.crop ?? null}
+                /*
+                 * Not disabled while saving.
+                 *
+                 * The save sets `busy`, and disabling the editor on `busy` locked
+                 * it mid-drag: the box moved once, the request started, and the
+                 * pointer was ignored for the rest of the gesture. The crop then
+                 * saved whatever the first pixel of movement produced.
+                 */
+                onChange={() => {
+                  /* The visual state is local; only the commit persists. */
+                }}
+                onCommit={(next) => onSaveCaption(image.key, { crop: next })}
+              />
+              {image.crop ? (
+                <button
+                  type="button"
+                  className="admin-button admin-button-secondary admin-button-small"
+                  disabled={busy}
+                  onClick={() => onSaveCaption(image.key, { crop: null })}
+                >
+                  Clear crop
+                </button>
+              ) : null}
+            </>
+          )}
+
+          <p className="admin-image-path">
+            Position {index + 1} of {total} · uploaded{' '}
+            {image.uploadedAt ? new Date(image.uploadedAt).toLocaleString() : 'unknown'}
+          </p>
+          <p className="admin-image-path">{image.url}</p>
+        </div>
+      )}
     </li>
   );
 }
+

@@ -29,6 +29,25 @@ export default async function AdminPage() {
   const warnings = deploymentWarnings();
   const counts = allGalleryCounts();
 
+  /*
+   * The gallery's overall completeness, computed once for the status panel.
+   *
+   * The module cards below already show per-category chips, but an operator
+   * opening the panel wants the answer to two questions before anything else:
+   * how many photographs exist in total, and how many categories are still
+   * empty. Both are derived here rather than counted by hand in the markup, so
+   * the numbers cannot disagree with the cards.
+   */
+  const totalPhotos = Object.values(counts).reduce((total, entry) => total + entry.total, 0);
+  const emptyCategories = MODULES.flatMap((module) => {
+    const byCategory: Partial<Record<string, number>> = counts[module.slug]?.byCategory ?? {};
+    return PHOTO_CATEGORIES.filter((category) => (byCategory[category.slug] ?? 0) === 0).map(
+      (category) => `${module.title} — ${category.label}`,
+    );
+  });
+  const totalCategories = MODULES.length * PHOTO_CATEGORIES.length;
+  const filledCategories = totalCategories - emptyCategories.length;
+
   return (
     <>
       <h1 className="admin-title">Overview</h1>
@@ -48,6 +67,65 @@ export default async function AdminPage() {
         </div>
       )}
 
+      {/*
+        * The detailed status panel.
+        *
+        * It answers, in one place and without a click: is the photography done?
+        * The two numbers are chosen deliberately — a total alone hides that six
+        * photos sit in one category while three are empty, and a "3 of 4"
+        * per-module figure alone hides how much work is left overall. The list of
+        * empty categories is the actual to-do list, so it is printed rather than
+        * merely counted.
+        */}
+      <section className="admin-card" aria-labelledby="status-heading">
+        <h2 className="admin-card-title" id="status-heading">
+          Status
+        </h2>
+        <p className="admin-card-desc">
+          Where the photography stands right now. A category with no photos leaves
+          a gap on the public page, so every empty one is listed by name.
+        </p>
+
+        <dl className="admin-totals">
+          <div>
+            <dt>Photos</dt>
+            <dd>{totalPhotos}</dd>
+          </div>
+          <div>
+            <dt>Categories filled</dt>
+            <dd>
+              {filledCategories} / {totalCategories}
+            </dd>
+          </div>
+          <div>
+            <dt>Still empty</dt>
+            <dd>{emptyCategories.length}</dd>
+          </div>
+          <div>
+            <dt>Site text</dt>
+            <dd>{CONTENT_MODULES.length + PROGRAM_MODULES.length}</dd>
+          </div>
+        </dl>
+
+        {emptyCategories.length > 0 ? (
+          <details className="admin-status-details">
+            <summary>
+              {emptyCategories.length} categor
+              {emptyCategories.length === 1 ? 'y has' : 'ies have'} no photos yet
+            </summary>
+            <ul className="admin-status-list">
+              {emptyCategories.map((label) => (
+                <li key={label}>{label}</li>
+              ))}
+            </ul>
+          </details>
+        ) : (
+          <p className="admin-notice admin-notice-ok" style={{ marginTop: 'var(--ds-space-4)' }}>
+            Every module has photos in every category.
+          </p>
+        )}
+      </section>
+
       <section className="admin-card">
         <h2 className="admin-card-title">Module photos</h2>
         <p className="admin-card-desc">
@@ -59,6 +137,9 @@ export default async function AdminPage() {
           {MODULES.map((module) => {
             const moduleCounts = counts[module.slug];
             const byCategory: Partial<Record<string, number>> = moduleCounts?.byCategory ?? {};
+            const filled = PHOTO_CATEGORIES.filter(
+              (category) => (byCategory[category.slug] ?? 0) > 0,
+            ).length;
             return (
               <Link
                 key={module.slug}
@@ -67,7 +148,9 @@ export default async function AdminPage() {
               >
                 <span className="admin-module-name">{module.title}</span>
                 <span className="admin-module-meta">
-                  {module.days} days · {module.level}
+                  {module.days} days · {module.level} · {moduleCounts?.total ?? 0} photo
+                  {(moduleCounts?.total ?? 0) === 1 ? '' : 's'} in {filled} of{' '}
+                  {PHOTO_CATEGORIES.length} categories
                 </span>
 
                 <span className="admin-module-cats">
@@ -81,7 +164,7 @@ export default async function AdminPage() {
                         }`}
                       >
                         {category.label}
-                        {count > 0 ? ` ${count}` : ''}
+                        {count > 0 ? ` ${count}` : ' —'}
                       </span>
                     );
                   })}

@@ -521,6 +521,29 @@
 
 /* --- Misc --- */
 
+/*
+ * Visually hidden, still focusable and still announced.
+ *
+ * `.admin-omit` is used for the `<input type="file">` behind a styled control:
+ * the input has to exist and be clickable programmatically, but showing the raw
+ * browser control next to the button that opens it reads as two unrelated
+ * controls. `.sr-only` is the same technique for text. Neither existed in this
+ * stylesheet before — the class names were used but never defined, so the file
+ * inputs were rendering as visible native controls beside their buttons.
+ */
+.admin-omit,
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .admin-muted {
   color: var(--ds-neutral-500);
   font-size: 0.875rem;
@@ -847,12 +870,541 @@
 .gallery-category-head {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--ds-space-3);
   margin-bottom: var(--ds-space-4);
 }
 
+/* --- Category status -------------------------------------------------
+ * Two pills: how many photos, and how many of them carry a description.
+ * The second is the one that answers "is this category finished", because an
+ * undescribed photo is invisible to a screen reader even though it renders.
+ */
+.gallery-category-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+  margin: var(--ds-space-2) 0 0;
+}
+
+.gallery-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ds-neutral-700, var(--ds-neutral-800));
+  background-color: var(--ds-neutral-100);
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: var(--ds-radius-full);
+}
+
+.gallery-status-pill.is-complete {
+  color: #1c6b3a;
+  background-color: #eaf6ee;
+  border-color: #bfe3cb;
+}
+
+.gallery-status-pill.is-partial {
+  color: #8a5a00;
+  background-color: var(--ds-yellow-50);
+  border-color: var(--ds-yellow-500);
+}
+
+/* --- Photo uploader ---------------------------------------------------
+ * Drop target, progress and the per-file result list. Deliberately plain: it
+ * appears four times on a module page and once per testimonial, so any strong
+ * treatment would compete with the photographs.
+ */
+.photo-uploader {
+  display: grid;
+  gap: var(--ds-space-3);
+}
+
+.photo-drop {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: var(--ds-space-6) var(--ds-space-4);
+  text-align: center;
+  background-color: var(--ds-neutral-50);
+  border: 2px dashed var(--ds-neutral-200);
+  border-radius: var(--ds-radius-md);
+  cursor: pointer;
+  transition:
+    border-color var(--ds-duration-fast) var(--ds-ease-out),
+    background-color var(--ds-duration-fast) var(--ds-ease-out);
+}
+
+.photo-drop:hover,
+.photo-drop:focus-visible,
+.photo-drop.is-dragging {
+  outline: none;
+  background-color: var(--ds-orange-50);
+  border-color: var(--ds-orange-500);
+}
+
+.photo-drop.is-dragging {
+  /* The whole zone reacts, not just the border: at a glance the operator needs
+     to know the drop will land HERE and not on the card below. */
+  box-shadow: inset 0 0 0 3px rgb(232 99 28 / 12%);
+}
+
+.photo-drop.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.photo-drop-icon {
+  font-size: 1.35rem;
+  line-height: 1;
+  color: var(--ds-orange-600);
+}
+
+.photo-drop-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--ds-neutral-900);
+}
+
+.photo-drop-sub {
+  max-width: 46ch;
+  font-size: 0.8125rem;
+  color: var(--ds-neutral-500);
+}
+
+.photo-drop-sub kbd {
+  padding: 0.05rem 0.3rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  color: var(--ds-neutral-800);
+  background-color: var(--ds-neutral-0);
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: 0.25rem;
+  box-shadow: 0 1px 0 var(--ds-neutral-200);
+}
+
+.photo-uploader-compact .photo-drop {
+  padding: var(--ds-space-4);
+}
+
+.photo-uploader-hint {
+  margin: 0;
+}
+
+.photo-uploader-limits {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ds-neutral-500);
+}
+
+/* --- Upload progress -------------------------------------------------- */
+
+.photo-progress {
+  display: grid;
+  gap: var(--ds-space-2);
+}
+
+.photo-progress-track {
+  height: 8px;
+  overflow: hidden;
+  background-color: var(--ds-neutral-100);
+  border-radius: var(--ds-radius-full);
+}
+
+.photo-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--ds-orange-500), var(--ds-yellow-500));
+  border-radius: inherit;
+  transition: width var(--ds-duration-fast) var(--ds-ease-out);
+}
+
+.photo-progress-text {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ds-neutral-700, var(--ds-neutral-800));
+}
+
+/* --- Per-file upload results ------------------------------------------ */
+
+.photo-queue {
+  display: grid;
+  gap: 1px;
+  max-height: 15rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  background-color: var(--ds-neutral-200);
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: var(--ds-radius-sm);
+}
+
+.photo-queue-item {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--ds-space-2);
+  padding: 0.4rem 0.6rem;
+  font-size: 0.8125rem;
+  background-color: var(--ds-neutral-0);
+}
+
+.photo-queue-mark {
+  font-weight: 700;
+  text-align: center;
+}
+
+.photo-queue-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ds-neutral-800);
+}
+
+.photo-queue-size {
+  font-variant-numeric: tabular-nums;
+  color: var(--ds-neutral-500);
+}
+
+/* The reason sits on its own line under the name, so a long error does not
+   squeeze the filename to nothing. */
+.photo-queue-state {
+  grid-column: 2 / -1;
+  font-size: 0.75rem;
+  color: var(--ds-neutral-500);
+}
+
+.photo-queue-item.is-done .photo-queue-mark {
+  color: #1c6b3a;
+}
+
+.photo-queue-item.is-failed {
+  background-color: #fdecea;
+}
+
+.photo-queue-item.is-failed .photo-queue-mark,
+.photo-queue-item.is-failed .photo-queue-state {
+  color: #8a1f1f;
+}
+
+.photo-queue-item.is-uploading .photo-queue-mark {
+  color: var(--ds-orange-600);
+}
+
+/* --- Gallery status summary -------------------------------------------
+ * Four cells, one per category, showing the two facts that decide whether a
+ * module's page is finished: does the category have photos, and are they
+ * described. An empty category is tinted rather than merely numbered, because
+ * "0 photos" in a list of numbers is easy to miss.
+ */
+.gallery-summary-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--ds-space-3);
+  margin: var(--ds-space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gallery-summary-item {
+  display: grid;
+  gap: 0.15rem;
+  padding: var(--ds-space-3) var(--ds-space-4);
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: var(--ds-radius-md);
+  background-color: var(--ds-neutral-0);
+}
+
+.gallery-summary-item.is-empty {
+  background-color: var(--ds-yellow-50);
+  border-color: var(--ds-yellow-500);
+}
+
+.gallery-summary-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: var(--ds-tracking-wide);
+  text-transform: uppercase;
+  color: var(--ds-neutral-500);
+}
+
+.gallery-summary-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ds-neutral-900);
+}
+
+.gallery-summary-item.is-empty .gallery-summary-value {
+  color: #8a5a00;
+}
+
+.gallery-summary-detail {
+  font-size: 0.75rem;
+  color: var(--ds-neutral-500);
+}
+
+/* --- Photo grid -------------------------------------------------------
+ * The gallery is a grid of thumbnails, not a list of form rows.
+ *
+ * The previous layout gave every photo a 96px preview beside two text fields,
+ * a select and three buttons. That is the right shape for editing one photo and
+ * the wrong shape for the thing an operator does most: look at what is there.
+ * Eleven photos meant eleven forms and several screens of scrolling, and the
+ * preview itself was a 96px square cropped to fit — useless for checking a
+ * screenshot.
+ *
+ * `auto-fill` with a 150px minimum keeps the tiles a readable size on a laptop
+ * and reflows to two or three columns on a phone without a breakpoint.
+ */
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--ds-space-3);
+  margin: var(--ds-space-5) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.photo-tile {
+  display: grid;
+  gap: var(--ds-space-2);
+  align-content: start;
+  min-width: 0;
+  padding: var(--ds-space-2);
+  background-color: var(--ds-neutral-0);
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: var(--ds-radius-md);
+}
+
+/* The open tile spans the row: its detail panel holds full-width inputs, and a
+   150px column would wrap every label to one word per line — the exact defect
+   the row layout was fixed for. */
+.photo-tile.is-open {
+  grid-column: 1 / -1;
+}
+
+.photo-tile-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--ds-radius-sm);
+  background-color: var(--ds-neutral-100);
+}
+
+.photo-tile-open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: zoom-in;
+}
+
+.photo-tile-open:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-ring-orange);
+  border-radius: var(--ds-radius-sm);
+}
+
+/* The whole photograph, uncropped. `object-fit: contain` on a fixed box would
+   letterbox; instead the tile lets the image keep its own shape so a tall phone
+   screenshot is obviously tall. */
+.photo-tile-open img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 220px;
+  object-fit: contain;
+  background-color: var(--ds-neutral-100);
+}
+
+.photo-tile-index {
+  position: absolute;
+  top: 0.35rem;
+  left: 0.35rem;
+  display: inline-flex;
+  min-width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.3rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--ds-neutral-0);
+  background-color: rgb(18 25 38 / 72%);
+  border-radius: var(--ds-radius-full);
+}
+
+.photo-tile-flag {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #8a5a00;
+  background-color: var(--ds-yellow-50);
+  border: 1px solid var(--ds-yellow-500);
+  border-radius: var(--ds-radius-full);
+}
+
+.photo-tile-caption {
+  margin: 0;
+  overflow: hidden;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--ds-neutral-800);
+  /* Two lines then an ellipsis: a long caption must not make one tile taller
+     than its neighbours and break the grid's rhythm. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.photo-tile-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.photo-tile-edit {
+  flex: 1 1 auto;
+  min-height: 32px;
+  padding-inline: var(--ds-space-3);
+}
+
+.photo-tile-detail {
+  display: grid;
+  gap: var(--ds-space-2);
+  margin-top: var(--ds-space-2);
+  padding-top: var(--ds-space-4);
+  border-top: 1px solid var(--ds-neutral-200);
+}
+
+/* Inside the detail panel the fields may use the whole row, so the 220px floor
+   that protects a narrow column is not needed. */
+.photo-tile-detail .admin-input,
+.photo-tile-detail .admin-textarea {
+  min-width: 0;
+}
+
+.photo-tile-detail-actions {
+  margin-top: var(--ds-space-2);
+}
+
+/* --- Full-size photo viewer -------------------------------------------
+ * A fixed overlay rather than a new page: "open full size" used to navigate to
+ * the bare image, losing the panel and the operator's place in it. Escape closes,
+ * the arrows step through the set, and clicking the backdrop closes while
+ * clicking the photograph does not.
+ */
+.photo-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-4);
+  background-color: rgb(12 16 24 / 88%);
+  backdrop-filter: blur(4px);
+}
+
+.photo-lightbox-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ds-space-3);
+}
+
+.photo-lightbox-count {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ds-neutral-0);
+}
+
+.photo-lightbox-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+}
+
+.photo-lightbox-stage {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: var(--ds-space-3);
+  min-height: 0;
+  overflow: auto;
+}
+
+.photo-lightbox-stage img {
+  max-width: 100%;
+  max-height: 100%;
+  /* `contain` rather than `cover`: this view exists so the operator can see the
+     WHOLE file, including the parts a thumbnail frame would crop away. */
+  object-fit: contain;
+  background-color: var(--ds-neutral-0);
+  border-radius: var(--ds-radius-sm);
+  box-shadow: 0 18px 60px rgb(0 0 0 / 45%);
+}
+
+.photo-lightbox-caption {
+  max-width: 70ch;
+  margin: 0;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--ds-neutral-100);
+}
+
+.photo-lightbox-nav {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  font-size: 1.75rem;
+  line-height: 1;
+  color: var(--ds-neutral-0);
+  background-color: rgb(255 255 255 / 14%);
+  border: 1px solid rgb(255 255 255 / 22%);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color var(--ds-duration-fast) var(--ds-ease-out);
+}
+
+.photo-lightbox-nav:hover:not(:disabled) {
+  background-color: rgb(255 255 255 / 26%);
+}
+
+.photo-lightbox-nav:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.photo-lightbox-prev {
+  left: var(--ds-space-4);
+}
+
+.photo-lightbox-next {
+  right: var(--ds-space-4);
+}
+
+/* --- Testimonial cards -------------------------------------------------
+ * The testimonial manager keeps its card layout: an entry is a set of named
+ * fields, not a photograph, so a thumbnail grid would not help. It does reuse
+ * the uploader, the image rows and the viewer.
+ */
 .gallery-list {
   display: flex;
   flex-direction: column;
@@ -862,56 +1414,15 @@
   list-style: none;
 }
 
-/* One photo: fixed-size preview, the fields, then the controls. The preview is
-   a fixed 96px box so rows line up regardless of each photo's own aspect ratio
-   — a column of ragged thumbnails is hard to scan. */
 .gallery-item {
   display: grid;
-  /* Explicit minimums rather than fractions: `1fr` collapsed to nothing once the
-     row held a thumbnail, two fields and three buttons, which is what wrapped the
-     labels into vertical text. */
-  grid-template-columns: 96px minmax(260px, 1fr) auto;
   gap: var(--ds-space-4);
   align-items: start;
   padding: var(--ds-space-4);
+  background-color: var(--ds-neutral-50);
   border: 1px solid var(--ds-neutral-200);
   border-left: 3px solid var(--ds-orange-500);
   border-radius: var(--ds-radius-md);
-  background-color: var(--ds-neutral-50);
-}
-
-/* Single column under 720px.
-
-   The old breakpoint was 640px, and a phone in landscape or a small tablet sat
-   just above it: the three-column grid applied with its 96px + 260px + auto
-   minimums, which squeezed the field column to a sliver and made every input
-   about 150px wide — the screenshot the client sent. 720px matches the image-row
-   breakpoint, so both photo layouts collapse together. */
-@media (max-width: 720px) {
-  .gallery-item {
-    grid-template-columns: 1fr;
-  }
-
-  /* The move/remove controls were stacked to save width in the three-column
-     layout. In a single column they have the whole row, so horizontal reads
-     faster and stops the card becoming four screens tall. */
-  .gallery-tools {
-    flex-direction: row;
-  }
-}
-
-.gallery-thumb {
-  width: 96px;
-  height: 96px;
-  overflow: hidden;
-  background-color: var(--ds-neutral-100);
-  border-radius: var(--ds-radius-sm);
-}
-
-.gallery-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .gallery-fields {
@@ -931,12 +1442,16 @@
   margin-top: 0;
 }
 
-/*
- * Testimonial photo preview.
- *
- * A circular thumbnail beside a Remove control, matching the 60px avatar the
- * public card renders so the operator sees the crop that will actually appear
- * rather than a rectangle that implies a different one.
+.gallery-tools {
+  display: flex;
+  flex-direction: row;
+  gap: var(--ds-space-2);
+}
+
+/* --- Testimonial photo preview -----------------------------------------
+ * A circular thumbnail matching the 60px avatar the public card renders, so the
+ * operator sees the crop that will actually appear rather than a rectangle that
+ * implies a different one.
  */
 .admin-photo-preview {
   display: flex;
@@ -1169,6 +1684,26 @@ label.admin-button:focus-within {
   border: 1px solid var(--ds-neutral-200);
 }
 
+/* The thumbnail's click target. A bare `<img>` cannot be reached with the
+   keyboard, and checking a screenshot is the main reason this row exists. */
+.admin-image-row-zoom {
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: zoom-in;
+  justify-self: start;
+}
+
+.admin-image-row-zoom:focus-visible {
+  outline: none;
+  border-radius: var(--ds-radius-sm);
+  box-shadow: var(--ds-ring-orange);
+}
+
+.admin-image-row-zoom:hover .admin-image-row-thumb {
+  border-color: var(--ds-orange-500);
+}
+
 .admin-image-row-fields {
   min-width: 0;
 }
@@ -1210,13 +1745,35 @@ label.admin-button:focus-within {
   color: var(--ds-neutral-900);
 }
 
-.gallery-tools {
-  display: flex;
-  /* Vertical on purpose: three 32px controls stacked keep the field column as
-     wide as possible. Laid out horizontally they took ~110px and squeezed the
-     caption input until its label wrapped. */
-  flex-direction: column;
-  gap: var(--ds-space-2);
+/* --- Status details ---------------------------------------------------
+ * The list of empty categories, collapsed behind a disclosure.
+ *
+ * Open by default it would push the module cards below the fold on a panel that
+ * is mostly a list of module cards. Collapsed, the summary line still states how
+ * many there are, so the information is not hidden — only the enumeration is.
+ */
+.admin-status-details {
+  margin-top: var(--ds-space-4);
+  padding: var(--ds-space-3) var(--ds-space-4);
+  background-color: var(--ds-yellow-50);
+  border: 1px solid var(--ds-yellow-500);
+  border-radius: var(--ds-radius-md);
+}
+
+.admin-status-details summary {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ds-neutral-800);
+  cursor: pointer;
+}
+
+.admin-status-list {
+  display: grid;
+  gap: 0.2rem;
+  margin: var(--ds-space-3) 0 0;
+  padding-left: var(--ds-space-5);
+  font-size: 0.8125rem;
+  color: var(--ds-neutral-700, var(--ds-neutral-800));
 }
 
 /* --- Module grid on the Overview --- */

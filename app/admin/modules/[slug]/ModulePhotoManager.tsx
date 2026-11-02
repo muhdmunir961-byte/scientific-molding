@@ -59,6 +59,24 @@ export default function ModulePhotoManager({ module }: { module: TrainingModule 
     void load();
   }, [load]);
 
+  /*
+   * A per-category summary, computed from the same array the sections render.
+   *
+   * The Overview card shows counts, but an operator working on one module needs
+   * to know what is MISSING from it — which category is still empty and which
+   * photos have no description — without scrolling four sections to find out.
+   */
+  const summary = PHOTO_CATEGORIES.map((category) => {
+    const images = gallery?.[category.slug] ?? [];
+    return {
+      ...category,
+      count: images.length,
+      described: images.filter((image) => image.alt.trim() !== '').length,
+    };
+  });
+  const totalPhotos = summary.reduce((total, c) => total + c.count, 0);
+  const emptyCategories = summary.filter((c) => c.count === 0).length;
+
   return (
     <>
       <p className="admin-breadcrumb">
@@ -76,6 +94,63 @@ export default function ModulePhotoManager({ module }: { module: TrainingModule 
         <div className={`admin-notice admin-notice-${notice.tone}`} role="status">
           {notice.text}
         </div>
+      )}
+
+      {/*
+       * The gallery's own status, above the four sections.
+       *
+       * It reports the two things that decide whether the module's page is
+       * finished: how many photos exist in total, and how many categories are
+       * still empty. A bare total would hide the second — six photos in one
+       * category is a module with three empty categories, not a complete one.
+       */}
+      {gallery && (
+        <section className="admin-card gallery-summary" aria-label="Gallery status">
+          <div className="admin-actions" style={{ justifyContent: 'space-between' }}>
+            <div>
+              <h2 className="admin-card-title">Gallery status</h2>
+              <p className="admin-card-desc">
+                {totalPhotos === 0
+                  ? 'No photos in this module yet. Add them per category below.'
+                  : `${totalPhotos} photo${totalPhotos === 1 ? '' : 's'} across ${
+                      PHOTO_CATEGORIES.length - emptyCategories
+                    } of ${PHOTO_CATEGORIES.length} categories.`}
+                {emptyCategories > 0
+                  ? ` ${emptyCategories} categor${emptyCategories === 1 ? 'y is' : 'ies are'} still empty.`
+                  : ' Every category has photos.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="admin-button admin-button-secondary"
+              onClick={() => void load()}
+              disabled={loading}
+            >
+              {loading ? 'Refreshing…' : 'Refresh'}
+            </button>
+          </div>
+
+          <ul className="gallery-summary-list">
+            {summary.map((category) => (
+              <li
+                key={category.slug}
+                className={`gallery-summary-item ${category.count === 0 ? 'is-empty' : 'is-filled'}`}
+              >
+                <span className="gallery-summary-label">{category.label}</span>
+                <span className="gallery-summary-value">
+                  {category.count === 0 ? 'empty' : `${category.count} photo${category.count === 1 ? '' : 's'}`}
+                </span>
+                {category.count > 0 && (
+                  <span className="gallery-summary-detail">
+                    {category.described === category.count
+                      ? 'all described'
+                      : `${category.described} of ${category.count} described`}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {loading || !gallery ? (

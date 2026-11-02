@@ -26,12 +26,19 @@ import { requireSession, fail } from '@/lib/admin/guard';
 import { slugify } from '@/lib/admin/r2-keys';
 import { readTestimonials, saveTestimonials } from '@/lib/admin/testimonials-store';
 import { storeAtKey, validateImage } from '@/lib/admin/store';
+import { UPLOAD_BATCH_SIZE } from '@/lib/admin/upload-limits';
 import { blankTestimonial, makeImage, type Testimonial } from '@/lib/testimonials';
 
 export const runtime = 'nodejs';
 
-/** Enough for a full client conversation, small enough to stay under the body limit. */
-const MAX_FILES = 20;
+/**
+ * Files per request.
+ *
+ * The panel batches, so the operator's selection is unlimited; this is only the
+ * size of one HTTP body. See the same constant in
+ * `app/api/admin/module-photos/route.ts` for the full reasoning.
+ */
+const MAX_FILES = UPLOAD_BATCH_SIZE;
 
 /**
  * Extension for an accepted MIME type.

@@ -23,43 +23,27 @@ import { join } from 'node:path';
 
 import { isR2Configured, r2Config } from './config';
 import { signDeleteRequest, signPutRequest } from './sigv4';
+import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from './upload-limits';
 
 /** Where the local fallback writes, relative to the project root. */
 const LOCAL_IMAGE_DIR = join(process.cwd(), 'public', 'images');
 /** Public path prefix the local fallback serves from. */
 const LOCAL_PUBLIC_PREFIX = '/images';
-/** Image types the panel accepts. */
-export const ALLOWED_IMAGE_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/avif',
-  /*
-   * SVG is allowed for the logo only — see `validateImage`. An SVG can carry
-   * script, so accepting one from a general-purpose upload field would let a
-   * crafted file run in the context of the page that embeds it. The logo is the
-   * one position where vector is genuinely needed (a raster wordmark looks soft
-   * on a retina display), and it is the one position an operator uploads
-   * deliberately rather than in bulk.
-   */
-  'image/svg+xml',
-] as const;
 
-/**
- * Maximum upload size in bytes.
+/*
+ * The accepted types and the size ceiling are defined in `./upload-limits`,
+ * which has no Node imports so the browser can read the same numbers. Re-exported
+ * here because every server caller already imports them from this module and a
+ * second import path for one constant is how the two copies start to drift.
  *
- * ── Why this is 25 MB and not 8 ─────────────────────────────────────────
- * Nothing here re-encodes an upload: the original bytes are stored and served,
- * because `next/image` already produces every display size from the original and
- * a resize-on-upload would bake one size in permanently.
- *
- * The cost of that decision is that an upload is stored in full, so the ceiling
- * has to cover a real file. A modern phone screenshot is 2–6 MB and a
- * full-resolution camera photo is 8–20 MB; the old 8 MB limit rejected the
- * second kind outright, which read as "upload is broken" rather than "this file
- * is too big". 25 MB covers both without inviting a 200 MB TIFF.
+ * SVG is allowed for the logo only — see `validateImage`. An SVG can carry
+ * script, so accepting one from a general-purpose upload field would let a
+ * crafted file run in the context of the page that embeds it. The logo is the
+ * one position where vector is genuinely needed (a raster wordmark looks soft
+ * on a retina display), and it is the one position an operator uploads
+ * deliberately rather than in bulk.
  */
-export const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
+export { ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES };
 
 /**
  * Extension for a MIME type.

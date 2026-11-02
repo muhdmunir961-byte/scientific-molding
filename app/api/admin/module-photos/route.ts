@@ -25,14 +25,28 @@ import { readGallery, saveGallery } from '@/lib/admin/gallery-store';
 import { requireSession, fail } from '@/lib/admin/guard';
 import { galleryKey } from '@/lib/admin/r2-keys';
 import { deleteAtUrl, storeAtKey, validateImage } from '@/lib/admin/store';
+import { UPLOAD_BATCH_SIZE } from '@/lib/admin/upload-limits';
 import type { GalleryImage } from '@/lib/gallery';
 import { isAspect, toCrop } from '@/lib/image-crop';
 import { PHOTO_CATEGORIES, isValidCategory, isValidModuleSlug, type PhotoCategory } from '@/lib/modules';
 
 export const runtime = 'nodejs';
 
-/** Ten photos per request covers a workshop session without a long upload. */
-const MAX_FILES = 10;
+/**
+ * Files per request.
+ *
+ * ── Why the panel has no limit but this route does ──────────────────────
+ * The panel lets an operator select any number of photos — that is what "no
+ * limit" means to the person using it. This is the size of one HTTP body, which
+ * is a different question: the browser splits the selection into batches of
+ * `UPLOAD_BATCH_SIZE` and sends them one after another, committing each. A
+ * hundred screenshots therefore work, and a failure at file 80 still leaves the
+ * first 79 stored and visible.
+ *
+ * Kept in `lib/admin/upload-limits.ts` so the browser that batches and the route
+ * that validates cannot disagree about the number.
+ */
+const MAX_FILES = UPLOAD_BATCH_SIZE;
 
 /**
  * Validate a module + category pair from a request.

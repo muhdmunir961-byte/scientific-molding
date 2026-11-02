@@ -29,6 +29,8 @@ import {
 
 import CropEditor from './CropEditor';
 import SectionSettings from './SectionSettings';
+import PhotoLightbox from '../PhotoLightbox';
+import PhotoUploader from '../PhotoUploader';
 import {
   addTestimonial,
   bulkUploadScreenshots,
@@ -61,6 +63,10 @@ export default function TestimonialsManager() {
   const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
   const [settings, setSettings] = useState<TestimonialsSettings>(DEFAULT_TESTIMONIALS_SETTINGS);
   const [settingsSaved, setSettingsSaved] = useState(false);
+  /** The full-size viewer: the entry's images and which one is open. */
+  const [zoom, setZoom] = useState<{ context: string; images: TestimonialImage[]; index: number } | null>(
+    null,
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -151,6 +157,9 @@ export default function TestimonialsManager() {
    *
    * Everything created here is unpublished, so a bulk upload cannot put a real
    * person's screenshot on the live site before the operator has looked at it.
+   *
+   * Returns the envelope `PhotoUploader` needs so it can mark each file: the
+   * route reports failures per file name, and the uploader matches on that.
    */
   async function bulkAdd(files: File[]) {
     setBusy(true);
@@ -160,8 +169,7 @@ export default function TestimonialsManager() {
     setBusy(false);
 
     if (!result.ok || !result.data) {
-      setNotice({ tone: 'error', text: result.error ?? 'Could not add those screenshots.' });
-      return;
+      return { ok: false, error: result.error ?? 'Could not add those screenshots.' };
     }
 
     setEntries(result.data.testimonials.map(normaliseEntry));
@@ -169,6 +177,8 @@ export default function TestimonialsManager() {
       tone: result.data.errors.length > 0 ? 'error' : 'ok',
       text: result.data.message ?? `${result.data.created} added.`,
     });
+
+    return { ok: true, errors: result.data.errors };
   }
 
   async function save(entry: Testimonial, fields: Partial<Testimonial>) {
@@ -244,7 +254,10 @@ export default function TestimonialsManager() {
    * a batch of five does not lose the other four. The whole list is written once
    * at the end.
    */
-  async function uploadScreenshots(entry: Testimonial, files: File[]) {
+  async function uploadScreenshots(
+    entry: Testimonial,
+    files: File[],
+  ): Promise<{ ok: boolean; error?: string; errors?: string[] }> {
     setBusy(true);
     setNotice(null);
 
@@ -263,7 +276,7 @@ export default function TestimonialsManager() {
     if (added.length === 0) {
       setBusy(false);
       setNotice({ tone: 'error', text: failures.join(' ') || 'Nothing was uploaded.' });
-      return;
+      return { ok: false, error: failures.join(' ') || 'Nothing was uploaded.', errors: failures };
     }
 
     const saved = await editTestimonial({
@@ -273,11 +286,18 @@ export default function TestimonialsManager() {
     setBusy(false);
 
     if (!saved.ok || !saved.data) {
-      setNotice({
-        tone: 'error',
-        text: `${added.length} uploaded but the entry was not saved: ${saved.error ?? 'unknown error'}.`,
-      });
-      return;
+      const detail = `${added.length} uploaded but the entry was not saved: ${saved.error ?? 'unknown error'}.`;
+      setNotice({ tone: 'error', text: detail });
+      /*
+       * The bytes are in storage but the entry was not written, so every file in
+       * this batch is reported as failed. Marking them done would tell the
+       * operator the screenshots are on the entry when they are not.
+       */
+      return {
+        ok: false,
+        error: detail,
+        errors: files.map((file) => `${file.name}: not saved to the entry`),
+      };
     }
 
     setEntries(saved.data.testimonials.map(normaliseEntry));
@@ -288,6 +308,8 @@ export default function TestimonialsManager() {
           ? `${added.length} added, ${failures.length} failed. ${failures.join(' ')}`
           : `${added.length} image${added.length === 1 ? '' : 's'} added.`,
     });
+
+    return { ok: true, errors: failures };
   }
 
   /** Replace the whole image list for one entry — used by remove and reorder. */
@@ -339,31 +361,31 @@ export default function TestimonialsManager() {
         }}
       />
 
-      <div className="admin-actions" style={{ marginBottom: 'var(--ds-space-6)' }}>
+      <div className="admin-actions" style={{ marginBottom: 'var(--ds-space-4)' }}>
         <button type="button" className="admin-button" onClick={add} disabled={busy || loading}>
-          Add a testimonial
+          Add an empty entry
         </button>
+      </div>
 
-        {/*
-          * A labelled file input styled as a button. A bare `<input type=file>`
-          * next to the button above reads as a second, unrelated control; this
-          * makes clear that both add entries, one at a time or in bulk.
-          */}
-        <label className={`admin-button admin-button-secondary ${busy || loading ? 'is-disabled' : ''}`}>
-          Upload screenshots
-          <input
-            type="file"
-            multiple
-            accept="image/jpeg,image/png,image/webp,image/avif"
-            className="sr-only"
-            disabled={busy || loading}
-            onChange={(event) => {
-              const files = Array.from(event.currentTarget.files ?? []);
-              if (files.length > 0) void bulkAdd(files);
-              event.currentTarget.value = '';
-            }}
-          />
-        </label>
+      {/*
+        * One uploader for the whole list. Each file becomes its own unpublished
+        * entry, and the per-file list underneath says exactly which ones landed —
+        * the old single button reported "9 added, 1 failed" with no way to tell
+        * which file was which.
+        */}
+      <div className="admin-card" style={{ marginBottom: 'var(--ds-space-6)' }}>
+        <h2 className="admin-card-title">Upload screenshots</h2>
+        <p className="admin-card-desc">
+          Each screenshot becomes its own entry, hidden until you publish it. Drop a
+          folder, pick any number of files, or paste a screenshot straight from the
+          clipboard.
+        </p>
+        <PhotoUploader
+          onUpload={bulkAdd}
+          disabled={busy || loading}
+          label="Add screenshots as new entries"
+          compact
+        />
       </div>
 
       {loading ? (
@@ -385,10 +407,39 @@ export default function TestimonialsManager() {
               onUploadPhoto={uploadPhoto}
               onUploadScreenshots={uploadScreenshots}
               onSaveImages={saveImages}
+              onZoom={(imageIndex) =>
+                setZoom({
+                  context: entry.name || `Entry ${index + 1}`,
+                  images: entry.images,
+                  index: imageIndex,
+                })
+              }
             />
           ))}
         </ul>
       )}
+
+      <PhotoLightbox
+        context={zoom?.context}
+        index={zoom?.index ?? null}
+        onIndex={(next) => {
+          /*
+           * `null` means "closed". Keeping the last index and merely hiding the
+           * overlay would reopen it on the next click, so the state is cleared.
+           */
+          if (next === null) {
+            setZoom(null);
+            return;
+          }
+          setZoom((current) => (current ? { ...current, index: next } : current));
+        }}
+        items={(zoom?.images ?? []).map((image, imageIndex) => ({
+          key: image.id,
+          src: image.src,
+          caption: image.caption,
+          alt: image.caption || `Screenshot ${imageIndex + 1}`,
+        }))}
+      />
     </>
   );
 }
@@ -412,6 +463,7 @@ function TestimonialRow({
   onUploadPhoto,
   onUploadScreenshots,
   onSaveImages,
+  onZoom,
 }: {
   entry: Testimonial;
   index: number;
@@ -421,8 +473,12 @@ function TestimonialRow({
   onRemove: (id: string) => void;
   onSave: (entry: Testimonial, fields: Partial<Testimonial>) => void;
   onUploadPhoto: (entry: Testimonial, file: File) => void;
-  onUploadScreenshots: (entry: Testimonial, files: File[]) => void;
+  onUploadScreenshots: (
+    entry: Testimonial,
+    files: File[],
+  ) => Promise<{ ok: boolean; error?: string; errors?: string[] }>;
   onSaveImages: (entry: Testimonial, images: TestimonialImage[]) => void;
+  onZoom: (imageIndex: number) => void;
 }) {
   const [name, setName] = useState(entry.name);
   const [role, setRole] = useState(entry.role);
@@ -558,26 +614,19 @@ function TestimonialRow({
         />
 
         {/* ── Feedback screenshots ────────────────────────────────────── */}
-        <label className="admin-label" htmlFor={`shot-upload-${entry.id}`}>
+        <p className="admin-label">
           Feedback screenshots ({entry.images.length})
-        </label>
+        </p>
         <p className="admin-hint">
           Screenshot asal daripada WhatsApp, email atau platform lain. Tiada had
           bilangan — pilih banyak fail sekali gus. Setiap satu ada caption dan
           crop sendiri.
         </p>
-        <input
-          id={`shot-upload-${entry.id}`}
-          className="admin-input"
-          type="file"
-          multiple
-          accept="image/jpeg,image/png,image/webp,image/avif"
+        <PhotoUploader
+          onUpload={(files) => onUploadScreenshots(entry, files)}
           disabled={busy}
-          onChange={(event) => {
-            const files = Array.from(event.currentTarget.files ?? []);
-            if (files.length > 0) void onUploadScreenshots(entry, files);
-            event.currentTarget.value = '';
-          }}
+          label="Add screenshots to this entry"
+          compact
         />
 
         {entry.images.length > 0 && (
@@ -601,6 +650,7 @@ function TestimonialRow({
                     entry.images.filter((item) => item.id !== image.id),
                   )
                 }
+                onZoom={() => onZoom(imageIndex)}
                 onMove={(delta) => {
                   const target = imageIndex + delta;
                   if (target < 0 || target >= entry.images.length) return;
@@ -665,6 +715,7 @@ function ImageRow({
   onSave,
   onRemove,
   onMove,
+  onZoom,
 }: {
   image: TestimonialImage;
   index: number;
@@ -673,6 +724,7 @@ function ImageRow({
   onSave: (next: TestimonialImage) => void;
   onRemove: () => void;
   onMove: (delta: number) => void;
+  onZoom: () => void;
 }) {
   const [caption, setCaption] = useState(image.caption);
   const [editing, setEditing] = useState(false);
@@ -717,8 +769,18 @@ function ImageRow({
         </button>
       </div>
 
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className="admin-image-row-thumb" src={image.src} alt={`Image ${index + 1}`} />
+      {/* A clickable preview: checking a screenshot is the point of this row, so
+          the thumbnail opens the full-size viewer rather than being decoration. */}
+      <button
+        type="button"
+        className="admin-image-row-zoom"
+        onClick={onZoom}
+        aria-label={`View screenshot ${index + 1} full size`}
+        title="Click to view full size"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="admin-image-row-thumb" src={image.src} alt={`Image ${index + 1}`} />
+      </button>
 
       <div className="admin-image-row-fields">
         <label className="admin-label" htmlFor={`cap-${image.id}`}>
