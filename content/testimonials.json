@@ -11,17 +11,6 @@
   },
   "testimonials": [
     {
-      "id": "testimonial-1",
-      "name": "Hafiz",
-      "role": "Snr Engineer",
-      "company": "Preminum Sound Solution,Penang.",
-      "quote": "trainer-strong techical expertise,simplify complex topic & related with actual manufcaturing challange.\n\nModule & delivery-Highly informative & valuable.Im highly recommended this training.",
-      "photo": "https://assets.scientificmoldings.com/images/testimonials/1793290060672-488835.png",
-      "moduleSlug": "m3-fundamental-pd",
-      "published": true,
-      "order": 0
-    },
-    {
       "id": "testimonial-2",
       "name": "[Name]",
       "role": "[Role]",
@@ -30,7 +19,7 @@
       "photo": "/images/testimonial-2.jpg",
       "moduleSlug": null,
       "published": false,
-      "order": 1
+      "order": 0
     },
     {
       "id": "testimonial-mv1v12i5",
@@ -41,7 +30,7 @@
       "photo": "",
       "moduleSlug": null,
       "published": false,
-      "order": 2
+      "order": 1
     },
     {
       "id": "testimonial-mv2f9fq6",
@@ -52,7 +41,7 @@
       "photo": "",
       "moduleSlug": null,
       "published": false,
-      "order": 3
+      "order": 2
     },
     {
       "id": "testimonial-mv2fcr9n",
@@ -63,7 +52,7 @@
       "photo": "",
       "moduleSlug": null,
       "published": false,
-      "order": 4
+      "order": 3
     },
     {
       "id": "testimonial-mv3tauh5",
@@ -74,7 +63,7 @@
       "photo": "",
       "moduleSlug": null,
       "published": false,
-      "order": 5
+      "order": 4
     },
     {
       "id": "testimonial-mvtsb4ru",
@@ -88,7 +77,7 @@
       "crop": null,
       "moduleSlug": null,
       "published": false,
-      "order": 6
+      "order": 5
     },
     {
       "id": "testimonial-mvtsb57w",
@@ -102,7 +91,7 @@
       "crop": null,
       "moduleSlug": null,
       "published": true,
-      "order": 7
+      "order": 6
     },
     {
       "id": "testimonial-mvtsb5na",
@@ -116,7 +105,7 @@
       "crop": null,
       "moduleSlug": null,
       "published": true,
-      "order": 8
+      "order": 7
     },
     {
       "id": "testimonial-mvtsb5yh",
@@ -130,7 +119,7 @@
       "crop": null,
       "moduleSlug": null,
       "published": true,
-      "order": 9
+      "order": 8
     },
     {
       "id": "testimonial-mvtsb6aj",
@@ -144,7 +133,7 @@
       "crop": null,
       "moduleSlug": null,
       "published": false,
-      "order": 10
+      "order": 9
     }
   ]
 }
