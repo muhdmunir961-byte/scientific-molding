@@ -44,7 +44,7 @@
       "order": 2
     },
     {
-      "id": "testimonial-mv2f9fq6",
+      "id": "testimonial-mv2fcr9n",
       "name": "New testimonial",
       "role": "",
       "company": "",
@@ -55,17 +55,6 @@
       "order": 3
     },
     {
-      "id": "testimonial-mv2fcr9n",
-      "name": "New testimonial",
-      "role": "",
-      "company": "",
-      "quote": "Replace this with the quote the person actually gave.",
-      "photo": "",
-      "moduleSlug": null,
-      "published": false,
-      "order": 4
-    },
-    {
       "id": "testimonial-mv3tauh5",
       "name": "New testimonial",
       "role": "",
@@ -74,7 +63,7 @@
       "photo": "",
       "moduleSlug": null,
       "published": false,
-      "order": 5
+      "order": 4
     },
     {
       "id": "testimonial-mvtsb4ru",
@@ -88,7 +77,7 @@
       "crop": null,
       "moduleSlug": null,
       "published": false,
-      "order": 6
+      "order": 5
     },
     {
       "id": "testimonial-mvtsb57w",
@@ -102,7 +91,7 @@
       "crop": null,
       "moduleSlug": null,
       "published": true,
-      "order": 7
+      "order": 6
     },
     {
       "id": "testimonial-mvtsb5na",
@@ -116,7 +105,7 @@
       "crop": null,
       "moduleSlug": null,
       "published": true,
-      "order": 8
+      "order": 7
     },
     {
       "id": "testimonial-mvtsb5yh",
@@ -130,7 +119,7 @@
       "crop": null,
       "moduleSlug": null,
       "published": true,
-      "order": 9
+      "order": 8
     },
     {
       "id": "testimonial-mvtsb6aj",
@@ -144,7 +133,7 @@
       "crop": null,
       "moduleSlug": null,
       "published": false,
-      "order": 10
+      "order": 9
     },
     {
       "id": "testimonial-mvzdvfm5",
@@ -164,7 +153,7 @@
       ],
       "moduleSlug": null,
       "published": false,
-      "order": 11
+      "order": 10
     },
     {
       "id": "testimonial-mvzdvgot",
@@ -184,7 +173,7 @@
       ],
       "moduleSlug": null,
       "published": false,
-      "order": 12
+      "order": 11
     },
     {
       "id": "testimonial-mvzdvhro",
@@ -204,7 +193,7 @@
       ],
       "moduleSlug": null,
       "published": false,
-      "order": 13
+      "order": 12
     },
     {
       "id": "testimonial-mvzdviwd",
@@ -224,7 +213,7 @@
       ],
       "moduleSlug": null,
       "published": false,
-      "order": 14
+      "order": 13
     },
     {
       "id": "testimonial-mvzdvk2p",
@@ -244,7 +233,7 @@
       ],
       "moduleSlug": null,
       "published": false,
-      "order": 15
+      "order": 14
     },
     {
       "id": "testimonial-mvzdvl4r",
@@ -264,7 +253,7 @@
       ],
       "moduleSlug": null,
       "published": false,
-      "order": 16
+      "order": 15
     },
     {
       "id": "testimonial-mvzdvm6x",
@@ -284,7 +273,7 @@
       ],
       "moduleSlug": null,
       "published": false,
-      "order": 17
+      "order": 16
     },
     {
       "id": "testimonial-mvzdvn6t",
@@ -304,7 +293,7 @@
       ],
       "moduleSlug": null,
       "published": false,
-      "order": 18
+      "order": 17
     },
     {
       "id": "testimonial-mvzdvo95",
@@ -324,7 +313,7 @@
       ],
       "moduleSlug": null,
       "published": false,
-      "order": 19
+      "order": 18
     },
     {
       "id": "testimonial-mvzdvpe9",
@@ -344,7 +333,7 @@
       ],
       "moduleSlug": null,
       "published": false,
-      "order": 20
+      "order": 19
     },
     {
       "id": "testimonial-mvzdvqmv",
@@ -364,7 +353,7 @@
       ],
       "moduleSlug": null,
       "published": false,
-      "order": 21
+      "order": 20
     },
     {
       "id": "testimonial-mvzdvroz",
@@ -384,7 +373,7 @@
       ],
       "moduleSlug": null,
       "published": false,
-      "order": 22
+      "order": 21
     },
     {
       "id": "testimonial-mvzdvspc",
@@ -404,7 +393,7 @@
       ],
       "moduleSlug": null,
       "published": false,
-      "order": 23
+      "order": 22
     }
   ]
 }
