@@ -3,7 +3,16 @@
   "modules": {
     "m1-fundamental": {
       "lecture": [],
-      "practical": [],
+      "practical": [
+        {
+          "key": "images/m1-fundamental/practical/1793630850648-495472.jpg",
+          "url": "https://assets.scientificmoldings.com/images/m1-fundamental/practical/1793630850648-495472.jpg",
+          "alt": "",
+          "caption": "",
+          "order": 0,
+          "uploadedAt": "2026-11-02T14:47:31.204Z"
+        }
+      ],
       "discussion": [
         {
           "key": "images/m1-fundamental/discussion/1793266347315-hld-1",
