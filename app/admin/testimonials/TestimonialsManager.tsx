@@ -63,6 +63,10 @@ export default function TestimonialsManager() {
   const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
   const [settings, setSettings] = useState<TestimonialsSettings>(DEFAULT_TESTIMONIALS_SETTINGS);
   const [settingsSaved, setSettingsSaved] = useState(false);
+  /** Which subset of the list is shown — see `Overview`. */
+  const [filter, setFilter] = useState<Filter>('all');
+  /** The one entry whose editor is open, by id. Only ever one. */
+  const [openId, setOpenId] = useState<string | null>(null);
   /** The full-size viewer: the entry's images and which one is open. */
   const [zoom, setZoom] = useState<{ context: string; images: TestimonialImage[]; index: number } | null>(
     null,
@@ -95,13 +99,65 @@ export default function TestimonialsManager() {
   }, [load]);
 
   const publishedCount = entries.filter((e) => e.published).length;
+  const imageCount = entries.reduce((total, entry) => total + entry.images.length, 0);
+  /* An entry with nothing on it at all — a draft that was never filled in. */
+  const isEmpty = (e: Testimonial) =>
+    e.images.length === 0 &&
+    e.quote.trim() === '' &&
+    e.name.trim() === '' &&
+    e.photo.trim() === '';
+
   /*
    * Live entries whose permission was never recorded — see the notice below.
    * Every entry that predates the gate reads as `consentOnFile: false`, so this
    * is the list the operator has to work through once.
    */
   const publishedWithoutConsent = entries.filter((e) => e.published && !e.consentOnFile).length;
-  const imageCount = entries.reduce((total, entry) => total + entry.images.length, 0);
+
+  const totals = {
+    entries: entries.length,
+    published: publishedCount,
+    hidden: entries.length - publishedCount,
+    /*
+     * Only LIVE entries count here.
+     *
+     * A hidden draft with no recorded permission is not an exposure — the gate
+     * will not let it be published until one is recorded. What is an exposure is
+     * an entry that is already on the site without it, and that is the number
+     * the operator needs to act on. Counting all 36 drafts here would bury the
+     * five that matter.
+     */
+    noPermission: publishedWithoutConsent,
+    images: imageCount,
+    empty: entries.filter(isEmpty).length,
+  };
+
+  /*
+   * The visible subset. A filter never mutates the list — `move` and `remove`
+   * work on `entries`, and the row's own index is its position in the FILTERED
+   * view, so a move is translated back to the real index before it is applied.
+   */
+  const visible = entries.filter((entry) => {
+    switch (filter) {
+      case 'published':
+        return entry.published;
+      case 'hidden':
+        return !entry.published;
+      case 'no-permission':
+        /*
+         * Live-only, matching the overview's count. A hidden entry without
+         * permission is not actionable — the gate already blocks it — so showing
+         * those here would make the list disagree with the number that opened it.
+         */
+        return entry.published && !entry.consentOnFile;
+      case 'images':
+        return entry.images.length > 0;
+      case 'empty':
+        return isEmpty(entry);
+      default:
+        return true;
+    }
+  });
 
   async function move(index: number, delta: number) {
     const target = index + delta;
@@ -387,28 +443,19 @@ export default function TestimonialsManager() {
         </div>
       )}
 
-      <SectionSettings
-        settings={settings}
-        saved={settingsSaved}
-        busy={busy}
-        onSave={saveSettings}
-        /*
-         * Bytes are not known client-side: the panel holds paths, not file
-         * sizes, and asking the browser to fetch every image just to size the
-         * page would be a lot of traffic for a number. The count is reported and
-         * the byte total is left to the storage provider.
-         */
-        totals={{
-          entries: entries.length,
-          published: publishedCount,
-          images: imageCount,
-          bytes: 0,
-        }}
-      />
+      <Overview totals={totals} filter={filter} onFilter={setFilter} />
 
       <div className="admin-actions" style={{ marginBottom: 'var(--ds-space-4)' }}>
         <button type="button" className="admin-button" onClick={add} disabled={busy || loading}>
           Add an empty entry
+        </button>
+        <button
+          type="button"
+          className="admin-button admin-button-secondary"
+          onClick={() => setOpenId(null)}
+          disabled={openId === null}
+        >
+          Close open editor
         </button>
       </div>
 
@@ -437,32 +484,89 @@ export default function TestimonialsManager() {
         <p className="admin-muted">Loading…</p>
       ) : entries.length === 0 ? (
         <p className="admin-muted">No testimonials yet.</p>
+      ) : visible.length === 0 ? (
+        <p className="admin-muted">
+          Nothing matches that filter.{' '}
+          <button type="button" className="admin-link-button" onClick={() => setFilter('all')}>
+            Show all {entries.length}
+          </button>
+        </p>
       ) : (
-        <ul className="gallery-list">
-          {entries.map((entry, index) => (
-            <TestimonialRow
-              key={entry.id}
-              entry={entry}
-              index={index}
-              total={entries.length}
-              busy={busy}
-              onMove={move}
-              onRemove={remove}
-              onSave={save}
-              onUploadPhoto={uploadPhoto}
-              onUploadScreenshots={uploadScreenshots}
-              onSaveImages={saveImages}
-              onZoom={(imageIndex) =>
-                setZoom({
-                  context: entry.name || `Entry ${index + 1}`,
-                  images: entry.images,
-                  index: imageIndex,
-                })
-              }
-            />
-          ))}
-        </ul>
+        <div className="testimonial-summary-list">
+          {visible.map((entry) => {
+            /*
+             * The row's position in the FILTERED view, translated back to the
+             * real index so a move reorders the actual list. Without this a move
+             * while a filter is applied would swap the wrong two entries.
+             */
+            const realIndex = entries.findIndex((e) => e.id === entry.id);
+            const open = openId === entry.id;
+
+            return (
+              <div key={entry.id}>
+                <TestimonialSummary
+                  entry={entry}
+                  index={realIndex}
+                  total={entries.length}
+                  busy={busy}
+                  open={open}
+                  onToggleOpen={() => setOpenId(open ? null : entry.id)}
+                  onMove={move}
+                  onRemove={remove}
+                  onTogglePublished={(target) =>
+                    save(target, { published: !target.published })
+                  }
+                />
+
+                {open && (
+                  <TestimonialRow
+                    entry={entry}
+                    index={realIndex}
+                    total={entries.length}
+                    busy={busy}
+                    onMove={move}
+                    onRemove={remove}
+                    onSave={save}
+                    onUploadPhoto={uploadPhoto}
+                    onUploadScreenshots={uploadScreenshots}
+                    onSaveImages={saveImages}
+                    onZoom={(imageIndex) =>
+                      setZoom({
+                        context: entry.name || `Entry ${realIndex + 1}`,
+                        images: entry.images,
+                        index: imageIndex,
+                      })
+                    }
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
+
+      {/*
+        * The section settings stay on the page, below the list.
+        *
+        * They change how the row BEHAVES (layout, autoplay, arrows, card width),
+        * not what it contains, so they are not part of the overview and not part
+        * of any single entry. Below the list keeps them available without pushing
+        * the list itself off the first screen.
+        */}
+      <div style={{ marginTop: 'var(--ds-space-8)' }}>
+        <SectionSettings
+          settings={settings}
+          saved={settingsSaved}
+          busy={busy}
+          onSave={saveSettings}
+          totals={{
+            entries: entries.length,
+            published: publishedCount,
+            images: imageCount,
+            bytes: 0,
+          }}
+        />
+      </div>
 
       <PhotoLightbox
         context={zoom?.context}
@@ -490,7 +594,232 @@ export default function TestimonialsManager() {
 }
 
 /**
- * One testimonial.
+ * The overview — the one plot that answers "what do I have?".
+ *
+ * ── Why this is not the SectionSettings inventory ───────────────────────
+ * That inventory was buried inside the settings form, which is where you go to
+ * change how the row behaves, not to find out what is in it. Counting also lived
+ * three screens down. So the numbers sit at the top of the page, next to the
+ * filters, and each count is also a filter — the number and the way to see the
+ * things behind it are the same control.
+ */
+function Overview({
+  totals,
+  filter,
+  onFilter,
+}: {
+  totals: {
+    entries: number;
+    published: number;
+    hidden: number;
+    noPermission: number;
+    images: number;
+    empty: number;
+  };
+  filter: Filter;
+  onFilter: (next: Filter) => void;
+}) {
+  const cards: { key: Filter; label: string; value: number; tone?: string }[] = [
+    { key: 'all', label: 'Total', value: totals.entries },
+    { key: 'published', label: 'Live', value: totals.published },
+    { key: 'hidden', label: 'Hidden', value: totals.hidden },
+    { key: 'no-permission', label: 'Live, no permission', value: totals.noPermission, tone: 'warn' },
+    { key: 'images', label: 'Images', value: totals.images },
+    { key: 'empty', label: 'Empty', value: totals.empty },
+  ];
+
+  return (
+    <section className="admin-card" aria-labelledby="testimonial-overview">
+      <h2 id="testimonial-overview" className="admin-card-title">
+        Overview
+      </h2>
+      <p className="admin-card-desc">
+        Every testimonial in the file, published or not. Click a number to show just
+        those.
+      </p>
+
+      <dl className="admin-totals">
+        {cards.map((card) => (
+          /*
+           * The whole card is the button, not just the label.
+           *
+           * The number is the biggest thing in the card and therefore the
+           * obvious target, so making only the small caption clickable means the
+           * most-likely click does nothing. One button wrapping both keeps the
+           * definition list intact and gives the card a single focus stop.
+           */
+          <div
+            key={card.key}
+            className={`admin-total-card${filter === card.key ? ' is-active' : ''}${
+              card.tone === 'warn' && card.value > 0 ? ' is-warn' : ''
+            }`}
+          >
+            <dt>
+              <button
+                type="button"
+                className="admin-total-button"
+                onClick={() => onFilter(card.key)}
+                aria-pressed={filter === card.key}
+                aria-label={`Show ${card.label.toLowerCase()} (${card.value})`}
+              >
+                <span className="admin-total-label">{card.label}</span>
+                <span className="admin-total-value">{card.value}</span>
+              </button>
+            </dt>
+          </div>
+        ))}
+      </dl>
+
+      {filter !== 'all' && (
+        <p className="admin-hint">
+          Showing {filter === 'no-permission' ? 'entries with no recorded permission' : filter} —
+          {' '}
+          <button type="button" className="admin-link-button" onClick={() => onFilter('all')}>
+            show all {totals.entries}
+          </button>
+        </p>
+      )}
+    </section>
+  );
+}
+
+/** Which subset of the list is shown. */
+type Filter = 'all' | 'published' | 'hidden' | 'no-permission' | 'images' | 'empty';
+
+/**
+ * One testimonial, as a single line — the default view.
+ *
+ * ── Why the editor is behind a disclosure ───────────────────────────────
+ * Every entry used to render its whole form: five text fields, a file picker, a
+ * photo preview, a path field, a screenshot uploader with a crop editor per
+ * image, a module select and three checkboxes. Twenty-four entries made the page
+ * roughly forty screens tall, so answering "how many testimonials do I have and
+ * which one is live" — the question an operator actually arrives with — meant
+ * scrolling all of it.
+ *
+ * So the list is a scannable index: state, who said it, a preview of the quote,
+ * how many images, and the two actions worth having on the row (publish and
+ * delete). The editor is one click away and only one is ever open.
+ *
+ * ── Why publish and delete stay on the row ──────────────────────────────
+ * They are the two actions an operator performs in bulk — turning things on and
+ * removing them — and burying either inside a disclosure would mean opening a
+ * form to do the one thing the list exists for.
+ */
+function TestimonialSummary({
+  entry,
+  index,
+  total,
+  busy,
+  open,
+  onToggleOpen,
+  onMove,
+  onRemove,
+  onTogglePublished,
+}: {
+  entry: Testimonial;
+  index: number;
+  total: number;
+  busy: boolean;
+  open: boolean;
+  onToggleOpen: () => void;
+  onMove: (index: number, delta: number) => void;
+  onRemove: (id: string) => void;
+  onTogglePublished: (entry: Testimonial) => void;
+}) {
+  /*
+   * What identifies the card at a glance. A screenshot-only entry has no name,
+   * so the fallback names the position — otherwise a list of forty blank rows
+   * is impossible to tell apart.
+   */
+  const title = entry.name.trim() !== '' ? entry.name : `Entry ${index + 1}`;
+  const subtitle = [entry.role, entry.company].filter((v) => v.trim() !== '').join(' · ');
+  const quote = entry.quote.replace(/\s+/g, ' ').trim();
+  const images = entry.images.length;
+
+  return (
+    <li className={`testimonial-summary${open ? ' is-open' : ''}`}>
+      <div className="testimonial-summary-row">
+        <button
+          type="button"
+          className="testimonial-summary-main"
+          onClick={onToggleOpen}
+          aria-expanded={open}
+          aria-label={`${open ? 'Close' : 'Open'} ${title}`}
+        >
+          <span
+            className={`testimonial-summary-dot ${entry.published ? 'is-live' : 'is-hidden'}`}
+            aria-hidden="true"
+          />
+          <span className="testimonial-summary-text">
+            <span className="testimonial-summary-title">
+              {title}
+              {!entry.consentOnFile && (
+                <span className="admin-badge admin-badge-locked">No permission</span>
+              )}
+            </span>
+            <span className="testimonial-summary-meta">
+              {subtitle || (quote ? '' : 'No name, quote or screenshot yet')}
+              {subtitle && quote ? ' · ' : ''}
+              {quote.length > 90 ? `${quote.slice(0, 90)}…` : quote}
+            </span>
+          </span>
+          <span className="testimonial-summary-tags">
+            {images > 0 && (
+              <span className="admin-badge admin-badge-locked">
+                {images} {images === 1 ? 'image' : 'images'}
+              </span>
+            )}
+            <span className="admin-badge admin-badge-locked">
+              {entry.published ? 'Live' : 'Hidden'}
+            </span>
+          </span>
+        </button>
+
+        <div className="testimonial-summary-actions">
+          <button
+            type="button"
+            className="admin-icon-button"
+            aria-label={`Move ${title} up`}
+            disabled={busy || index === 0}
+            onClick={() => onMove(index, -1)}
+          >
+            ↑
+          </button>
+          <button
+            type="button"
+            className="admin-icon-button"
+            aria-label={`Move ${title} down`}
+            disabled={busy || index === total - 1}
+            onClick={() => onMove(index, 1)}
+          >
+            ↓
+          </button>
+          <button
+            type="button"
+            className="admin-button admin-button-secondary admin-button-small"
+            disabled={busy}
+            onClick={() => onTogglePublished(entry)}
+          >
+            {entry.published ? 'Unpublish' : 'Publish'}
+          </button>
+          <button
+            type="button"
+            className="admin-icon-button admin-icon-danger"
+            aria-label={`Delete ${title}`}
+            disabled={busy}
+            onClick={() => onRemove(entry.id)}
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+    </li>
+  );
+}
+
+/**
+ * One testimonial, as a full editor.
  *
  * Every text field holds its own draft and posts on blur, and only when the value
  * actually changed — so clicking through the list produces no commits. The
@@ -545,13 +874,12 @@ function TestimonialRow({
 
 
   return (
-    <li className={`gallery-item ${entry.published ? '' : 'testimonial-unpublished'}`}>
-      <div className="gallery-fields">
-        <div className="gallery-category-head">
-          <span className="admin-array-index">
-            {entry.published ? 'Published' : 'Hidden'}
-          </span>
-          <div className="gallery-tools">
+    <div className="testimonial-editor">
+      <div className="gallery-category-head">
+        <span className="admin-array-index">
+          {entry.published ? 'Published' : 'Hidden'}
+        </span>
+        <div className="gallery-tools">
             <button
               type="button"
               className="admin-icon-button"
@@ -579,15 +907,15 @@ function TestimonialRow({
             >
               ✕
             </button>
-          </div>
         </div>
+      </div>
 
-        <TextField
-          label="Name (optional)"
-          value={name}
-          onChange={setName}
-          onSave={() => name !== entry.name && onSave(entry, { name })}
-        />
+      <TextField
+        label="Name (optional)"
+        value={name}
+        onChange={setName}
+        onSave={() => name !== entry.name && onSave(entry, { name })}
+      />
         <TextField
           label="Job title (optional)"
           value={role}
@@ -766,8 +1094,7 @@ function TestimonialRow({
             representation under the Consumer Protection Act 1999.
           </p>
         )}
-      </div>
-    </li>
+    </div>
   );
 }
 

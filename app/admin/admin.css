@@ -158,17 +158,10 @@
   min-width: 0;
 }
 
-.gallery-fields .admin-input,
-.gallery-fields .admin-textarea,
-.gallery-fields .admin-button {
-  min-width: 220px;
-}
-
 @media (max-width: 720px) {
-  .gallery-fields .admin-input,
-  .gallery-fields .admin-textarea,
-  .gallery-fields .admin-button {
-    min-width: 0;
+  .testimonial-editor .admin-input,
+  .testimonial-editor .admin-textarea,
+  .testimonial-editor .admin-button {
     width: 100%;
   }
 }
@@ -1405,43 +1398,6 @@
  * fields, not a photograph, so a thumbnail grid would not help. It does reuse
  * the uploader, the image rows and the viewer.
  */
-.gallery-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ds-space-4);
-  margin: var(--ds-space-6) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.gallery-item {
-  display: grid;
-  gap: var(--ds-space-4);
-  align-items: start;
-  padding: var(--ds-space-4);
-  background-color: var(--ds-neutral-50);
-  border: 1px solid var(--ds-neutral-200);
-  border-left: 3px solid var(--ds-orange-500);
-  border-radius: var(--ds-radius-md);
-}
-
-.gallery-fields {
-  min-width: 0;
-}
-
-.gallery-fields .admin-label {
-  margin-top: var(--ds-space-3);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: var(--ds-tracking-wide);
-  text-transform: uppercase;
-  color: var(--ds-neutral-500);
-}
-
-.gallery-fields .admin-label:first-child {
-  margin-top: 0;
-}
-
 .gallery-tools {
   display: flex;
   flex-direction: row;
@@ -1935,16 +1891,12 @@ label.admin-button:focus-within {
   background-color: var(--ds-orange-50);
 }
 
-/* --- Testimonials: unpublished rows muted so the state is scannable --- */
-
-.testimonial-unpublished {
-  border-left-color: var(--ds-neutral-200);
-  background-color: var(--ds-neutral-100);
-}
-
-.testimonial-unpublished .admin-label {
-  color: var(--ds-neutral-500);
-}
+/* --- Testimonials -----------------------------------------------------
+ * The published/hidden state used to be carried by a `.testimonial-unpublished`
+ * modifier on a `.gallery-item` wrapper. That wrapper is gone: the compact list
+ * shows the state with a dot and a text badge on the row itself, which is
+ * readable without scanning a background tint down a list of thirty-six.
+ */
 
 /* --- Responsive shell and reduced-motion/accessibility affordances --- */
 
@@ -2040,3 +1992,247 @@ label.admin-button:focus-within {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* --- Testimonial overview + compact list -----------------------------
+ *
+ * The list is the index: one line per entry, so twenty-four of them fit on a
+ * couple of screens instead of forty. The editor opens underneath the row it
+ * belongs to.
+ *
+ * The count cards are buttons because each one is also a filter — the number
+ * and the way to see what is behind it are the same control.
+ */
+
+.admin-total-card {
+  padding: 0;
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: var(--ds-radius-md);
+  background-color: var(--ds-neutral-0);
+  transition: border-color var(--ds-duration-fast) var(--ds-ease-out);
+}
+
+/* The overview cards carry their own typography on the spans inside the button,
+   so the base `.admin-totals dt/dd` treatment is switched off here — otherwise
+   the number inherits the uppercase caption styling. */
+.admin-total-card dt,
+.admin-total-card dd {
+  margin: 0;
+  font: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  color: inherit;
+}
+
+.admin-total-card.is-active {
+  border-color: var(--ds-orange-500);
+  background-color: var(--ds-orange-50);
+}
+
+/* A count that needs attention (entries with no recorded permission). Only
+   tinted when it is non-zero — a red zero trains the eye to ignore it. */
+.admin-total-card.is-warn {
+  border-color: var(--ds-orange-500);
+  background-color: var(--ds-orange-50);
+}
+
+.admin-total-button {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: var(--ds-space-3) var(--ds-space-4);
+  border: none;
+  border-radius: var(--ds-radius-md);
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-total-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: var(--ds-tracking-wide);
+  text-transform: uppercase;
+  color: var(--ds-neutral-500);
+}
+
+.admin-total-value {
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--ds-neutral-900);
+}
+
+.admin-total-button:hover .admin-total-label {
+  color: var(--ds-orange-600);
+}
+
+.admin-total-button:focus-visible {
+  outline: 2px solid var(--ds-orange-500);
+  outline-offset: 4px;
+  border-radius: var(--ds-radius-sm);
+}
+
+.admin-link-button {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--ds-orange-600);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.testimonial-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+  margin: var(--ds-space-6) 0 0;
+}
+
+.testimonial-summary {
+  border: 1px solid var(--ds-neutral-200);
+  border-radius: var(--ds-radius-md);
+  background-color: var(--ds-neutral-0);
+}
+
+.testimonial-summary.is-open {
+  border-color: var(--ds-orange-500);
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/*
+ * The editor body, opened under its row.
+ *
+ * ── Why it carries its own frame ────────────────────────────────────────
+ * It used to be a `.gallery-item`, which supplied the padding, the tinted
+ * background and the orange left rule. That wrapper was removed when the editor
+ * moved inside a disclosure, and without a replacement the fields sat flush
+ * against the page with no padding at all. This restores the frame and drops the
+ * top border and radius so the panel reads as one attached to the row above it
+ * rather than a second, unrelated card.
+ */
+.testimonial-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-4);
+  padding: var(--ds-space-4);
+  border: 1px solid var(--ds-orange-500);
+  border-top: none;
+  border-bottom-right-radius: var(--ds-radius-md);
+  border-bottom-left-radius: var(--ds-radius-md);
+  background-color: var(--ds-neutral-50);
+}
+
+.testimonial-editor .admin-label {
+  margin-top: var(--ds-space-3);
+  margin-bottom: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: var(--ds-tracking-wide);
+  text-transform: uppercase;
+  color: var(--ds-neutral-500);
+}
+
+.testimonial-editor .admin-label:first-child {
+  margin-top: 0;
+}
+
+.testimonial-summary-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+}
+
+/* The row body is a button so the whole line is one click target, which is the
+   difference between scanning a list and aiming at a small caret. */
+.testimonial-summary-main {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-3) var(--ds-space-4);
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.testimonial-summary-main:focus-visible {
+  outline: 2px solid var(--ds-orange-500);
+  outline-offset: -2px;
+  border-radius: var(--ds-radius-md);
+}
+
+/* Live or hidden, at a glance. The dot is the fastest thing on the row to read,
+   and it is `aria-hidden` because the text badge beside it says the same. */
+.testimonial-summary-dot {
+  height: 8px;
+  width: 8px;
+  flex-shrink: 0;
+  border-radius: var(--ds-radius-full);
+}
+
+.testimonial-summary-dot.is-live {
+  background-color: var(--ds-orange-500);
+}
+
+.testimonial-summary-dot.is-hidden {
+  background-color: var(--ds-neutral-300);
+}
+
+.testimonial-summary-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.testimonial-summary-title {
+  font-weight: 600;
+  color: var(--ds-neutral-900);
+}
+
+/* One line, ellipsised: the row's height must not depend on how long the quote
+   is, or the list stops being scannable. */
+.testimonial-summary-meta {
+  overflow: hidden;
+  font-size: 0.8125rem;
+  color: var(--ds-neutral-500);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.testimonial-summary-tags {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--ds-space-2);
+  align-items: center;
+}
+
+.testimonial-summary-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--ds-space-1);
+  padding-right: var(--ds-space-3);
+}
+
+@media (max-width: 640px) {
+  /* On a phone the tags are dropped rather than squeezing the actions off the
+     row. The dot and the title still say live or hidden. */
+  .testimonial-summary-tags {
+    display: none;
+  }
+
+  .testimonial-summary-actions {
+    gap: 0;
+  }
+}
+
