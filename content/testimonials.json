@@ -552,7 +552,7 @@
         }
       ],
       "moduleSlug": null,
-      "published": true,
+      "published": false,
       "order": 30
     },
     {
@@ -572,7 +572,7 @@
         }
       ],
       "moduleSlug": null,
-      "published": false,
+      "published": true,
       "order": 31
     },
     {
