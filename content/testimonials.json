@@ -453,6 +453,7 @@
       ],
       "moduleSlug": null,
       "published": false,
+      "consentOnFile": true,
       "order": 25
     },
     {
