@@ -21,6 +21,7 @@
 import { NextResponse } from 'next/server';
 
 import { requireSession, fail } from '@/lib/admin/guard';
+import { deleteAtUrl } from '@/lib/admin/store';
 import {
   readTestimonials,
   readTestimonialsSettings,
@@ -123,11 +124,25 @@ function toImages(raw: unknown): TestimonialImage[] {
  * Explicit field by field rather than a spread: a caller could otherwise write
  * arbitrary keys into the committed file, and the public component would carry
  * them into the render.
+ *
+ * ── Why `images` falls back to the previous value ────────────────────────
+ * Every field save from the panel sends the whole entry, so `images` is normally
+ * present. But a caller that edits one field (`{id, published: true}`) would
+ * otherwise write `images: []` over a card holding eleven screenshots — the
+ * operator flips a publish toggle and loses the evidence attached to it. An
+ * explicit empty array still clears them, because `[]` is present and is not
+ * `undefined`; only an absent key inherits.
+ *
  * @param {Record<string, unknown>} raw
  * @param {number} fallbackOrder
+ * @param {Testimonial} [previous] the stored entry, when this is an edit
  * @returns {Testimonial}
  */
-function toTestimonial(raw: Record<string, unknown>, fallbackOrder: number): Testimonial {
+function toTestimonial(
+  raw: Record<string, unknown>,
+  fallbackOrder: number,
+  previous?: Testimonial,
+): Testimonial {
   const str = (v: unknown) => (typeof v === 'string' ? v : '');
   const moduleSlug = str(raw.moduleSlug).trim();
 
@@ -138,9 +153,16 @@ function toTestimonial(raw: Record<string, unknown>, fallbackOrder: number): Tes
     company: str(raw.company),
     quote: str(raw.quote),
     photo: str(raw.photo),
-    images: toImages(raw.images),
+    images: raw.images === undefined ? (previous?.images ?? []) : toImages(raw.images),
     moduleSlug: moduleSlug === '' ? null : moduleSlug,
     published: raw.published === true,
+    /*
+     * Falls back to the stored value for the same reason `images` does: the
+     * panel sends the whole entry, but a caller editing one field must not
+     * silently withdraw a permission the operator had already recorded.
+     */
+    consentOnFile:
+      raw.consentOnFile === undefined ? (previous?.consentOnFile ?? false) : raw.consentOnFile === true,
     order: Number.isInteger(raw.order) ? (raw.order as number) : fallbackOrder,
   };
 }
@@ -304,7 +326,7 @@ export async function PATCH(request: Request): Promise<NextResponse> {
   const target = existing.find((t) => t.id === id);
   if (!target) return fail('That testimonial is not in the list.', 404);
 
-  const merged = toTestimonial({ ...target, ...payload, id }, target.order);
+  const merged = toTestimonial({ ...target, ...payload, id }, target.order, target);
   const problem = validateTestimonial(merged);
   if (problem) return fail(problem);
 
@@ -318,7 +340,30 @@ export async function PATCH(request: Request): Promise<NextResponse> {
 }
 
 /**
- * DELETE — remove one entry.
+ * DELETE — remove one entry, and the photographs that belonged to it.
+ *
+ * ── Why the bytes are removed, not just the manifest entry ──────────────
+ * Removing the entry stopped the site rendering it, which is what the operator
+ * sees and therefore what they assume happened. But the files stayed in R2 under
+ * their original public URLs, so a person who had withdrawn their testimonial —
+ * the ordinary reason to delete one — was still one link away from having their
+ * face and their words served from the client's own domain.
+ *
+ * That is not a tidiness problem. Under PDPA 2010 a withdrawal of consent has to
+ * actually stop the processing, and an object that still resolves is still being
+ * processed. It is also the difference between "we removed it" and "we stopped
+ * linking to it" if the deletion is ever questioned.
+ *
+ * ── Why the manifest is written first ───────────────────────────────────
+ * The same ordering as `/api/admin/module-photos`: commit the removal, then
+ * delete the object. If the commit fails, nothing has been destroyed and the
+ * operator can retry. The reverse order would let a failed commit leave the live
+ * site referencing a URL whose bytes are already gone.
+ *
+ * A failed object delete does NOT fail the request. The site is already correct
+ * once the manifest is written; an orphaned object costs storage, and reporting
+ * it lets the operator clean up rather than being blocked by it.
+ *
  * @param {Request} request JSON with `id`
  */
 export async function DELETE(request: Request): Promise<NextResponse> {
@@ -336,7 +381,8 @@ export async function DELETE(request: Request): Promise<NextResponse> {
   if (!id) return fail('No testimonial was specified.');
 
   const existing = await readTestimonials();
-  if (!existing.some((t) => t.id === id)) {
+  const target = existing.find((t) => t.id === id);
+  if (!target) {
     return fail('That testimonial is not in the list.', 404);
   }
 
@@ -347,9 +393,37 @@ export async function DELETE(request: Request): Promise<NextResponse> {
 
   const result = await saveTestimonials(next, 'remove one');
 
+  /*
+   * Every file the entry owned: the headshot and each screenshot. `upgrade` is
+   * applied first because a legacy entry keeps its image in `screenshot` rather
+   * than in the images array, and deleting the entry without deleting that file
+   * would be the exact gap this closes.
+   */
+  const upgraded = upgradeTestimonial(target);
+  const urls = [upgraded.photo, ...upgraded.images.map((image) => image.src)].filter(
+    (url) => url.trim() !== '',
+  );
+
+  const notRemoved: string[] = [];
+  for (const url of urls) {
+    const outcome = await deleteAtUrl(url);
+    if (!outcome.deleted && outcome.reason !== 'not an R2 object' && outcome.reason !== 'not a local path') {
+      notRemoved.push(`${url} (${outcome.reason ?? 'unknown'})`);
+    }
+  }
+
   return NextResponse.json({
     ok: true,
-    data: { testimonials: next, storage: result.storage, message: result.message },
+    data: {
+      testimonials: next,
+      storage: result.storage,
+      filesRemoved: urls.length - notRemoved.length,
+      filesNotRemoved: notRemoved,
+      message:
+        notRemoved.length > 0
+          ? `Entry removed. ${notRemoved.length} image file(s) could not be deleted and are still reachable — remove them from storage by hand. ${result.message}`
+          : `Entry and ${urls.length} image file(s) removed. ${result.message}`,
+    },
   });
 }
 

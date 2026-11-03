@@ -2835,13 +2835,25 @@ report(
  * Polish #7 — Layout variety, dark rhythm, testimonials, image slots
  * ------------------------------------------------------------------ */
 
-/* --- Layout variety: four structurally distinct section grids. --- */
+/* --- Layout variety: three structurally distinct section grids. --- */
+
+/*
+ * ── Why Testimonials is NOT in this list any more ───────────────────────
+ * It used to assert `.testimonial-grid` was `repeat(3,1fr)` behind a 768px
+ * query. That rule was replaced by `repeat(auto-fit, minmax(min(420px,100%),1fr))`
+ * when the section stopped always having exactly three entries — and it had to
+ * be: a fixed three-up is precisely what breaks an unlimited list, because the
+ * fourth card starts a second row of three rather than the grid adapting.
+ *
+ * The layout-variety intent still holds and is asserted below, on its own terms:
+ * this section is the page's only self-sizing grid, which is a more distinct
+ * structure than a second symmetric three-up was.
+ */
 
 const LAYOUT_GRIDS = [
   ['About is asymmetric 60/40', '.about-grid', '3fr 2fr', '1024'],
   ['Contact is asymmetric 60/40 with the form first', '.contact-grid', '3fr 2fr', '1024'],
   ['Track Record ranks its figures 40/35/25', '.track-stats', '4fr 3.5fr 2.5fr', '768'],
-  ['Testimonials is a symmetric 3-up', '.testimonial-grid', 'repeat(3,1fr)', '768'],
 ];
 
 /*
@@ -3514,7 +3526,6 @@ for (const [label, selector, prop] of TAP_TARGETS) {
  */
 const RESPONSIVE_GRIDS = [
   ['the contact form', '.contact-grid', '3fr 2fr', '1024'],
-  ['the testimonial row', '.testimonial-grid', 'repeat(3,1fr)', '768'],
   ['the footer columns', '.footer-grid', '1fr 1fr', '640'],
 ];
 
@@ -3536,6 +3547,37 @@ for (const [label, selector, columns, breakpoint] of RESPONSIVE_GRIDS) {
     `expected "${columns}" in the ${breakpoint}px query — served: ${wide || '(rule absent)'}`,
   );
 }
+
+/*
+ * The testimonial grid, asserted on its own terms.
+ *
+ * It is the page's only SELF-SIZING grid: `auto-fit` with a `minmax` floor, so
+ * the column count follows the number of cards instead of a fixed count. That is
+ * what makes an unlimited list safe — three cards share the measure, thirty wrap
+ * into ten rows, and one card fills the measure rather than sitting a third of
+ * the page wide.
+ *
+ * A fixed `repeat(n, 1fr)` here would be a regression with a specific symptom:
+ * the operator publishes a fourth testimonial and it starts a ragged second row
+ * of three, with the grid never adapting again however many are added.
+ */
+const testimonialColumns = declarationsOf('.testimonial-grid').get('grid-template-columns') ?? '';
+
+report(
+  testimonialColumns.includes('auto-fit') && testimonialColumns.includes('minmax'),
+  'the testimonial grid sizes its columns from the content, not from a fixed count',
+  `expected "repeat(auto-fit, minmax(…))" — served: ${testimonialColumns || '(absent)'}; a fixed count breaks the section as soon as the list grows`,
+);
+report(
+  !/repeat\(\s*\d+\s*,/.test(testimonialColumns),
+  'the testimonial grid does not hardcode how many cards sit in a row',
+  `served: ${testimonialColumns}`,
+);
+report(
+  testimonialColumns.includes('100%'),
+  'the testimonial grid floor collapses below its minimum on a narrow screen',
+  `the minmax floor must be "min(<floor>, 100%)" so one card still fits a phone — served: ${testimonialColumns}`,
+);
 
 /* --- Heading outline. --- */
 

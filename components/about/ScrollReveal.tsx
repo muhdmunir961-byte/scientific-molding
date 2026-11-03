@@ -37,6 +37,21 @@ export interface ScrollRevealProps {
   className?: string;
 }
 
+/**
+ * The longest stagger any block may be given.
+ *
+ * ── Why the delay is clamped here and not at the call site ──────────────
+ * Callers stagger by index (`delayMs={i * 80}`), which is correct for the three
+ * cards the section was designed around and wrong the moment the list is
+ * unbounded: the twentieth card would sit at `opacity: 0` for 1.6 seconds after
+ * scrolling into view, and the hundredth for eight. A card that has not appeared
+ * yet is indistinguishable from a card that failed to load.
+ *
+ * Clamping inside the component means every caller is safe by construction, and
+ * a new list that staggers by index does not have to remember this.
+ */
+const MAX_REVEAL_DELAY_MS = 240;
+
 export default function ScrollReveal({
   children,
   delayMs = 0,
@@ -44,6 +59,7 @@ export default function ScrollReveal({
 }: ScrollRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const delay = Math.min(Math.max(0, delayMs), MAX_REVEAL_DELAY_MS);
 
   useEffect(() => {
     const node = ref.current;
@@ -87,7 +103,7 @@ export default function ScrollReveal({
       data-reveal-ready=""
       data-visible={isVisible ? '' : undefined}
       className={`reveal-block ${className}`}
-      style={delayMs > 0 ? { transitionDelay: `${delayMs}ms` } : undefined}
+      style={delay > 0 ? { transitionDelay: `${delay}ms` } : undefined}
     >
       {children}
     </div>

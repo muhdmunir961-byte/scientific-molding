@@ -546,6 +546,152 @@ report(
 );
 
 /*
+ * The testimonial list is unlimited, and three things break when it grows.
+ *
+ *   1. The public component must not cap the list. A `slice` or a hardcoded
+ *      count here would mean the operator publishes twelve and the site shows
+ *      three, with no error anywhere.
+ *   2. The dot strip must be windowed. One dot per entry is fine for three and
+ *      unusable for three hundred — it becomes a grey smear wider than the
+ *      viewport that cannot be aimed at.
+ *   3. The avatar must come from the entry, not from a position. Pairing by
+ *      index reads a list that includes unpublished drafts, so one hidden entry
+ *      above a published one puts every avatar below it on the wrong person.
+ */
+const testimonialsLib = read('lib/testimonials.ts');
+report(
+  !/\bpublishedTestimonials\(\)\s*\.\s*slice\(/.test(testimonialsComponent),
+  'the public component does not cap the number of testimonials',
+  'a slice would silently hide published entries once the list grows',
+);
+report(
+  testimonialsComponent.includes('dotWindow') &&
+    testimonialsLib.includes('export function dotWindow'),
+  'the slider windows its position dots instead of drawing one per entry',
+  'an unbounded list needs a bounded dot strip; see MAX_SLIDER_DOTS',
+);
+
+/*
+ * Comments are stripped first: the component's own docblock quotes the old
+ * `TESTIMONIAL_AVATARS[index]` expression to explain why it is gone, and
+ * matching that would fail on a file whose CODE is correct.
+ */
+const testimonialsCode = testimonialsComponent
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/\/\/.*$/gm, '');
+
+report(
+  !/TESTIMONIAL_AVATARS\s*\[/.test(testimonialsCode),
+  'a testimonial avatar is read from its own entry, not by position',
+  'index-pairing reads the published list against the full list, so a hidden draft shifts every avatar below it',
+);
+
+/* The bulk upload creates one entry per file inside a single millisecond. */
+report(
+  /Date\.now\(\)\.toString\(36\)\}-\$\{Math\.random\(\)/.test(testimonialsLib),
+  'a generated testimonial id cannot collide within one millisecond',
+  'the route rejects a duplicate id, so a colliding batch would fail every save after the first',
+);
+
+/* ------------------------------------------------------------------ *
+ * 15. Publishing a testimonial requires recorded permission
+ * ------------------------------------------------------------------ */
+
+/*
+ * This is the panel's one legally load-bearing gate, so it is asserted rather
+ * than left to the UI to remember.
+ *
+ * The exposure is real and threefold. A testimonial is a quotation attributed to
+ * a named person, usually with their photograph and often their employer:
+ *
+ *   • Defamation Act 1957 — attributing a statement they never made. Truth is a
+ *     defence to a claim by that person only if they actually said it.
+ *   • PDPA 2010 s.6 — a photograph and name of an identifiable person are
+ *     personal data, processed for a purpose that needs consent. s.19 makes a
+ *     withdrawal of consent something the controller must act on.
+ *   • Consumer Protection Act 1999 s.10 — a misleading representation about a
+ *     service, which the named company can also claim on.
+ *
+ * Two invariants follow, and both are asserted here:
+ *
+ *   1. `validateTestimonial` refuses to publish without `consentOnFile`.
+ *   2. A stored entry that predates the field reads as NOT consented, so the
+ *      gate cannot be bypassed by an old file.
+ */
+report(
+  /if\s*\(!entry\.consentOnFile\)\s*\{[\s\S]{0,400}?return/.test(testimonialsLib),
+  'a testimonial cannot be published without recorded permission',
+  'without this gate the panel will publish a quote attributed to a named person who never agreed to it',
+);
+report(
+  /const consentOnFile = entry\.consentOnFile === true/.test(testimonialsLib),
+  'an entry written before the permission field defaults to not consented',
+  'defaulting to true would grandfather every existing entry past the gate it was added to enforce',
+);
+report(
+  testimonialsRoute.includes('consentOnFile'),
+  'the testimonials API carries the permission flag through a save',
+  'the route builds each entry field by field, so a field it does not name is silently dropped',
+);
+
+/* ------------------------------------------------------------------ *
+ * 16. Deleting a testimonial deletes its photographs
+ * ------------------------------------------------------------------ */
+
+/*
+ * A withdrawal of consent is the ordinary reason to delete a testimonial. If the
+ * entry goes but the file stays, the person's face and words are still served
+ * from the client's own domain at their original URL — so the withdrawal has not
+ * actually stopped the processing, which is what PDPA 2010 s.19 requires.
+ *
+ * The route must therefore reach the storage layer, and must do it AFTER the
+ * manifest commit so a failed commit cannot leave the live site pointing at
+ * bytes that are already gone.
+ */
+report(
+  /deleteAtUrl/.test(testimonialsRoute),
+  'deleting a testimonial deletes its stored photographs',
+  'removing the entry alone leaves the image publicly reachable at its original URL',
+);
+report(
+  testimonialsRoute.indexOf('saveTestimonials(next, \'remove one\')') <
+    testimonialsRoute.indexOf('deleteAtUrl('),
+  'the entry is committed before its files are deleted',
+  'the reverse order lets a failed commit leave the site referencing a URL whose bytes are gone',
+);
+report(
+  /filesNotRemoved/.test(testimonialsRoute) &&
+    /filesNotRemoved/.test(read('app/admin/testimonials/TestimonialsManager.tsx')),
+  'a photograph that could not be deleted is reported, not swallowed',
+  'an operator who is told "Removed." will believe a withdrawn photo is gone',
+);
+
+/*
+ * ── The live entries that predate the gate ──────────────────────────────
+ * The gate stops this happening again, but it cannot retroactively vouch for
+ * what is already published: every entry written before the field existed reads
+ * as unconfirmed. If the panel stayed silent about those, the operator would
+ * believe the exposure had been dealt with when the live page still carries it.
+ *
+ * Asserted on the SOURCE rather than the served HTML because the manager is a
+ * client component — its entry rows are rendered after the fetch, so they are
+ * not in the server-rendered payload. This file's own docblock explains why
+ * source-level assertions are the right level for invariants like this.
+ */
+const testimonialsManager = read('app/admin/testimonials/TestimonialsManager.tsx');
+report(
+  /publishedWithoutConsent/.test(testimonialsManager) &&
+    /entries\.filter\(\(e\) => e\.published && !e\.consentOnFile\)/.test(testimonialsManager),
+  'the panel counts the live entries that have no recorded permission',
+  'a silent gate would leave existing unconfirmed testimonials live and unmentioned',
+);
+report(
+  /consentOnFile/.test(testimonialsManager) && /Permission on file/.test(testimonialsManager),
+  'each entry in the panel exposes a permission control',
+  'the operator needs somewhere to record it, or the gate can never be satisfied',
+);
+
+/*
  * When nothing is published, the served page must not contain the section.
  *
  * The page is fetched here rather than reusing a variable from

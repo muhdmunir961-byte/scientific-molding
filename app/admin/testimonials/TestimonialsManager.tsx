@@ -95,6 +95,12 @@ export default function TestimonialsManager() {
   }, [load]);
 
   const publishedCount = entries.filter((e) => e.published).length;
+  /*
+   * Live entries whose permission was never recorded — see the notice below.
+   * Every entry that predates the gate reads as `consentOnFile: false`, so this
+   * is the list the operator has to work through once.
+   */
+  const publishedWithoutConsent = entries.filter((e) => e.published && !e.consentOnFile).length;
   const imageCount = entries.reduce((total, entry) => total + entry.images.length, 0);
 
   async function move(index: number, delta: number) {
@@ -128,7 +134,20 @@ export default function TestimonialsManager() {
       return;
     }
     setEntries(result.data.testimonials.map(normaliseEntry));
-    setNotice({ tone: 'ok', text: 'Removed.' });
+
+    /*
+     * The removal now also deletes the photographs. If any of them survived, the
+     * operator has to know: a person who withdrew their testimonial is still
+     * reachable at that URL, and "Removed." would tell them it was dealt with.
+     */
+    const stranded = result.data.filesNotRemoved ?? [];
+    setNotice({
+      tone: stranded.length > 0 ? 'error' : 'ok',
+      text:
+        stranded.length > 0
+          ? `Entry removed, but ${stranded.length} image file(s) are still in storage: ${stranded.join(', ')}`
+          : result.data.message ?? 'Removed.',
+    });
   }
 
   async function add() {
@@ -327,14 +346,40 @@ export default function TestimonialsManager() {
       <h1 className="admin-title">Testimonials</h1>
       <p className="admin-lede">
         {entries.length} entries, {publishedCount} published. Only published entries
-        appear on the site, and the section is hidden entirely when none are.
+        appear on the site, and the section is hidden entirely when none are. There
+        is no limit on how many you publish — the landing page re-flows to fit.
       </p>
 
       <div className="admin-notice admin-notice-warn">
-        A published testimonial is a claim in a named person&rsquo;s mouth. Only
-        publish a quote the person actually gave, and a company name only with that
+        A published testimonial is a claim in a named person&rsquo;s mouth. Publishing
+        is blocked until you record that permission on the entry. Only publish a
+        quote the person actually gave, and a company name only with that
         company&rsquo;s written permission.
       </div>
+
+      {/*
+        * Live entries with no recorded permission.
+        *
+        * The publish gate stops this happening again, but it cannot retroactively
+        * vouch for what is already on the site — every entry published before the
+        * gate existed was published on the strength of a conversation nobody
+        * recorded. Surfacing the count here is the only way the operator finds
+        * out; an unconfirmed testimonial that is already live is exactly the
+        * exposure the gate was added to prevent.
+        */}
+      {publishedWithoutConsent > 0 && (
+        <div className="admin-notice admin-notice-error" role="alert">
+          <strong>
+            {publishedWithoutConsent} published{' '}
+            {publishedWithoutConsent === 1 ? 'testimonial has' : 'testimonials have'} no
+            recorded permission.
+          </strong>{' '}
+          {publishedWithoutConsent === 1 ? 'It is' : 'They are'} live on the site now.
+          Confirm each one below, or unpublish it — a quote attributed to someone who
+          never agreed to it is a defamation exposure, and their photograph is
+          personal data under PDPA 2010.
+        </div>
+      )}
 
       {notice && (
         <div className={`admin-notice admin-notice-${notice.tone}`} role="status">
@@ -685,6 +730,20 @@ function TestimonialRow({
         <label className="admin-checkbox" style={{ marginTop: 'var(--ds-space-4)' }}>
           <input
             type="checkbox"
+            checked={entry.consentOnFile}
+            disabled={busy}
+            onChange={(e) => onSave(entry, { consentOnFile: e.target.checked })}
+          />
+          <span className="admin-muted">
+            <strong>Permission on file</strong> — this person has agreed, in
+            writing or by message, to this quote, this photo and this company
+            name appearing on the site.
+          </span>
+        </label>
+
+        <label className="admin-checkbox" style={{ marginTop: 'var(--ds-space-4)' }}>
+          <input
+            type="checkbox"
             checked={entry.published}
             disabled={busy}
             onChange={(e) => onSave(entry, { published: e.target.checked })}
@@ -693,6 +752,20 @@ function TestimonialRow({
             {entry.published ? 'Shown on the site' : 'Hidden from the site'}
           </span>
         </label>
+
+        {/*
+          * Stated next to the toggle, not only in the notice at the top of the
+          * page: this is the one field that can stop a save, and an operator who
+          * meets the refusal here needs to know why without scrolling back.
+          */}
+        {!entry.consentOnFile && (
+          <p className="admin-hint">
+            Publishing is blocked until permission is recorded. Without it, a
+            quote in a named person&rsquo;s mouth is a defamation exposure, the
+            photo is personal data under PDPA 2010, and the quote is a
+            representation under the Consumer Protection Act 1999.
+          </p>
+        )}
       </div>
     </li>
   );

@@ -85,7 +85,7 @@ export const SESSION_IMAGES: readonly SessionImage[] = TRAINER_SESSIONS.map(
 );
 
 /**
- * Testimonial avatars.
+ * Testimonial avatars — the headshot of every entry, published or not.
  *
  * ── Why this is not an override slot ────────────────────────────────────
  * Every other image on the page is a fixed position, so a fixed key is the right
@@ -96,6 +96,17 @@ export const SESSION_IMAGES: readonly SessionImage[] = TRAINER_SESSIONS.map(
  *
  * So the avatar comes from the entry's own `photo` field, which travels with it
  * through a reorder and has no limit on how many entries exist.
+ *
+ * ── Why the public component no longer reads this ────────────────────────
+ * `Testimonials.tsx` used to pair `TESTIMONIAL_AVATARS[index]` with the
+ * published list, and those two lists are not the same list: this one includes
+ * hidden drafts, so one unpublished entry above a published one shifted every
+ * avatar below it onto the wrong person. The component now reads
+ * `testimonial.photo` directly, which is the entry's own value and cannot drift.
+ *
+ * The export stays because the admin's image manifest lists it as the set of
+ * testimonial photographs currently in use, and removing it would make that page
+ * report a position it can no longer answer for.
  */
 export const TESTIMONIAL_AVATARS = allTestimonials().map((testimonial) => testimonial.photo);
 

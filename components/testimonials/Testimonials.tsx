@@ -49,8 +49,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import ScrollReveal from '../about/ScrollReveal';
 import { withOverrides } from '@/lib/admin/overrides';
-import { TESTIMONIAL_AVATARS } from '../shared/image-content';
 import {
+  dotWindow,
   publishedTestimonials,
   testimonialsSettings,
   ASPECT_RATIOS,
@@ -74,11 +74,22 @@ const TESTIMONIALS_HERO = withOverrides('testimonials.TESTIMONIALS_HERO', TESTIM
  * slot: a slot pairs by index, so inserting a testimonial above another would
  * silently move every headshot down one place — the wrong person's face on the
  * wrong quote.
+ *
+ * ── Why this no longer consults `TESTIMONIAL_AVATARS` ────────────────────
+ * It used to fall back to `TESTIMONIAL_AVATARS[index]`, which is a list built
+ * from EVERY entry — published or not. The index here counts only the published
+ * ones, so as soon as one hidden draft sat above a published testimonial the two
+ * lists were offset by one and every avatar below the gap belonged to someone
+ * else. With the list now unbounded (an operator can publish as many as they
+ * like, in any order) that is not an edge case, it is the normal state.
+ *
+ * The entry's own `photo` is the only value that travels with the entry through
+ * a reorder, a publish toggle or a delete, so it is the only one used.
  */
 function publishedWithPhotos(): (Testimonial & { resolvedPhoto: string })[] {
-  return publishedTestimonials().map((testimonial, index) => ({
+  return publishedTestimonials().map((testimonial) => ({
     ...testimonial,
-    resolvedPhoto: TESTIMONIAL_AVATARS[index] || testimonial.photo,
+    resolvedPhoto: testimonial.photo,
   }));
 }
 
@@ -424,9 +435,18 @@ function TestimonialSlider({
 
       {settings.dots && entries.length > 1 && (
         <div className="testimonial-dots" role="tablist" aria-label="Choose a testimonial">
-          {entries.map((entry, i) => (
+          {/*
+            * A WINDOW of dots once the list gets long, not one per card.
+            *
+            * The list has no maximum, so "one dot per entry" turns into a
+            * several-hundred-dot smear that cannot be aimed at. `dotWindow`
+            * keeps the strip to `MAX_SLIDER_DOTS` around the card in view —
+            * every entry is still reachable by arrow, swipe and scroll, and the
+            * count is still announced below. See `lib/testimonials.ts`.
+            */}
+          {dotWindow(entries.length, active).map((i) => (
             <button
-              key={entry.id}
+              key={entries[i]?.id ?? i}
               type="button"
               role="tab"
               aria-selected={i === active}

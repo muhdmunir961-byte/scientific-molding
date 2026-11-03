@@ -120,6 +120,62 @@ export const SETTINGS_LIMITS = {
   cardWidth: { min: 260, max: 720 },
 } as const;
 
+/**
+ * How many position dots the slider draws at once.
+ *
+ * ── Why there is a cap on DOTS when there is none on ENTRIES ────────────
+ * The list is unlimited: the operator can publish three testimonials or three
+ * hundred, and the row renders every one of them. The dot strip is the only
+ * part of the slider that grows with the count, and it grows in the worst
+ * possible way — 300 ten-pixel dots do not wrap into something readable, they
+ * become a grey smear wider than the viewport that no one can aim at.
+ *
+ * So past this many entries the strip shows a WINDOW of dots around the
+ * current card instead of one per card. Nothing is hidden from the visitor:
+ * the card count and the position are still announced ("Testimonial 87 of
+ * 300"), the arrows and the scroll row reach every entry, and the dots stay a
+ * control that can be hit with a thumb.
+ */
+export const MAX_SLIDER_DOTS = 9;
+
+/**
+ * The dots to draw for a list of `total` entries, centred on `active`.
+ *
+ * Pure, so the component and the checks cannot disagree about what is shown.
+ * Below the cap every entry gets a dot, in order, so the common case is exactly
+ * what it always was.
+ *
+ * Above it the window is clamped to the ends rather than being allowed to run
+ * past them: at entry 0 the visitor sees dots 0–8, at the last entry they see
+ * the final nine, and in between the active dot sits in the middle. A window
+ * that slid off the end would either draw fewer dots or none.
+ *
+ * @param {number} total how many entries the row holds
+ * @param {number} active zero-based index of the card currently in view
+ * @param {number} [max] how many dots may be drawn at once
+ * @returns {number[]} the entry indexes to draw, ascending
+ */
+export function dotWindow(
+  total: number,
+  active: number,
+  max: number = MAX_SLIDER_DOTS,
+): number[] {
+  const count = Math.max(0, Math.floor(total));
+  if (count === 0) return [];
+
+  const size = Math.max(1, Math.floor(max));
+  if (count <= size) return Array.from({ length: count }, (_, i) => i);
+
+  /* Clamp the active index first: a scroll position can briefly exceed the
+     list while a card is being removed, and an out-of-range centre would
+     produce a window hanging off the end. */
+  const centre = Math.min(count - 1, Math.max(0, Math.floor(active)));
+  const half = Math.floor(size / 2);
+  const start = Math.min(Math.max(0, centre - half), count - size);
+
+  return Array.from({ length: size }, (_, i) => start + i);
+}
+
 /** One testimonial. */
 export interface Testimonial {
   /** Stable identity. Reordering depends on it; see `lib/gallery.ts` for why. */
@@ -133,6 +189,30 @@ export interface Testimonial {
   readonly quote: string;
   /** Optional headshot path. Empty string renders an initial-letter tile. */
   readonly photo: string;
+  /**
+   * Whether the person's permission to publish this is actually held.
+   *
+   * ── Why this is a stored field and not a tick-box in the operator's head ─
+   * A published testimonial is a quotation attributed to a named person, often
+   * with their face, often naming their employer. Publishing one without
+   * permission is not a style problem, it is three separate causes of action in
+   * Malaysia:
+   *
+   *   • **Defamation** (Defamation Act 1957) — attributing a statement to a
+   *     named person that they did not make. Truth is a defence to a claim BY
+   *     that person only if they said it; a fabricated endorsement fails it.
+   *   • **PDPA 2010, s.6** — a photograph of an identifiable person is personal
+   *     data, and processing it needs consent for that purpose. s.19 requires
+   *     the data to be kept accurate, and a withdrawn consent must be actionable.
+   *   • **Consumer Protection Act 1999, s.10** — a false or misleading
+   *     representation about a service. An invented testimonial is exactly that,
+   *     and the *company* named is a second potential claimant.
+   *
+   * So the permission is recorded per entry, and `validateTestimonial` refuses
+   * to publish without it. The field exists to make the operator state a fact
+   * once, at the moment they publish, rather than remember it later.
+   */
+  readonly consentOnFile: boolean;
   /**
    * Every screenshot attached to this entry — a WhatsApp or email capture.
    *
@@ -170,8 +250,14 @@ export interface Testimonial {
  * `allTestimonials()` upgrades v1 and v2 on read, so the rest of the codebase
  * only ever sees v3.
  */
-type StoredTestimonial = Omit<Testimonial, 'images'> & {
+type StoredTestimonial = Omit<Testimonial, 'images' | 'consentOnFile'> & {
   images?: TestimonialImage[];
+  /**
+   * Absent on any entry written before the permission gate existed. Read as
+   * `false` by `upgradeTestimonial` — the safe default for a permission nobody
+   * recorded.
+   */
+  consentOnFile?: boolean;
   /** v2 fields, still read so nothing is lost on the way through. */
   screenshot?: string;
   caption?: string;
@@ -237,9 +323,22 @@ export function testimonialsSettings(): TestimonialsSettings {
  * @returns {Testimonial}
  */
 export function upgradeTestimonial(entry: StoredTestimonial): Testimonial {
+  /*
+   * `consentOnFile` defaults to FALSE for every entry that predates it.
+   *
+   * The safe default for a missing permission is "not held". An entry written
+   * before this field existed was published on the strength of a conversation
+   * nobody recorded, and assuming consent would keep exactly the exposure the
+   * field was added to close. Defaulting to false means such an entry stays
+   * visible (the publish flag is untouched) but must be re-affirmed the next
+   * time the operator saves it — which is the moment they can actually check.
+   */
+  const consentOnFile = entry.consentOnFile === true;
+
   if (Array.isArray(entry.images)) {
     return {
       ...entry,
+      consentOnFile,
       images: entry.images.map((image) => makeImage(image)),
     };
   }
@@ -247,6 +346,7 @@ export function upgradeTestimonial(entry: StoredTestimonial): Testimonial {
   const legacy = entry.screenshot?.trim() ?? '';
   return {
     ...entry,
+    consentOnFile,
     images: legacy
       ? [
           makeImage({
@@ -301,7 +401,16 @@ export function hasPublishedTestimonials(): boolean {
  */
 export function blankTestimonial(order: number): Testimonial {
   return {
-    id: `testimonial-${Date.now().toString(36)}`,
+    /*
+     * The id is the only thing that identifies an entry through a reorder, a
+     * publish toggle and a delete, and the route rejects a duplicate id. A bare
+     * timestamp was not unique: the bulk upload loop creates one entry per file
+     * inside a single millisecond, so a batch of screenshots produced the same
+     * id for several entries and every save after the first was refused.
+     *
+     * A random suffix costs nothing and makes collision a non-event.
+     */
+    id: `testimonial-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
     name: '',
     role: '',
     company: '',
@@ -310,6 +419,12 @@ export function blankTestimonial(order: number): Testimonial {
     images: [],
     moduleSlug: null,
     published: false,
+    /*
+     * A new entry starts with no recorded permission, for the same reason it
+     * starts unpublished: both are the safe state, and both require a
+     * deliberate act by the operator before anything reaches the page.
+     */
+    consentOnFile: false,
     order,
   };
 }
@@ -342,6 +457,28 @@ export function validateTestimonial(entry: Testimonial): string {
    * published entry reaches the page.
    */
   if (entry.published) {
+    /*
+     * ── The permission gate ─────────────────────────────────────────────
+     * This is the one check that exists for a legal reason rather than a
+     * presentational one, and it is deliberately FIRST so the message is the
+     * one the operator reads.
+     *
+     * Publishing a quotation attributed to a named person, with their face and
+     * often their employer's name, without their permission is a defamation
+     * exposure (a statement they did not make), a PDPA s.6 exposure (their
+     * photograph and name processed without consent) and a CPA s.10 exposure (a
+     * misleading representation about the service). Each is a separate claim,
+     * and the company named is a second potential claimant.
+     *
+     * The panel cannot verify permission — only the operator can. What it can
+     * do is refuse to publish until they have stated that they hold it, so the
+     * question is asked once, at the moment it matters, instead of relying on
+     * someone remembering a conversation.
+     */
+    if (!entry.consentOnFile) {
+      return 'This entry cannot be published until you confirm you hold the person’s permission to quote them. Tick “Permission on file” and save.';
+    }
+
     const hasSomething =
       entry.images.length > 0 ||
       entry.quote.trim() !== '' ||

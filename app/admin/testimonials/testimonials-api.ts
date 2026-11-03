@@ -21,6 +21,10 @@ interface TestimonialsPayload {
   settings?: TestimonialsSettings;
   settingsSaved?: boolean;
   message?: string;
+  /** Files the DELETE actually removed from storage. */
+  filesRemoved?: number;
+  /** Files it could not remove, so the operator can clean them up by hand. */
+  filesNotRemoved?: string[];
 }
 
 /**

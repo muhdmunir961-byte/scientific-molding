@@ -3577,13 +3577,17 @@ body {
 }
 
 /* --- The card grid ---
-   `auto-fit` with a 380px floor rather than a fixed three-up.
+   `auto-fit` with a 420px floor rather than a fixed three-up.
 
    The three-up rule was written when the section always had exactly three
    entries. With one entry it produced a single card a third of the page wide,
    and with five it left a ragged second row. `auto-fit` makes the column count
    follow the content: one card fills the measure, three share it, and the
    `minmax` floor stops a card ever becoming too narrow to read a screenshot in.
+
+   That is also what makes the list safe to grow without a limit: the operator
+   can publish three testimonials or thirty, and the grid re-flows into as many
+   rows as it needs instead of overflowing a fixed column count.
 
    `1fr` columns cap at the container's 1280px, so a single card does not stretch
    to an unreadable width on a wide monitor. */
@@ -3679,6 +3683,7 @@ body {
 
 .testimonial-dots {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--ds-space-2);
   justify-content: center;
   margin-top: var(--ds-space-2);
